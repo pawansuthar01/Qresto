@@ -14,5 +14,5 @@ export default async function HomePage() {
     redirect(`/owner/restaurants/${session.user.restaurantId}/dashboard`);
   }
 
-  return null; // ensure component returns something (even if redirect happens)
+  return null;
 }
