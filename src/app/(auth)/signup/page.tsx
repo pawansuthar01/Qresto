@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
-import bcrypt from "bcryptjs";
 
 const signUpSchema = z
   .object({
@@ -54,15 +53,13 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: data.name,
           email: data.email,
-          password: hashedPassword,
+          password: data.password,
         }),
       });
 

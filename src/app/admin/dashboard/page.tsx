@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { RestaurantList } from "@/components/admin/RestaurantList";
 import { CreateRestaurantDialog } from "@/components/admin/CreateRestaurantDialog";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
+import { UserManagement } from "@/components/admin/UserManagement";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,6 +106,7 @@ export default function AdminDashboardPage() {
         <Tabs defaultValue="restaurants" className="space-y-4">
           <TabsList>
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="analytics">Platform Analytics</TabsTrigger>
           </TabsList>
 
@@ -125,6 +127,10 @@ export default function AdminDashboardPage() {
             ) : (
               <RestaurantList restaurants={restaurants || []} />
             )}
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
