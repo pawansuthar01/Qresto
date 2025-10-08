@@ -5,19 +5,19 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
-    console.log(req.nextauth);
     // Admin-only routes
     if (path.startsWith("/admin") && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/signin", req.url));
+    } else {
     }
 
     // Owner routes - check if they have a restaurant
     if (
       path.startsWith("/owner") &&
       token?.role === "OWNER" &&
-      !token?.restaurantId
+      token?.restaurantId == null
     ) {
-      return NextResponse.redirect(new URL("/signin", req.url));
+      // return NextResponse.redirect(new URL("/signin", req.url));
     }
 
     return NextResponse.next();

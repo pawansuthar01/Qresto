@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Shield, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "../../../components/ui/alert";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -32,10 +33,22 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const callbackUrl = searchParams.get("callbackUrl") || "/admin/dashboard";
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      if (session.user.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else if (session.user.role === "OWNER") {
+        router.push("/owner/dashboard");
+      }
+    }
+  }, [session, status, router]);
 
   const {
     register,
@@ -66,8 +79,7 @@ export default function SignInPage() {
           title: "Success",
           description: "Signed in successfully",
         });
-        router.push(callbackUrl);
-        router.refresh();
+        // Session will be updated and useEffect will handle redirect
       }
     } catch (error) {
       toast({
@@ -83,7 +95,7 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signIn("google", { callbackUrl });
+      await signIn("google", { callbackUrl: "/admin/dashboard" });
     } catch (error) {
       toast({
         title: "Error",
@@ -94,18 +106,37 @@ export default function SignInPage() {
     }
   };
 
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
+          <div className="flex items-center justify-center mb-2">
+            <Shield className="h-12 w-12 text-primary" />
+          </div>
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome to QResto
+            Admin Login
           </CardTitle>
           <CardDescription className="text-center">
-            Sign in to manage your restaurant
+            Sign in to manage your restaurant platform
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              This login is for <strong>Company Admins only</strong>. Restaurant
+              owners will receive login credentials from the admin.
+            </AlertDescription>
+          </Alert>
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -206,18 +237,18 @@ export default function SignInPage() {
           </Button>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <p className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-primary hover:underline font-medium"
-            >
-              Sign up
-            </Link>
-          </p>
-          <p className="text-xs text-center text-muted-foreground">
-            Demo credentials: admin@qresto.com / password123
-          </p>
+          <div className="rounded-md bg-muted p-3 text-center w-full">
+            <p className="text-xs font-medium text-muted-foreground">
+              Demo Admin Credentials
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Email:{" "}
+              <code className="bg-background px-1">admin@qresto.com</code>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Password: <code className="bg-background px-1">password123</code>
+            </p>
+          </div>
         </CardFooter>
       </Card>
     </div>

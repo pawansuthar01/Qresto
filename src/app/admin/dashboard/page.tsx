@@ -1,19 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { RestaurantList } from "@/components/admin/RestaurantList";
 import { CreateRestaurantDialog } from "@/components/admin/CreateRestaurantDialog";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Building2, TrendingUp, Users, Activity } from "lucide-react";
 import { useRestaurants } from "@/hooks/useRestaurant";
 
 export default function AdminDashboardPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedUserEmail, setSelectedEmail] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+
   const { data: restaurants, isLoading } = useRestaurants();
+
+  useEffect(() => {
+    fetch("/api/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .finally(() => setUsersLoading(false));
+  }, []);
 
   const totalRestaurants = restaurants?.length || 0;
   const totalTables =
@@ -26,6 +43,13 @@ export default function AdminDashboardPage() {
       0
     ) || 0;
 
+  const usersWithoutRestaurant = users?.filter((u) => !u.restaurantId);
+
+  const handleCreateForUser = (userId: string) => {
+    setSelectedEmail(userId);
+    setDialogOpen(true);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -36,7 +60,12 @@ export default function AdminDashboardPage() {
               Manage all restaurants and monitor platform performance
             </p>
           </div>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setSelectedEmail(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Restaurant
           </Button>
@@ -101,7 +130,7 @@ export default function AdminDashboardPage() {
           </Card>
         </div>
 
-        {/* Tabs for Restaurants and Analytics */}
+        {/* Tabs */}
         <Tabs defaultValue="restaurants" className="space-y-4">
           <TabsList>
             <TabsTrigger value="restaurants">Restaurants</TabsTrigger>
@@ -109,21 +138,33 @@ export default function AdminDashboardPage() {
           </TabsList>
 
           <TabsContent value="restaurants" className="space-y-4">
-            {isLoading ? (
+            {isLoading || usersLoading ? (
               <div className="flex items-center justify-center py-12">
-                <p className="text-muted-foreground">Loading restaurants...</p>
-              </div>
-            ) : restaurants?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
-                <Building2 className="mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="mb-4 text-muted-foreground">No restaurants yet</p>
-                <Button onClick={() => setDialogOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create your first restaurant
-                </Button>
+                <p className="text-muted-foreground">Loading data...</p>
               </div>
             ) : (
-              <RestaurantList restaurants={restaurants || []} />
+              <>
+                <RestaurantList restaurants={restaurants || []} />
+
+                <div className="mt-6">
+                  <h2 className="text-xl font-semibold mb-2">
+                    Users without Restaurant
+                  </h2>
+                  {usersWithoutRestaurant.map((user) => (
+                    <Card key={user.id} className="mb-2">
+                      <CardHeader>
+                        <CardTitle>{user.name}</CardTitle>
+                        <CardDescription>{user?.email}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button onClick={() => handleCreateForUser(user.email)}>
+                          <Plus className="mr-2 h-4 w-4" /> Create Restaurant
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
             )}
           </TabsContent>
 
@@ -135,6 +176,7 @@ export default function AdminDashboardPage() {
         <CreateRestaurantDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
+          ownerData={selectedUserEmail}
         />
       </div>
     </MainLayout>

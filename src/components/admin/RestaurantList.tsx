@@ -49,6 +49,7 @@ export function RestaurantList({ restaurants }: RestaurantListProps) {
                 <Building2 className="h-5 w-5" />
                 {restaurant.name}
               </CardTitle>
+
               <CardDescription>/{restaurant.slug}</CardDescription>
             </CardHeader>
             <CardContent>

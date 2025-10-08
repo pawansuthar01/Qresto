@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log("Fetching restaurant with ID:", params.id);
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -17,19 +17,9 @@ export async function GET(
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
       include: {
-        users: true,
-        categories: {
-          include: {
-            items: true,
-          },
-          orderBy: { sortOrder: "asc" },
-        },
-        tables: {
-          include: {
-            qrCode: true,
-          },
-          orderBy: { number: "asc" },
-        },
+        users: { select: { id: true, name: true, email: true, role: true } },
+        categories: { include: { items: true }, orderBy: { sortOrder: "asc" } },
+        tables: { include: { qrCode: true }, orderBy: { number: "asc" } },
       },
     });
 
@@ -40,7 +30,7 @@ export async function GET(
       );
     }
 
-    // Check access
+    // Access check
     if (
       session.user.role !== "ADMIN" &&
       session.user.restaurantId !== params.id
@@ -130,5 +120,40 @@ export async function DELETE(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { name, slug, address, phone, ownerId } = body;
+
+    if (!name || !slug) {
+      return NextResponse.json(
+        { error: "Name and slug are required" },
+        { status: 400 }
+      );
+    }
+
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        name,
+        slug,
+        address,
+        phone,
+        users: {
+          connect: ownerId ? { id: ownerId } : undefined,
+        },
+      },
+    });
+    await prisma.user.update({
+      where: { id: ownerId },
+      data: { restaurantId: restaurant.id },
+    });
+
+    return NextResponse.json(restaurant);
+  } catch (error: any) {
+    console.error("Error creating restaurant:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
