@@ -1,53 +1,37 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import NextAuth from "next-auth";
+import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "./db";
 import bcrypt from "bcryptjs";
 
-export const authOptions: NextAuthOptions = {
+export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/signin",
-    signOut: "/signin",
-    error: "/signin",
-  },
+  session: { strategy: "jwt" },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    CredentialsProvider({
-      name: "credentials",
+    Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: {},
+        password: {},
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
-        }
+        if (!credentials?.email || !credentials.password)
+          return null;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { restaurant: true },
         });
+        if (!user || !user.password) return null;
 
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
+        const valid = await bcrypt.compare(
           credentials.password,
           user.password
         );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials");
-        }
+        if (!valid) return null;
 
         return {
           id: user.id,
@@ -55,27 +39,21 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           restaurantId: user.restaurantId,
-          image: user.image,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    jwt({ token, user }) {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
         token.restaurantId = user.restaurantId;
-        token.id = user.id;
       }
-
-      if (trigger === "update" && session) {
-        token = { ...token, ...session };
-      }
-
       return token;
     },
-    async session({ session, token }) {
-      if (token && session.user) {
+    session({ session, token }) {
+      if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "OWNER";
         session.user.restaurantId = token.restaurantId as string | null;
@@ -83,33 +61,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
-};
-
-// Type declarations
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name?: string | null;
-      image?: string | null;
-      role: "ADMIN" | "OWNER";
-      restaurantId: string | null;
-    };
-  }
-
-  interface User {
-    role: "ADMIN" | "OWNER";
-    restaurantId: string | null;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: "ADMIN" | "OWNER";
-    restaurantId: string | null;
-  }
-}
+  secret: process.env.NEXTAUTH_SECRET!,
+});
