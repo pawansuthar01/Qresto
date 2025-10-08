@@ -10,13 +10,12 @@ export const metadata: Metadata = {
   title: "QResto - Digital Menu Platform",
   description: "Multi-tenant SaaS platform for restaurants",
   manifest: "/manifest.json",
-};
-
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
   themeColor: "#000000",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
