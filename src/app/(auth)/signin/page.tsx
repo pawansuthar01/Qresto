@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -21,6 +20,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
+import { signIn, useSession } from "next-auth/react";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,7 +29,7 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -37,15 +37,16 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/admin/dashboard";
-
-  // Redirect if already logged in
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       if (session.user.role === "ADMIN") {
         router.push("/admin/dashboard");
       } else if (session.user.role === "OWNER") {
-        router.push("/owner/dashboard");
+        router.push(
+          `/owner/restaurants/${
+            session.user.restaurantId ? session.user.restaurantId : "padding"
+          }/dashboard`
+        );
       }
     }
   }, [session, status, router]);
@@ -249,8 +250,28 @@ export default function SignInPage() {
               Password: <code className="bg-background px-1">password123</code>
             </p>
           </div>
+          <p className="text-xs text-center text-muted-foreground">
+            Demo credentials: admin@qresto.com / password123
+          </p>
+          <p className="text-xs text-center text-muted-foreground">
+            Contact your administrator for account access
+          </p>
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
+      <SignInForm />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { InvoiceButton } from "./InvoiceButton";
 import { formatCurrency } from "@/lib/utils";
-import { Clock, User, Table, CheckCircle } from "lucide-react";
+import { Clock, User, Table, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -38,8 +39,25 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [filter, setFilter] = useState<string>("ALL");
+  const canSoundEnabled = localStorage.getItem("sound");
+  const [previousOrderCount, setPreviousOrderCount] = useState(orders.length);
 
+  useEffect(() => {
+    const enableSound = () => localStorage.setItem("sound", "true");
+    window.addEventListener("click", enableSound, { once: true });
+    return () => window.removeEventListener("click", enableSound);
+  }, []);
   const canUpdate = hasPermission("order.update");
+
+  // Play sound when new order arrives
+  useEffect(() => {
+    if (orders.length > previousOrderCount && canSoundEnabled) {
+      const audio = new Audio("/notification.mp3");
+      audio.volume = 0.5;
+      audio.play().catch((e) => console.log("Sound play failed:", e));
+    }
+    setPreviousOrderCount(orders.length);
+  }, [orders.length, previousOrderCount, canSoundEnabled]);
 
   const updateOrderStatus = useMutation({
     mutationFn: async ({
@@ -95,10 +113,32 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
             <SelectItem value="SERVED">Served</SelectItem>
           </SelectContent>
         </Select>
+
         <div className="text-sm text-muted-foreground">
           {filteredOrders.length}{" "}
           {filteredOrders.length === 1 ? "order" : "orders"}
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            localStorage.setItem("sound", canSoundEnabled ? "false" : "true")
+          }
+          className="ml-auto"
+        >
+          {canSoundEnabled ? (
+            <>
+              <Volume2 className="mr-2 h-4 w-4" />
+              Sound On
+            </>
+          ) : (
+            <>
+              <VolumeX className="mr-2 h-4 w-4" />
+              Sound Off
+            </>
+          )}
+        </Button>
       </div>
 
       {filteredOrders.length === 0 ? (
@@ -108,7 +148,7 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredOrders.map((order) => (
-            <Card key={order.id}>
+            <Card key={order.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-lg">
@@ -187,6 +227,15 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                       </SelectContent>
                     </Select>
                   )}
+
+                {/* Invoice Buttons */}
+                {(order.status === "SERVED" || order.status === "READY") && (
+                  <InvoiceButton
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    restaurantId={restaurantId}
+                  />
+                )}
               </CardContent>
             </Card>
           ))}

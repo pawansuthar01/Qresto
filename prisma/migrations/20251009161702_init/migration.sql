@@ -1,8 +1,11 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'OWNER');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'OWNER', 'MANAGER', 'STAFF');
 
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'SERVED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "MenuScheduleType" AS ENUM ('DAILY', 'WEEKLY', 'DATE_RANGE', 'EVENT', 'SEASONAL');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -36,11 +39,34 @@ CREATE TABLE "Restaurant" (
 );
 
 -- CreateTable
+CREATE TABLE "MenuSchedule" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "type" "MenuScheduleType" NOT NULL DEFAULT 'DAILY',
+    "restaurantId" TEXT NOT NULL,
+    "startTime" TEXT,
+    "endTime" TEXT,
+    "daysOfWeek" JSONB,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "eventName" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "priority" INTEGER NOT NULL DEFAULT 0,
+    "themeData" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "MenuSchedule_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "MenuCategory" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "restaurantId" TEXT NOT NULL,
+    "scheduleId" TEXT,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -120,6 +146,21 @@ CREATE TABLE "OrderItem" (
     CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "RestaurantEvent" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "restaurantId" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT false,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RestaurantEvent_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -136,7 +177,16 @@ CREATE UNIQUE INDEX "Restaurant_slug_key" ON "Restaurant"("slug");
 CREATE INDEX "Restaurant_slug_idx" ON "Restaurant"("slug");
 
 -- CreateIndex
+CREATE INDEX "MenuSchedule_restaurantId_idx" ON "MenuSchedule"("restaurantId");
+
+-- CreateIndex
+CREATE INDEX "MenuSchedule_isActive_idx" ON "MenuSchedule"("isActive");
+
+-- CreateIndex
 CREATE INDEX "MenuCategory_restaurantId_idx" ON "MenuCategory"("restaurantId");
+
+-- CreateIndex
+CREATE INDEX "MenuCategory_scheduleId_idx" ON "MenuCategory"("scheduleId");
 
 -- CreateIndex
 CREATE INDEX "MenuItem_categoryId_idx" ON "MenuItem"("categoryId");
@@ -177,11 +227,23 @@ CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
 -- CreateIndex
 CREATE INDEX "OrderItem_menuItemId_idx" ON "OrderItem"("menuItemId");
 
+-- CreateIndex
+CREATE INDEX "RestaurantEvent_restaurantId_idx" ON "RestaurantEvent"("restaurantId");
+
+-- CreateIndex
+CREATE INDEX "RestaurantEvent_isActive_idx" ON "RestaurantEvent"("isActive");
+
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "MenuSchedule" ADD CONSTRAINT "MenuSchedule_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "MenuCategory" ADD CONSTRAINT "MenuCategory_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "MenuCategory" ADD CONSTRAINT "MenuCategory_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "MenuSchedule"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MenuItem" ADD CONSTRAINT "MenuItem_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "MenuCategory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -206,3 +268,6 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("or
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "MenuItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RestaurantEvent" ADD CONSTRAINT "RestaurantEvent_restaurantId_fkey" FOREIGN KEY ("restaurantId") REFERENCES "Restaurant"("id") ON DELETE CASCADE ON UPDATE CASCADE;

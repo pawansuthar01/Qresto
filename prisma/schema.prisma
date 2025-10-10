@@ -8,8 +8,8 @@ datasource db {
 }
 
 enum UserRole {
-  ADMIN
-  OWNER
+  ADMIN  // Company Owner
+  OWNER  // Restaurant Owner
 }
 
 enum OrderStatus {
@@ -24,133 +24,195 @@ enum OrderStatus {
 model User {
   id            String       @id @default(cuid())
   email         String       @unique
-  name          String?
   password      String?
-  image         String?
+  name          String?
   role          UserRole     @default(OWNER)
+  image         String?
+  emailVerified DateTime?
+  
+  // Restaurant relationship
   restaurantId  String?
   restaurant    Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-
+  
   @@index([email])
   @@index([restaurantId])
+  @@map("users")
 }
 
 model Restaurant {
-  id          String         @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  slug        String         @unique
-  logo        String?
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  coverUrl    String?
   address     String?
   phone       String?
-  permissions Json           @default("{}")
-  customization Json         @default("{}")
-  users       User[]
+  email       String?
+  
+  // Permission system - stored as JSON
+  permissions Json     @default("{}")
+  
+  // Customization settings
+  customization Json   @default("{\"primaryColor\":\"#3b82f6\",\"secondaryColor\":\"#1e40af\",\"fontFamily\":\"Inter\",\"layout\":\"grid\"}")
+  
+  // Relations
+  owners      User[]
   categories  MenuCategory[]
+  items       MenuItem[]
   tables      Table[]
   qrCodes     QRCode[]
   orders      Order[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   @@index([slug])
+  @@map("restaurants")
 }
 
 model MenuCategory {
-  id           String       @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
   description  String?
+  displayOrder Int        @default(0)
+  isActive     Boolean    @default(true)
+  
+  // Time-based scheduling
+  scheduleType String     @default("always") // "always", "time-based", "date-based", "event-based"
+  schedule     Json?      @default("{}") // Flexible schedule configuration
+  
   restaurantId String
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
   items        MenuItem[]
-  sortOrder    Int          @default(0)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
   @@index([restaurantId])
+  @@map("menu_categories")
 }
 
 model MenuItem {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  image       String?
-  categoryId  String
-  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  available   Boolean      @default(true)
-  customization Json       @default("{}")
-  sortOrder   Int          @default(0)
-  orderItems  OrderItem[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
+  id           String       @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  imageUrl     String?
+  isAvailable  Boolean      @default(true)
+  isVegetarian Boolean      @default(false)
+  isVegan      Boolean      @default(false)
+  isGlutenFree Boolean      @default(false)
+  spiceLevel   Int?         @default(0)
+  displayOrder Int          @default(0)
+  
+  categoryId   String
+  category     MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  restaurantId String
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  orderItems   OrderItem[]
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
   @@index([categoryId])
+  @@index([restaurantId])
+  @@map("menu_items")
 }
 
 model Table {
   id           String     @id @default(cuid())
   number       String
+  name         String?
   capacity     Int        @default(4)
+  isActive     Boolean    @default(true)
+  
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  qrCode       QRCode?
+  
+  qrCodes      QRCode[]
   orders       Order[]
+  
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-
+  
   @@unique([restaurantId, number])
   @@index([restaurantId])
+  @@map("tables")
 }
 
 model QRCode {
   id           String     @id @default(cuid())
   shortCode    String     @unique
-  tableId      String     @unique
+  dataUrl      String     @db.Text
+  isActive     Boolean    @default(true)
+  scans        Int        @default(0)
+  
+  tableId      String
   table        Table      @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  imageData    String     @db.Text
-  scans        Int        @default(0)
+  
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-
+  
   @@index([shortCode])
+  @@index([tableId])
   @@index([restaurantId])
+  @@map("qr_codes")
 }
 
 model Order {
   id           String      @id @default(cuid())
   orderNumber  String      @unique
+  status       OrderStatus @default(PENDING)
+  totalAmount  Float
+  notes        String?
+  customerName String?
+  customerPhone String?
+  
+  tableId      String
+  table        Table       @relation(fields: [tableId], references: [id])
+  
   restaurantId String
   restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  tableId      String?
-  table        Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  
   items        OrderItem[]
-  total        Float
-  status       OrderStatus @default(PENDING)
-  customerName String?
-  notes        String?
+  
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
-
-  @@index([restaurantId])
-  @@index([tableId])
+  
   @@index([orderNumber])
+  @@index([tableId])
+  @@index([restaurantId])
+  @@index([status])
+  @@map("orders")
 }
 
 model OrderItem {
   id         String   @id @default(cuid())
-  orderId    String
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   quantity   Int
   price      Float
   notes      String?
+  
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  
   createdAt  DateTime @default(now())
-
+  updatedAt  DateTime @updatedAt
+  
   @@index([orderId])
   @@index([menuItemId])
+  @@map("order_items")
 }

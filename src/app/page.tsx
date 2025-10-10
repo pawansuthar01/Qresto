@@ -1,4 +1,5 @@
 import "./globals.css";
+
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,6 +14,10 @@ export default async function HomePage() {
   if (session.user.role === "ADMIN") {
     redirect("/admin/dashboard");
   } else {
-    redirect(`/owner/restaurants/${session.user.restaurantId}/dashboard`);
+    redirect(
+      `/owner/restaurants/${
+        session.user.restaurantId ? session.user.restaurantId : "padding"
+      }/dashboard`
+    );
   }
 }

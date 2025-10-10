@@ -28,6 +28,7 @@ const PERMISSION_GROUPS = {
     { key: "menu.update", label: "Update Menu Items" },
     { key: "menu.delete", label: "Delete Menu Items" },
     { key: "menu.customize", label: "Customize Menu Card Design" },
+    { key: "menu.schedule", label: "Manage Menu Schedules" },
   ],
   "Table Management": [
     { key: "table.create", label: "Create Tables" },
@@ -46,9 +47,11 @@ const PERMISSION_GROUPS = {
     { key: "order.read", label: "View Orders" },
     { key: "order.update", label: "Update Order Status" },
   ],
-  Other: [
+  "Invoice & Billing": [
     { key: "invoice.generate", label: "Generate Invoices" },
     { key: "invoice.download", label: "Download Invoices" },
+  ],
+  "Other Features": [
     { key: "analytics.view", label: "View Analytics" },
     { key: "staff.manage", label: "Manage Staff" },
     { key: "settings.update", label: "Update Settings" },
@@ -94,7 +97,7 @@ export function PermissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto max-w-2xl">
         <DialogHeader>
           <DialogTitle>Manage Permissions - {restaurant.name}</DialogTitle>
           <DialogDescription>
@@ -105,14 +108,14 @@ export function PermissionDialog({
         <div className="space-y-6">
           {Object.entries(PERMISSION_GROUPS).map(([group, items]) => (
             <div key={group} className="space-y-3">
-              <h3 className="font-semibold">{group}</h3>
+              <h3 className="font-semibold text-sm text-primary">{group}</h3>
               <div className="space-y-2">
                 {items.map((item) => (
                   <div
                     key={item.key}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent/50 transition-colors"
                   >
-                    <Label htmlFor={item.key} className="cursor-pointer">
+                    <Label htmlFor={item.key} className="cursor-pointer flex-1">
                       {item.label}
                     </Label>
                     <Switch
@@ -129,7 +132,7 @@ export function PermissionDialog({
           ))}
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

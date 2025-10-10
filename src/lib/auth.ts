@@ -101,7 +101,7 @@ declare module "next-auth" {
   }
 
   interface User {
-    role: "ADMIN" | "OWNER";
+    role: "ADMIN" | "OWNER" | "MANAGER" | "STAFF";
     restaurantId: string | null;
   }
 }
@@ -109,7 +109,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    role: "ADMIN" | "OWNER";
+    role: "ADMIN" | "OWNER" | "MANAGER" | "STAFF";
     restaurantId: string | null;
   }
 }

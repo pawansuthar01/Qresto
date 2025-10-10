@@ -53,7 +53,7 @@ export default function OwnerDashboardPage() {
         .catch((err) => console.error(err))
         .finally(() => setLoading(false));
     } else if (status === "unauthenticated") {
-      router.push("/auth/login");
+      router.push("/signin");
     } else {
       setLoading(false);
     }

@@ -14,6 +14,7 @@ import {
   Settings,
   Building2,
   TrendingUp,
+  Calendar,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -36,6 +37,11 @@ export function Sidebar() {
           href: `/owner/restaurants/${session.user.restaurantId}/menu`,
           label: "Menu",
           icon: UtensilsCrossed,
+        },
+        {
+          href: `/owner/restaurants/${session.user.restaurantId}/schedules`,
+          label: "Schedules",
+          icon: Calendar,
         },
         {
           href: `/owner/restaurants/${session.user.restaurantId}/tables`,

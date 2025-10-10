@@ -6,6 +6,7 @@ export type Permission =
   | "menu.update"
   | "menu.delete"
   | "menu.customize"
+  | "menu.schedule"
   | "table.create"
   | "table.read"
   | "table.update"
@@ -34,6 +35,7 @@ export const DEFAULT_PERMISSIONS: PermissionSet = {
   "menu.update": false,
   "menu.delete": false,
   "menu.customize": false,
+  "menu.schedule": false,
   "table.create": false,
   "table.read": true,
   "table.update": false,
