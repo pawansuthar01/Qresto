@@ -131,8 +131,53 @@ export interface OrderItemType {
   menuItem: MenuItemType;
 }
 
+// Enhanced Theme Interface
+export interface EnhancedTheme {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  buttonTextColor?: string;
+  cardBackground?: string;
+  borderColor?: string;
+  successColor?: string;
+  errorColor?: string;
+  labelColor?: string;
+  fontFamily?: string;
+  fontSize?: number;
+  lineHeight?: number;
+  headingFont?: string;
+  headingWeight?: number;
+  cardPadding?: number;
+  borderRadius?: number;
+  inputRadius?: number;
+  buttonRadius?: number;
+  cardShadow?: string;
+  enableAnimations?: boolean;
+  enableGradients?: boolean;
+  cartWidth?: "narrow" | "normal" | "wide";
+  showItemImages?: boolean;
+  showItemBadges?: boolean;
+  showSubtotal?: boolean;
+  showTax?: boolean;
+  showDiscount?: boolean;
+  enableCoupon?: boolean;
+  enableTips?: boolean;
+  showEstimatedTime?: boolean;
+  cartLayout?: "compact" | "comfortable" | "spacious";
+}
+
 export interface CartItem {
-  menuItem: MenuItemType;
+  menuItem: {
+    id: string;
+    name: string;
+    price: number;
+    imageUrl?: string | null;
+    category?: string;
+    isVegetarian?: boolean;
+    spiceLevel?: number;
+  };
   quantity: number;
   notes?: string;
 }

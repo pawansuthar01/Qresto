@@ -11,7 +11,7 @@ const createQRCodeSchema = z.object({
 
 // GET - List QR codes (permission: qrcode.read)
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

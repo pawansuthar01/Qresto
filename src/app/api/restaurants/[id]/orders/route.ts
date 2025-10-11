@@ -19,10 +19,6 @@ const createOrderSchema = z.object({
   notes: z.string().optional(),
 });
 
-const updateOrderStatusSchema = z.object({
-  status: z.nativeEnum(OrderStatus),
-});
-
 // GET - List orders (permission: order.read)
 export async function GET(
   request: NextRequest,

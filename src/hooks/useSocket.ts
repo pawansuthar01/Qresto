@@ -11,51 +11,51 @@ export function useSocket() {
     const socketUrl =
       process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-    socketRef.current = io(socketUrl, {
+    const socket = io(socketUrl, {
       path: "/api/socket",
       transports: ["websocket", "polling"],
     });
 
-    socketRef.current.on("connect", () => {
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
       console.log("✅ Socket connected");
       setConnected(true);
     });
 
-    socketRef.current.on("disconnect", () => {
+    socket.on("disconnect", () => {
       console.log("❌ Socket disconnected");
       setConnected(false);
     });
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      socket.disconnect();
     };
   }, []);
 
   return { socket: socketRef.current, connected };
 }
 
-export function useRestaurantSocket(restaurantId: string | undefined) {
+export function useRestaurantSocket(restaurantId?: string) {
   const { socket, connected } = useSocket();
 
   useEffect(() => {
-    if (socket && connected && restaurantId) {
-      socket.emit("join-restaurant", restaurantId);
-      console.log("📡 Joined restaurant room:", restaurantId);
+    if (!socket || !connected || !restaurantId) return;
 
-      return () => {
-        socket.emit("leave-restaurant", restaurantId);
-      };
-    }
+    socket.emit("join-restaurant", restaurantId);
+    console.log("📡 Joined restaurant room:", restaurantId);
+
+    return () => {
+      socket.emit("leave-restaurant", restaurantId);
+    };
   }, [socket, connected, restaurantId]);
 
   return { socket, connected };
 }
 
 export function useTableSocket(
-  tableId: string | undefined,
-  restaurantId: string | undefined,
+  tableId?: string,
+  restaurantId?: string,
   capacity: number = 4
 ) {
   const { socket, connected } = useSocket();
@@ -73,51 +73,56 @@ export function useTableSocket(
   });
 
   useEffect(() => {
-    if (socket && connected && tableId && restaurantId) {
-      socket.emit("join-table", { tableId, restaurantId, capacity });
+    if (!socket || !connected || !tableId || !restaurantId) return;
 
-      socket.on("table-joined", (data) => {
-        setTableStatus({
-          joined: true,
-          isFull: false,
-          userCount: data.userCount,
-          capacity: data.capacity,
-        });
+    const handleJoin = (data: any) => {
+      setTableStatus({
+        joined: true,
+        isFull: false,
+        userCount: data.userCount,
+        capacity: data.capacity,
       });
+    };
 
-      socket.on("table-full", (data) => {
-        setTableStatus({
-          joined: false,
-          isFull: true,
-          userCount: data.current,
-          capacity: data.capacity,
-          error: data.message,
-        });
+    const handleFull = (data: any) => {
+      setTableStatus({
+        joined: false,
+        isFull: true,
+        userCount: data.current,
+        capacity: data.capacity,
+        error: data.message,
       });
+    };
 
-      socket.on("table-users-updated", (data) => {
-        setTableStatus((prev) => ({
-          ...prev,
-          userCount: data.userCount,
-          capacity: data.capacity,
-        }));
-      });
+    const handleUsersUpdated = (data: any) => {
+      setTableStatus((prev) => ({
+        ...prev,
+        userCount: data.userCount,
+        capacity: data.capacity,
+      }));
+    };
 
-      socket.on("table-error", (data) => {
-        setTableStatus((prev) => ({
-          ...prev,
-          error: data.message,
-        }));
-      });
+    const handleError = (data: any) => {
+      setTableStatus((prev) => ({
+        ...prev,
+        error: data.message,
+      }));
+    };
 
-      return () => {
-        socket.emit("leave-table", tableId);
-        socket.off("table-joined");
-        socket.off("table-full");
-        socket.off("table-users-updated");
-        socket.off("table-error");
-      };
-    }
+    socket.emit("join-table", { tableId, restaurantId, capacity });
+
+    socket.on("table-joined", handleJoin);
+    socket.on("table-full", handleFull);
+    socket.on("table-users-updated", handleUsersUpdated);
+    socket.on("table-error", handleError);
+
+    return () => {
+      socket.emit("leave-table", tableId);
+      socket.off("table-joined", handleJoin);
+      socket.off("table-full", handleFull);
+      socket.off("table-users-updated", handleUsersUpdated);
+      socket.off("table-error", handleError);
+    };
   }, [socket, connected, tableId, restaurantId, capacity]);
 
   return { socket, connected, tableStatus };

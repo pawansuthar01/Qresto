@@ -7,7 +7,7 @@ import { generateShortCode } from "@/lib/utils";
 import QRCode from "qrcode";
 
 export async function POST(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
 
 export async function GET(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
   try {
@@ -27,7 +27,7 @@ export async function GET(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "invoice.download");
+    authorize(permissions, "invoice.download");
 
     const order = await prisma.order.findUnique({
       where: { id: params.orderId },

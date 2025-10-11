@@ -7,7 +7,6 @@ import { TableMap } from "@/components/table/TableMap";
 import { CreateTableDialog } from "@/components/table/CreateTableDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { usePermissions } from "@/hooks/usePermissions";
 

@@ -683,7 +683,7 @@ export default function EnhancedCart({
                   <div className="space-y-3">
                     <div>
                       <label
-                        className="block mb-1 font-medium text-sm flex items-center gap-1"
+                        className="block mb-1 font-medium text-sm  items-center gap-1"
                         style={{ color: t.labelColor }}
                       >
                         <svg
@@ -714,7 +714,7 @@ export default function EnhancedCart({
 
                     <div>
                       <label
-                        className="block mb-1 font-medium text-sm flex items-center gap-1"
+                        className="block mb-1 font-medium text-sm  items-center gap-1"
                         style={{ color: t.labelColor }}
                       >
                         <svg
@@ -744,7 +744,7 @@ export default function EnhancedCart({
 
                     <div>
                       <label
-                        className="block mb-1 font-medium text-sm flex items-center gap-1"
+                        className="block mb-1 font-medium text-sm  items-center gap-1"
                         style={{ color: t.labelColor }}
                       >
                         <svg

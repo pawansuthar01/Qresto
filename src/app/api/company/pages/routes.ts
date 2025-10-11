@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
 
 const updatePageSchema = z.object({
   type: z.enum(["about", "contact", "privacy", "terms"]),
@@ -14,9 +15,9 @@ const updatePageSchema = z.object({
 });
 
 // GET - Get all company pages (public if published, all if admin)
-export async function GET(request: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.role === UserRole.SUPER_ADMIN;
 
     const pages = await prisma.companyPage.findMany({
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 // POST - Create or update company page (Super Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await getServerSession(authOptions);
 
     if (!session?.user || session.user.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json(

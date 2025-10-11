@@ -1,14 +1,12 @@
 "use client";
 
-import { MenuItemCard } from "./MenuItemCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRestaurant } from "@/hooks/useRestaurant";
-import { Edit, Eye, EyeOff, Palette, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { notificationSound } from "@/lib/notification-sound";
 import { CreateMenuItemDialog } from "./CreateMenuItemDialog";
 
@@ -24,7 +22,6 @@ export function MenuList({
   4;
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const [categories, setCategories] = useState(initialCategories);
@@ -44,8 +41,6 @@ export function MenuList({
       );
 
       if (response.ok) {
-        const updatedItem = await response.json();
-
         // Update local state
         setCategories((prev) =>
           prev.map((cat) => ({

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardHeader from "@/components/DashboardHeader";
 import FullMenuCustomizer from "./FullMenuCustomizer";
 import { useRestaurant } from "@/hooks/useRestaurant";
 
@@ -13,7 +12,6 @@ interface MenuThemeCustomizerProps {
 
 export default function MenuThemeCustomizer({
   restaurant,
-  user,
 }: MenuThemeCustomizerProps) {
   const [isSaving, setSaving] = useState(false);
   const { data } = useRestaurant(restaurant.id);

@@ -9,8 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatCurrency } from "@/lib/utils";
@@ -20,19 +18,15 @@ interface CartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restaurantId: string;
-  tableId?: string; // optional if QR table is used
 }
 
-export function Cart({ open, onOpenChange, restaurantId, tableId }: CartProps) {
+export function Cart({ open, onOpenChange, restaurantId }: CartProps) {
   const { items, updateQuantity, removeItem, getTotal } = useCartStore();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const total = getTotal();
 
   const handleCheckout = () => {
-    // Don't open checkout if cart is empty
-    if (items.length === 0) return;
-
     onOpenChange(false);
     setCheckoutOpen(true);
   };
@@ -125,13 +119,6 @@ export function Cart({ open, onOpenChange, restaurantId, tableId }: CartProps) {
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
         restaurantId={restaurantId}
-        tableId={tableId}
-        cartItems={items.map((item) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          notes: item.notes || "",
-        }))}
-        totalAmount={total}
       />
     </>
   );

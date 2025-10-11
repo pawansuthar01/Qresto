@@ -50,8 +50,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string; scheduleId: string } }
+  _: NextRequest,
+  {
+    params,
+  }: {
+    params: { id: string; scheduleId: string };
+  }
 ) {
   try {
     const session = await getServerSession(authOptions);

@@ -31,7 +31,7 @@ export function useRealtimeOrders(restaurantId: string) {
       console.log("⚠️ Disconnected from real-time server");
     });
 
-    socketClient.on("new-order", (order) => {
+    socketClient.on("new-order", (_) => {
       // Refetch orders
       queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 

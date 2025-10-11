@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 // GET - Public access to menu via QR code
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { shortCode: string } }
 ) {
   try {

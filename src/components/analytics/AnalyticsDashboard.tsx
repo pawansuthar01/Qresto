@@ -7,10 +7,8 @@ import {
   DollarSign,
   ShoppingCart,
   Award,
-  Users,
   Clock,
 } from "lucide-react";
-import { RevenueChart } from "./RevenueChart";
 import { TopItemsChart } from "./TopItemsChart";
 import { OrderStatusChart } from "./OrderStatusChart";
 import { RecentOrdersList } from "./RecentOrdersList";

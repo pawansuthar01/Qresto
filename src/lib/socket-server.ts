@@ -104,7 +104,7 @@ export function initSocketServer(httpServer: HTTPServer): SocketIOServer {
       console.log("🔌 Client disconnected:", socket.id);
 
       // Remove from all table sessions
-      tableSessions.forEach((session, key) => {
+      tableSessions.forEach((session, _) => {
         if (session.users.has(socket.id)) {
           handleTableLeave(socket.id, session.tableId, io);
         }

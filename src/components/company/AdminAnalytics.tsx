@@ -2,16 +2,7 @@
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import {
-  BarChart3,
-  TrendingUp,
-  Package,
-  Clock,
-  Award,
-  DollarSign,
-} from "lucide-react";
-import { Main } from "next/document";
+import { BarChart3, TrendingUp, Package, Award } from "lucide-react";
 import { MainLayout } from "../layout/MainLayout";
 
 interface AdminAnalyticsProps {

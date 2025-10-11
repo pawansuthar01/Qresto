@@ -17,7 +17,7 @@ const createMenuItemSchema = z.object({
 
 // GET - Read menu (permission: menu.read)
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

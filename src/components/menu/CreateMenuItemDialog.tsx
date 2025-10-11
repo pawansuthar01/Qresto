@@ -87,9 +87,6 @@ export function CreateMenuItemDialog({
   console.log("All current form values:", itemForm.getValues());
   const onSubmitItem = async (data: any) => {
     try {
-      // Add restaurantId if missing
-      console.log("Form Data Before Submit:", data); // ✅ ye dikhaega jo fill hua
-      console.log("All current form values:", itemForm.getValues());
       const payload = { restaurantId, ...data, type: "item" };
       await createMenuItem.mutateAsync(payload);
       toast({

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -31,7 +30,6 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 function SignInForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);

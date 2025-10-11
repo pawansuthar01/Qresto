@@ -27,7 +27,7 @@ export async function GET(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "analytics.view");
+    authorize(permissions, "analytics.view");
 
     // Get date range from query params (default: last 30 days)
     const { searchParams } = new URL(req.url);
@@ -61,7 +61,7 @@ export async function GET(
           status: { not: "CANCELLED" },
           createdAt: { gte: startDate },
         },
-        _sum: { total: true },
+        _sum: { totalAmount: true },
       }),
 
       // Average order value
@@ -71,7 +71,7 @@ export async function GET(
           status: { not: "CANCELLED" },
           createdAt: { gte: startDate },
         },
-        _avg: { total: true },
+        _avg: { totalAmount: true },
       }),
 
       // Top selling items
@@ -125,7 +125,7 @@ export async function GET(
         },
         select: {
           createdAt: true,
-          total: true,
+          totalAmount: true,
         },
         orderBy: { createdAt: "asc" },
       }),
@@ -182,8 +182,8 @@ export async function GET(
     return NextResponse.json({
       summary: {
         totalOrders,
-        totalRevenue: totalRevenue._sum.total || 0,
-        avgOrderValue: avgOrderValue._avg.total || 0,
+        totalRevenue: totalRevenue._sum.totalAmount || 0,
+        avgOrderValue: avgOrderValue._avg.totalAmount || 0,
         uniqueCustomers: uniqueCustomers.length,
         avgItemsPerOrder: avgItems,
         period: `Last ${days} days`,

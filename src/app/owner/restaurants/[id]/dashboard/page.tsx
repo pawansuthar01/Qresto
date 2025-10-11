@@ -4,13 +4,7 @@ import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  UtensilsCrossed,
-  Table,
-  QrCode,
-  ShoppingCart,
-  TrendingUp,
-} from "lucide-react";
+import { UtensilsCrossed, Table, QrCode, ShoppingCart } from "lucide-react";
 
 export default function OwnerDashboardPage() {
   const params = useParams();

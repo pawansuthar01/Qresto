@@ -2,16 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import {
-  Plus,
-  Minus,
-  Star,
-  TrendingUp,
-  Flame,
-  Leaf,
-  Award,
-  Clock,
-} from "lucide-react";
+import { Plus, Minus, Star, Flame, Leaf, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
@@ -34,7 +25,6 @@ export default function MenuItemCard({
   canOrder,
   customization = {},
 }: MenuItemCardProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const getBadges = () => {

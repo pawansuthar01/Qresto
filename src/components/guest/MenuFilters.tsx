@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, X, TrendingUp, DollarSign, Leaf } from "lucide-react";
+import { Search, Filter, X, DollarSign, Leaf } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -182,7 +182,7 @@ export default function MenuFilters({
 
               {/* Price Range */}
               <div>
-                <Label className="text-base font-semibold mb-3 block flex items-center gap-2">
+                <Label className="text-base font-semibold mb-3 block  items-center gap-2">
                   <DollarSign className="w-4 h-4" />
                   Price Range
                 </Label>

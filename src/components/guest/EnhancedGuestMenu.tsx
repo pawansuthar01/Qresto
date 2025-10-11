@@ -30,7 +30,7 @@ export default function EnhancedGuestMenu({
   const { restaurant, table, categories: initialCategories, canOrder } = data;
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories] = useState(initialCategories);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -78,7 +78,7 @@ export default function EnhancedGuestMenu({
       setMenuItems((prev) => prev.filter((item) => item.id !== data.itemId));
     });
 
-    socket.on("order-status-changed", (data) => {
+    socket.on("order-status-changed", (_) => {
       notificationSound.playStatusUpdate();
     });
 

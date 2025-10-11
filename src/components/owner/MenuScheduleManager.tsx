@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Calendar,
   Clock,
   Sparkles,
   Save,
@@ -196,10 +194,6 @@ export default function MenuScheduleManager({
     const status = getMenuStatus(schedule);
     alert(`Preview:\nStatus: ${status.status}\nMessage: ${status.message}`);
   };
-
-  const selectedCategoryData = categories.find(
-    (c) => c.id === selectedCategory
-  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">

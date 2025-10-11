@@ -5,11 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string; qrId: string } }
+  _: NextRequest,
+  {
+    params,
+  }: {
+    params: { id: string; qrId: string };
+  }
 ) {
   try {
-    console.log("yes");
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {

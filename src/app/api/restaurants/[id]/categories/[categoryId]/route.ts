@@ -52,8 +52,12 @@ export async function PATCH(
 
 // DELETE - Delete category
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string; categoryId: string } }
+  _: NextRequest,
+  {
+    params,
+  }: {
+    params: { id: string; categoryId: string };
+  }
 ) {
   try {
     const { authorized, error } = await authorize(params.id, "menu.delete");

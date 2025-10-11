@@ -6,7 +6,7 @@ import { authorize } from "@/lib/permissions";
 import { menuItemSchema, menuCategorySchema } from "@/lib/validations";
 
 export async function GET(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -52,12 +52,10 @@ export async function POST(
       );
     }
 
-    const permissions = restaurant.permissions as any;
     authorize(params.id, "menu.create");
 
     const body = await req.json();
     const { type, ...data } = body;
-    console.log(type, data);
     if (type === "category") {
       const validatedData = menuCategorySchema.parse(data);
       const { sortOrder, ...prismaData } = validatedData;

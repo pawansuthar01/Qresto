@@ -14,7 +14,7 @@ interface AISuggestion {
 
 // GET - Get AI-powered menu suggestions
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -39,10 +39,6 @@ export async function GET(
           },
         },
       },
-    });
-
-    const menuItems = await prisma.menuItem.findMany({
-      where: { restaurantId: params.id },
     });
 
     const suggestions: AISuggestion[] = [];

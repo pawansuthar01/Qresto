@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { restaurantSchema } from "@/lib/validations";
 import { DEFAULT_PERMISSIONS } from "@/lib/permissions";
 
-export async function GET(req: NextRequest) {
+export async function GET(_: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 

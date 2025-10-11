@@ -5,11 +5,15 @@ import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
+// ✅ Proper Metadata for Next.js 14
 export const metadata: Metadata = {
   title: "QResto - Smart Restaurant QR System",
   description: "Modern restaurant management with QR code ordering",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#3b82f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#1e40af" },
+  ],
   viewport: {
     width: "device-width",
     initialScale: 1,

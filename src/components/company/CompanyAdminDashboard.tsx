@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +15,7 @@ import {
   Globe,
 } from "lucide-react";
 import DashboardHeader from "@/components/DashboardHeader";
-import PageEditorDialog from "./pageEditorDialog";
+import PageEditorDialog from "./PageEditorDialog";
 
 interface CompanyAdminDashboardProps {
   pages: any[];
@@ -29,7 +28,6 @@ export default function CompanyAdminDashboard({
   stats,
   user,
 }: CompanyAdminDashboardProps) {
-  const router = useRouter();
   const [editorOpen, setEditorOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState<any>(null);
   const [localPages, setLocalPages] = useState(pages);

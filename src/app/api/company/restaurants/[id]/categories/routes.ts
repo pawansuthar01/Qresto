@@ -11,7 +11,7 @@ const createCategorySchema = z.object({
 
 // GET - List categories
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

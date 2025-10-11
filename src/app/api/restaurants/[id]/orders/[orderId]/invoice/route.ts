@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
 
 export async function GET(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
   try {
@@ -27,11 +27,12 @@ export async function GET(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "invoice.generate");
+    authorize(permissions, "invoice.generate");
 
     // Fetch order with all details
     const order = await prisma.order.findUnique({
       where: { id: params.orderId },
+
       include: {
         items: {
           include: {
@@ -39,6 +40,7 @@ export async function GET(
           },
         },
         table: true,
+
         restaurant: true,
       },
     });
@@ -46,7 +48,15 @@ export async function GET(
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-
+    const items = order.items.map((item) => ({
+      name: item.menuItem.name,
+      quantity: item.quantity,
+      price: item.price,
+      total: item.quantity * item.price,
+    }));
+    const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+    const tax = subtotal * 0.05;
+    const total = subtotal + tax;
     // Generate invoice data
     const invoice = {
       invoiceNumber: `INV-${order.orderNumber}`,
@@ -61,15 +71,10 @@ export async function GET(
         name: order.customerName || "Guest",
         table: order.table?.number || "N/A",
       },
-      items: order.items.map((item) => ({
-        name: item.menuItem.name,
-        quantity: item.quantity,
-        price: item.price,
-        total: item.quantity * item.price,
-      })),
-      subtotal: order.total,
-      tax: order.total * 0.05, // 5% tax
-      total: order.total * 1.05,
+      items,
+      subtotal,
+      tax,
+      total,
       status: order.status,
       notes: order.notes,
     };

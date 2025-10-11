@@ -6,7 +6,7 @@ import { authorize } from "@/lib/permissions";
 import { tableSchema } from "@/lib/validations";
 
 export async function GET(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

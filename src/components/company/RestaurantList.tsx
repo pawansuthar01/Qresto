@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, Settings, Users, QrCode } from "lucide-react";
+import { Building2, Settings } from "lucide-react";
 import { PermissionDialog } from "./PermissionDialog";
 
 interface Restaurant {

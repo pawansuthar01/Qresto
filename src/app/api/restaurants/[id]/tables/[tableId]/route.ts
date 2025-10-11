@@ -27,7 +27,7 @@ export async function PATCH(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "table.update");
+    authorize(permissions, "table.update");
 
     const body = await req.json();
 
@@ -50,7 +50,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string; tableId: string } }
 ) {
   try {
@@ -72,7 +72,7 @@ export async function DELETE(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "table.delete");
+    authorize(permissions, "table.delete");
 
     await prisma.table.delete({
       where: { id: params.tableId },

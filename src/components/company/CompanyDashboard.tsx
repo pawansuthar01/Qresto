@@ -11,12 +11,11 @@ import { Spinner } from "../ui/spinner";
 
 interface CompanyDashboardProps {
   restaurants: any[];
-  user: any;
+  user?: any;
 }
 
 export default function CompanyDashboard({
   restaurants,
-  user,
 }: CompanyDashboardProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 

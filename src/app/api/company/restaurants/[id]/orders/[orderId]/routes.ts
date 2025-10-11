@@ -58,7 +58,7 @@ export async function PATCH(
 
 // GET - Get single order
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
   try {

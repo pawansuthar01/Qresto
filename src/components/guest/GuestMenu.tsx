@@ -5,10 +5,8 @@ import {
   ShoppingCart,
   Plus,
   Minus,
-  Store,
   Leaf,
   Flame,
-  Users,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +23,122 @@ interface GuestMenuProps {
   shortCode: string;
 }
 
+// Default customization values matching the Advanced Customizer
+const defaultCustomization = {
+  // Colors
+  primaryColor: "#3b82f6",
+  secondaryColor: "#1e40af",
+  backgroundColor: "#ffffff",
+  textColor: "#1f2937",
+  accentColor: "#10b981",
+  buttonTextColor: "#ffffff",
+  cardBackground: "#ffffff",
+  borderColor: "#e5e7eb",
+  hoverColor: "#2563eb",
+  successColor: "#10b981",
+  errorColor: "#ef4444",
+  warningColor: "#f59e0b",
+  labelColor: "#374151",
+  placeholderColor: "#9ca3af",
+  overlayColor: "#000000",
+
+  // Typography
+  fontFamily: "Inter",
+  headingFont: "Inter",
+  fontSize: 16,
+  lineHeight: 1.5,
+  letterSpacing: 0,
+  fontWeight: 400,
+  headingWeight: 700,
+
+  // Layout
+  layout: "grid",
+  columns: 3,
+  gap: 16,
+  padding: 16,
+  maxWidth: 1200,
+  containerPadding: 16,
+
+  // Cards
+  cardStyle: "modern",
+  borderRadius: 12,
+  cardShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  cardPadding: 16,
+  cardBorder: true,
+  cardBorderWidth: 1,
+
+  // Images
+  showImages: true,
+  imageStyle: "cover",
+  imagePosition: "top",
+  imageHeight: 192,
+  imageRadius: 8,
+
+  // Video
+  showVideos: false,
+  videoAutoplay: false,
+  videoMuted: true,
+  videoLoop: true,
+
+  // Display Elements
+  showPrices: true,
+  showDescription: true,
+  showBadges: true,
+  showRatings: false,
+  showLogo: true,
+  showQuantity: true,
+
+  // Header
+  headerStyle: "gradient",
+  headerHeight: 72,
+  logoPosition: "left",
+  logoSize: 40,
+
+  // Background
+  backgroundImage: "",
+  backgroundVideo: "",
+  backgroundOpacity: 100,
+  backgroundBlur: 0,
+  backgroundOverlay: false,
+  overlayOpacity: 50,
+
+  // Theme
+  darkMode: false,
+
+  // Buttons
+  buttonRadius: 8,
+  buttonSize: "medium",
+  buttonStyle: "solid",
+
+  // Spacing
+  spacing: "normal",
+  itemSpacing: 16,
+  sectionSpacing: 32,
+
+  // Animations
+  enableAnimations: true,
+  animationSpeed: "normal",
+  hoverEffect: "lift",
+
+  // Advanced
+  customCSS: "",
+  enableGradients: true,
+  enableShadows: true,
+  enableTransitions: true,
+
+  // Cart Specific
+  cartWidth: "normal",
+  showItemImages: true,
+  showItemBadges: true,
+  showSubtotal: true,
+  showTax: true,
+  showDiscount: true,
+  enableCoupon: true,
+  enableTips: true,
+  showEstimatedTime: true,
+  cartLayout: "comfortable",
+};
+
 export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   const { restaurant, table, categories: initialCategories, canOrder } = data;
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -34,39 +148,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   );
   const [categories, setCategories] = useState(initialCategories);
 
+  // Merge restaurant customization with defaults
   const theme = {
-    primaryColor: restaurant.customization?.primaryColor || "#3b82f6",
-    secondaryColor: restaurant.customization?.secondaryColor || "#1e40af",
-    backgroundColor: restaurant.customization?.backgroundColor || "#ffffff",
-    textColor: restaurant.customization?.textColor || "#111827",
-    accentColor: restaurant.customization?.accentColor || "#10b981",
-    fontFamily: restaurant.customization?.fontFamily || "Inter",
-    headingFont: restaurant.customization?.headingFont || "Inter",
-    fontSize: restaurant.customization?.fontSize || "medium",
-    layout: restaurant.customization?.layout || "grid",
-    cardStyle: restaurant.customization?.cardStyle || "modern",
-    borderRadius: restaurant.customization?.borderRadius || "12px",
-    spacing: restaurant.customization?.spacing || "normal",
-    columns: restaurant.customization?.columns || 3,
-    showImages: restaurant.customization?.showImages ?? true,
-    showVideos: restaurant.customization?.showVideos ?? false,
-    imageStyle: restaurant.customization?.imageStyle || "cover",
-    imagePosition: restaurant.customization?.imagePosition || "top",
-    showPrices: restaurant.customization?.showPrices ?? true,
-    showDescription: restaurant.customization?.showDescription ?? true,
-    showBadges: restaurant.customization?.showBadges ?? true,
-    showRatings: restaurant.customization?.showRatings ?? true,
-    headerStyle: restaurant.customization?.headerStyle || "gradient",
-    showLogo: restaurant.customization?.showLogo ?? true,
-    logoPosition: restaurant.customization?.logoPosition || "left",
-    backgroundImage: restaurant.customization?.backgroundImage || "",
-    backgroundVideo: restaurant.customization?.backgroundVideo || "",
-    backgroundOpacity: restaurant.customization?.backgroundOpacity ?? 100,
-    darkMode: restaurant.customization?.darkMode ?? false,
-    buttonTextColor: restaurant.customization?.buttonTextColor || "white",
-    cardBackground: restaurant.customization?.cardBackground || "#fff",
-    cardShadow:
-      restaurant.customization?.cardShadow || "0 2px 8px rgba(0,0,0,0.1)",
+    ...defaultCustomization,
+    ...restaurant.customization,
   };
 
   const { socket, connected, tableStatus } = useTableSocket(
@@ -103,16 +188,23 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   }, []);
 
   const addToCart = (menuItem: any) => {
+    const normalizedItem = {
+      ...menuItem,
+      imageUrl: menuItem.imageUrl || undefined,
+    };
+
     setCart((prev) => {
-      const existing = prev.find((item) => item.menuItem.id === menuItem.id);
+      const existing = prev.find(
+        (item) => item.menuItem.id === normalizedItem.id
+      );
       if (existing) {
         return prev.map((item) =>
-          item.menuItem.id === menuItem.id
+          item.menuItem.id === normalizedItem.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, { menuItem, quantity: 1 }];
+      return [...prev, { menuItem: normalizedItem, quantity: 1 }];
     });
   };
 
@@ -137,6 +229,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   );
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Table Full Error Screen
   if (tableStatus.isFull) {
     return (
       <div
@@ -144,6 +237,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
         style={{
           backgroundColor: theme.backgroundColor,
           color: theme.textColor,
+          fontFamily: theme.fontFamily,
         }}
       >
         <Card className="max-w-md w-full">
@@ -159,91 +253,206 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
     );
   }
 
+  // Animation classes based on theme
+  const hoverClass = theme.enableAnimations
+    ? theme.hoverEffect === "lift"
+      ? "hover:scale-105 transition-transform"
+      : theme.hoverEffect === "glow"
+      ? "hover:shadow-2xl transition-shadow"
+      : theme.hoverEffect === "scale"
+      ? "hover:scale-110 transition-transform"
+      : ""
+    : "";
+
+  const transitionClass = theme.enableTransitions
+    ? "transition-all duration-300"
+    : "";
+
   return (
     <div
-      className="min-h-screen pb-24"
+      className="min-h-screen pb-24 relative"
       style={{
         backgroundColor: theme.backgroundColor,
         color: theme.textColor,
         fontFamily: theme.fontFamily,
-        backgroundImage: theme.backgroundImage
-          ? `url(${theme.backgroundImage})`
-          : undefined,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        opacity: theme.backgroundOpacity / 100,
+        fontSize: `${theme.fontSize}px`,
+        lineHeight: theme.lineHeight,
+        letterSpacing: `${theme.letterSpacing}px`,
+        fontWeight: theme.fontWeight,
       }}
     >
+      {/* Background Image/Video */}
+      {theme.backgroundImage && (
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: `url(${theme.backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: theme.backgroundOpacity / 100,
+            filter: `blur(${theme.backgroundBlur}px)`,
+          }}
+        />
+      )}
+
+      {theme.backgroundVideo && (
+        <video
+          autoPlay={theme.videoAutoplay}
+          loop={theme.videoLoop}
+          muted={theme.videoMuted}
+          className="fixed inset-0 w-full h-full object-cover -z-10"
+          style={{
+            opacity: theme.backgroundOpacity / 100,
+            filter: `blur(${theme.backgroundBlur}px)`,
+          }}
+        >
+          <source src={theme.backgroundVideo} type="video/mp4" />
+        </video>
+      )}
+
+      {/* Background Overlay */}
+      {theme.backgroundOverlay && (
+        <div
+          className="fixed inset-0 -z-5"
+          style={{
+            backgroundColor: theme.overlayColor,
+            opacity: theme.overlayOpacity / 100,
+          }}
+        />
+      )}
+
       {/* Header */}
       <div
-        className="sticky top-0 z-40 shadow-sm"
+        className="sticky top-0 z-40 shadow-lg"
         style={{
           background:
-            theme.headerStyle === "gradient"
-              ? `linear-gradient(90deg, ${theme.primaryColor}, ${theme.secondaryColor})`
-              : theme.primaryColor,
+            theme.enableGradients && theme.headerStyle === "gradient"
+              ? `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})`
+              : theme.headerStyle === "solid"
+              ? theme.primaryColor
+              : "transparent",
           color: theme.buttonTextColor,
+          height: `${theme.headerHeight}px`,
         }}
       >
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        <div
+          className="container mx-auto h-full flex justify-between items-center"
+          style={{
+            maxWidth: `${theme.maxWidth}px`,
+            paddingLeft: `${theme.containerPadding}px`,
+            paddingRight: `${theme.containerPadding}px`,
+          }}
+        >
+          <div className="flex items-center gap-3">
             {theme.showLogo && restaurant.logoUrl && (
-              <Image
-                src={restaurant.logoUrl}
-                alt={restaurant.name}
-                width={40}
-                height={40}
-                className={`rounded ${
-                  theme.logoPosition === "left" ? "" : "mx-auto"
-                }`}
-              />
+              <div
+                className="bg-white rounded-full overflow-hidden flex items-center justify-center"
+                style={{
+                  width: `${theme.logoSize}px`,
+                  height: `${theme.logoSize}px`,
+                }}
+              >
+                <Image
+                  src={restaurant.logoUrl}
+                  alt={restaurant.name}
+                  width={theme.logoSize}
+                  height={theme.logoSize}
+                  className="object-cover"
+                />
+              </div>
             )}
-            <h1
-              className="text-xl font-bold"
-              style={{ fontFamily: theme.headingFont }}
-            >
-              {restaurant.name}
-            </h1>
+            <div>
+              <h1
+                className="font-bold"
+                style={{
+                  fontFamily: theme.headingFont,
+                  fontWeight: theme.headingWeight,
+                  fontSize: `${theme.fontSize * 1.5}px`,
+                }}
+              >
+                {restaurant.name}
+              </h1>
+              <p
+                style={{
+                  fontSize: `${theme.fontSize * 0.875}px`,
+                  opacity: 0.9,
+                }}
+              >
+                Table {table.number}
+              </p>
+            </div>
           </div>
 
           {canOrder && cartItemCount > 0 && (
             <button
               onClick={() => setCartOpen(true)}
-              className="relative rounded-full p-3 shadow-lg"
+              className={`relative rounded-full p-3 shadow-lg ${transitionClass}`}
               style={{
-                color: theme.primaryColor,
                 backgroundColor: theme.cardBackground,
+                color: theme.primaryColor,
               }}
             >
               <ShoppingCart className="w-6 h-6" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+              <span
+                className="absolute -top-2 -right-2 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold"
+                style={{ backgroundColor: theme.errorColor }}
+              >
                 {cartItemCount}
               </span>
             </button>
           )}
         </div>
+
         {!connected && (
-          <div className="mt-2 text-xs bg-yellow-500/20 rounded px-2 py-1 text-center">
+          <div
+            className="mt-2 text-xs rounded px-2 py-1 text-center"
+            style={{
+              backgroundColor: `${theme.warningColor}20`,
+              color: theme.warningColor,
+            }}
+          >
             Reconnecting...
           </div>
         )}
       </div>
 
       {/* Category Tabs */}
-      <div className="sticky top-[72px] z-30 bg-white border-b overflow-x-auto">
-        <div className="container mx-auto px-4 flex gap-2 py-3">
+      <div
+        className="sticky z-30 border-b overflow-x-auto"
+        style={{
+          top: `${theme.headerHeight}px`,
+          backgroundColor: theme.cardBackground,
+          borderColor: theme.borderColor,
+        }}
+      >
+        <div
+          className="container mx-auto flex gap-2 py-3"
+          style={{
+            maxWidth: `${theme.maxWidth}px`,
+            paddingLeft: `${theme.containerPadding}px`,
+            paddingRight: `${theme.containerPadding}px`,
+          }}
+        >
           {categories.map((category: any) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className="px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors"
+              className={`px-4 py-2 font-medium whitespace-nowrap ${transitionClass}`}
               style={{
                 backgroundColor:
                   selectedCategory === category.id
-                    ? theme.accentColor
-                    : theme.secondaryColor,
+                    ? theme.primaryColor
+                    : "transparent",
                 color:
-                  selectedCategory === category.id ? "#fff" : theme.textColor,
+                  selectedCategory === category.id
+                    ? theme.buttonTextColor
+                    : theme.textColor,
+                border:
+                  selectedCategory === category.id
+                    ? "none"
+                    : `2px solid ${theme.borderColor}`,
+                borderRadius: `${theme.buttonRadius}px`,
               }}
             >
               {category.name}
@@ -254,8 +463,15 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
 
       {/* Menu Items */}
       <div
-        className={`container mx-auto px-4 py-6 grid gap-4`}
-        style={{ gridTemplateColumns: `repeat(${theme.columns}, 1fr)` }}
+        className="container mx-auto py-6 grid"
+        style={{
+          maxWidth: `${theme.maxWidth}px`,
+          paddingLeft: `${theme.containerPadding}px`,
+          paddingRight: `${theme.containerPadding}px`,
+          gridTemplateColumns:
+            theme.layout === "grid" ? `repeat(${theme.columns}, 1fr)` : "1fr",
+          gap: `${theme.gap}px`,
+        }}
       >
         {categories
           .filter((cat: any) => cat.id === selectedCategory)
@@ -265,19 +481,29 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
               return (
                 <Card
                   key={item.id}
-                  className={`overflow-hidden ${theme.cardStyle}`}
+                  className={`overflow-hidden ${hoverClass}`}
                   style={{
                     backgroundColor: theme.cardBackground,
-                    boxShadow: theme.cardShadow,
-                    borderRadius: theme.borderRadius,
-                    padding: theme.spacing === "normal" ? "1rem" : "0.5rem",
+                    boxShadow: theme.enableShadows ? theme.cardShadow : "none",
+                    borderRadius: `${theme.borderRadius}px`,
+                    padding: `${theme.cardPadding}px`,
+                    border: theme.cardBorder
+                      ? `${theme.cardBorderWidth}px solid ${theme.borderColor}`
+                      : "none",
                   }}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex flex-col gap-2">
+                  <CardContent className="p-0">
+                    <div
+                      className="flex flex-col"
+                      style={{ gap: `${theme.itemSpacing}px` }}
+                    >
                       {theme.showImages && item.imageUrl && (
                         <div
-                          className={`relative w-full h-48 rounded overflow-hidden`}
+                          className="relative w-full overflow-hidden"
+                          style={{
+                            height: `${theme.imageHeight}px`,
+                            borderRadius: `${theme.imageRadius}px`,
+                          }}
                         >
                           <Image
                             src={item.imageUrl}
@@ -288,89 +514,149 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                         </div>
                       )}
 
-                      <div className="flex justify-between items-start">
-                        <div>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between items-start gap-2">
                           <h3
                             className="font-semibold"
-                            style={{ color: theme.primaryColor }}
+                            style={{
+                              color: theme.primaryColor,
+                              fontFamily: theme.headingFont,
+                              fontWeight: theme.headingWeight,
+                              fontSize: `${theme.fontSize}px`,
+                            }}
                           >
                             {item.name}
                           </h3>
-                          {theme.showDescription && item.description && (
-                            <p className="text-sm text-gray-600">
-                              {item.description}
-                            </p>
-                          )}
-                          <div className="flex gap-2 mt-1">
-                            {theme.showBadges && item.isVegetarian && (
-                              <Leaf className="w-4 h-4 text-green-600" />
-                            )}
-                            {theme.showBadges &&
-                              item.spiceLevel > 0 &&
-                              Array.from({ length: item.spiceLevel }).map(
-                                (_, i) => (
-                                  <Flame
-                                    key={i}
-                                    className="w-3 h-3 text-red-500"
-                                  />
-                                )
-                              )}
-                          </div>
-                        </div>
-                        {theme.showPrices && (
-                          <span className="font-bold">
-                            {formatCurrency(item.price)}
-                          </span>
-                        )}
-                      </div>
-
-                      {canOrder && tableStatus.joined && (
-                        <div className="flex items-center gap-2 mt-2">
-                          {quantity === 0 ? (
-                            <Button
-                              onClick={() => addToCart(item)}
-                              size="sm"
-                              className="w-full"
+                          {theme.showPrices && (
+                            <span
+                              className="font-bold whitespace-nowrap"
                               style={{
-                                backgroundColor: theme.primaryColor,
-                                color: theme.buttonTextColor,
+                                color: theme.primaryColor,
+                                fontSize: `${theme.fontSize}px`,
                               }}
                             >
-                              <Plus className="w-4 h-4 mr-1" />
-                              Add to Cart
-                            </Button>
-                          ) : (
-                            <div className="flex items-center gap-2 w-full">
-                              <Button
-                                onClick={() => removeFromCart(item.id)}
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
+                              {formatCurrency(item.price)}
+                            </span>
+                          )}
+                        </div>
+
+                        {theme.showDescription && item.description && (
+                          <p
+                            className="text-sm"
+                            style={{
+                              color: theme.accentColor,
+                              fontSize: `${theme.fontSize * 0.875}px`,
+                            }}
+                          >
+                            {item.description}
+                          </p>
+                        )}
+
+                        {theme.showBadges && (
+                          <div className="flex gap-2 flex-wrap">
+                            {item.isVegetarian && (
+                              <span
+                                className="text-xs px-2 py-1 rounded-full inline-flex items-center gap-1"
                                 style={{
-                                  borderColor: theme.primaryColor,
-                                  color: theme.primaryColor,
+                                  backgroundColor: `${theme.successColor}20`,
+                                  color: theme.successColor,
                                 }}
                               >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <span className="font-bold text-lg px-3">
-                                {quantity}
+                                <Leaf className="w-3 h-3" /> Veg
                               </span>
+                            )}
+                            {item.spiceLevel > 0 && (
+                              <span
+                                className="text-xs px-2 py-1 rounded-full inline-flex items-center gap-1"
+                                style={{
+                                  backgroundColor: `${theme.errorColor}20`,
+                                  color: theme.errorColor,
+                                }}
+                              >
+                                {Array.from({ length: item.spiceLevel }).map(
+                                  (_, i) => (
+                                    <Flame key={i} className="w-3 h-3" />
+                                  )
+                                )}
+                                Spicy
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {canOrder && tableStatus.joined && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {quantity === 0 ? (
                               <Button
                                 onClick={() => addToCart(item)}
                                 size="sm"
-                                className="flex-1"
+                                className={`w-full ${transitionClass}`}
                                 style={{
-                                  backgroundColor: theme.primaryColor,
-                                  color: theme.buttonTextColor,
+                                  backgroundColor:
+                                    theme.buttonStyle === "solid"
+                                      ? theme.primaryColor
+                                      : "transparent",
+                                  color:
+                                    theme.buttonStyle === "solid"
+                                      ? theme.buttonTextColor
+                                      : theme.primaryColor,
+                                  border:
+                                    theme.buttonStyle === "outline"
+                                      ? `2px solid ${theme.primaryColor}`
+                                      : "none",
+                                  borderRadius: `${theme.buttonRadius}px`,
+                                  padding:
+                                    theme.buttonSize === "small"
+                                      ? "6px 12px"
+                                      : theme.buttonSize === "large"
+                                      ? "12px 24px"
+                                      : "8px 16px",
                                 }}
                               >
-                                <Plus className="w-4 h-4" />
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add to Cart
                               </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            ) : (
+                              <div className="flex items-center gap-2 w-full">
+                                <Button
+                                  onClick={() => removeFromCart(item.id)}
+                                  size="sm"
+                                  variant="outline"
+                                  className={`flex-1 ${transitionClass}`}
+                                  style={{
+                                    borderColor: theme.primaryColor,
+                                    color: theme.primaryColor,
+                                    borderRadius: `${theme.buttonRadius}px`,
+                                  }}
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </Button>
+                                <span
+                                  className="font-bold px-3"
+                                  style={{
+                                    color: theme.textColor,
+                                    fontSize: `${theme.fontSize * 1.125}px`,
+                                  }}
+                                >
+                                  {quantity}
+                                </span>
+                                <Button
+                                  onClick={() => addToCart(item)}
+                                  size="sm"
+                                  className={`flex-1 ${transitionClass}`}
+                                  style={{
+                                    backgroundColor: theme.primaryColor,
+                                    color: theme.buttonTextColor,
+                                    borderRadius: `${theme.buttonRadius}px`,
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -379,7 +665,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
           )}
       </div>
 
-      {/* Cart */}
+      {/* Cart Component */}
       {canOrder && tableStatus.joined && (
         <Cart
           open={cartOpen}
@@ -393,22 +679,35 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
         />
       )}
 
-      {/* Floating Cart Button */}
+      {/* Floating Cart Button - Mobile */}
       {canOrder && tableStatus.joined && cartItemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg md:hidden">
+        <div
+          className="fixed bottom-0 left-0 right-0 p-4 border-t shadow-lg md:hidden z-50"
+          style={{
+            backgroundColor: theme.cardBackground,
+            borderColor: theme.borderColor,
+          }}
+        >
           <Button
             onClick={() => setCartOpen(true)}
-            className="w-full"
+            className={`w-full ${transitionClass}`}
             size="lg"
             style={{
               backgroundColor: theme.primaryColor,
               color: theme.buttonTextColor,
+              borderRadius: `${theme.buttonRadius}px`,
+              fontSize: `${theme.fontSize * 1.125}px`,
             }}
           >
             <ShoppingCart className="mr-2 w-5 h-5" />
             View Cart ({cartItemCount}) • {formatCurrency(cartTotal)}
           </Button>
         </div>
+      )}
+
+      {/* Custom CSS */}
+      {theme.customCSS && (
+        <style dangerouslySetInnerHTML={{ __html: theme.customCSS }} />
       )}
     </div>
   );

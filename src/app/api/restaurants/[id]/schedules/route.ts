@@ -17,7 +17,7 @@ const updateScheduleSchema = z.object({
 
 // GET - Get all menu schedules
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

@@ -11,7 +11,7 @@ const createTableSchema = z.object({
 
 // GET - List tables (permission: table.read)
 export async function GET(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {

@@ -46,7 +46,7 @@ export async function POST(
 }
 
 export async function GET(
-  req: NextRequest,
+  _: NextRequest,
   { params }: { params: { shortCode: string } }
 ) {
   try {

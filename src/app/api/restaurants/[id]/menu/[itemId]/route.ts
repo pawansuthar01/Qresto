@@ -54,9 +54,12 @@ export async function PATCH(
         select: { id: true },
       });
 
-      tables.forEach((table) => {
-        global.io.to(`table:${table.id}`).emit("menu-item-updated", menuItem);
-      });
+      if (global.io) {
+        const io = global.io;
+        tables.forEach((table) => {
+          io.to(`table:${table.id}`).emit("menu-item-updated", menuItem);
+        });
+      }
     }
 
     return NextResponse.json(menuItem);
@@ -78,7 +81,7 @@ export async function PATCH(
 
 // DELETE - Delete menu item (permission: menu.delete)
 export async function DELETE(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) {
   try {
@@ -105,12 +108,14 @@ export async function DELETE(
         where: { restaurantId: params.id },
         select: { id: true },
       });
-
-      tables.forEach((table) => {
-        global.io.to(`table:${table.id}`).emit("menu-item-deleted", {
-          itemId: params.itemId,
+      if (global.io) {
+        const io = global.io;
+        tables.forEach((table) => {
+          io.to(`table:${table.id}`).emit("menu-item-deleted", {
+            itemId: params.itemId,
+          });
         });
-      });
+      }
     }
 
     return NextResponse.json({ success: true });

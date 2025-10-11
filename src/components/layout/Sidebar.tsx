@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/store/userStore";
 import {
@@ -11,18 +11,14 @@ import {
   Table,
   QrCode,
   ShoppingCart,
-  Settings,
-  Building2,
   TrendingUp,
   Calendar,
 } from "lucide-react";
-import { Button } from "../ui/button";
 interface SidebarProps {
   className?: string;
 }
 export function Sidebar({ className }: SidebarProps) {
   const { data: session } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
   const { sidebarOpen } = useUserStore();
 
