@@ -13,7 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useUpdateRestaurant } from "@/hooks/useRestaurant";
-import { Permission } from "@/lib/permissions";
 
 interface PermissionDialogProps {
   restaurant: any;

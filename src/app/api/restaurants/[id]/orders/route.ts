@@ -1,61 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { authorize } from "@/lib/permissions";
-import { orderSchema } from "@/lib/validations";
+import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/utils";
+import { OrderStatus } from "@prisma/client";
+import { z } from "zod";
 
+const createOrderSchema = z.object({
+  tableId: z.string(),
+  items: z.array(
+    z.object({
+      menuItemId: z.string(),
+      quantity: z.number().int().positive(),
+      notes: z.string().optional(),
+    })
+  ),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const updateOrderStatusSchema = z.object({
+  status: z.nativeEnum(OrderStatus),
+});
+
+// GET - List orders (permission: order.read)
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { authorized, error } = await authorize(params.id, "order.read");
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authorized) {
+      return NextResponse.json({ error }, { status: 403 });
     }
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!restaurant) {
-      return NextResponse.json(
-        { error: "Restaurant not found" },
-        { status: 404 }
-      );
-    }
-
-    const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "order.read");
-
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status");
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") as OrderStatus | null;
+    const limit = parseInt(searchParams.get("limit") || "50");
 
     const orders = await prisma.order.findMany({
       where: {
         restaurantId: params.id,
-        ...(status && { status: status as any }),
+        ...(status && { status }),
       },
       include: {
+        table: true,
         items: {
           include: {
             menuItem: true,
           },
         },
-        table: true,
       },
       orderBy: { createdAt: "desc" },
+      take: limit,
     });
 
     return NextResponse.json(orders);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching orders:", error);
-    if (error.message?.includes("Permission denied")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -63,93 +66,107 @@ export async function GET(
   }
 }
 
+// POST - Create order (permission: order.create)
 export async function POST(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await req.json();
-    const validatedData = orderSchema.parse(body);
+    const { authorized, error } = await authorize(params.id, "order.create");
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!restaurant) {
-      return NextResponse.json(
-        { error: "Restaurant not found" },
-        { status: 404 }
-      );
+    if (!authorized) {
+      return NextResponse.json({ error }, { status: 403 });
     }
 
-    const permissions = restaurant.permissions as any;
+    const body = await request.json();
+    const validatedData = createOrderSchema.parse(body);
 
-    // Check if ordering is allowed
-    if (!permissions["order.create"]) {
-      return NextResponse.json(
-        { error: "Ordering is not enabled for this restaurant" },
-        { status: 403 }
-      );
-    }
-
-    // Calculate total
-    const menuItems = await prisma.menuItem.findMany({
+    const table = await prisma.table.findFirst({
       where: {
-        id: {
-          in: validatedData.items.map((item) => item.menuItemId),
-        },
+        id: validatedData.tableId,
+        restaurantId: params.id,
       },
     });
 
-    const total = validatedData.items.reduce((sum, item) => {
-      const menuItem = menuItems.find((mi: any) => mi.id === item.menuItemId);
+    if (!table) {
+      return NextResponse.json({ error: "Table not found" }, { status: 404 });
+    }
+
+    const menuItems = await prisma.menuItem.findMany({
+      where: {
+        id: { in: validatedData.items.map((item) => item.menuItemId) },
+        restaurantId: params.id,
+      },
+    });
+
+    if (menuItems.length !== validatedData.items.length) {
+      return NextResponse.json(
+        { error: "Some menu items not found" },
+        { status: 400 }
+      );
+    }
+
+    const totalAmount = validatedData.items.reduce((sum, item) => {
+      const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
       return sum + (menuItem?.price || 0) * item.quantity;
     }, 0);
 
-    // Generate unique order number
     let orderNumber = generateOrderNumber();
-    let existing = await prisma.order.findUnique({ where: { orderNumber } });
+    let exists = await prisma.order.findUnique({ where: { orderNumber } });
 
-    while (existing) {
+    while (exists) {
       orderNumber = generateOrderNumber();
-      existing = await prisma.order.findUnique({ where: { orderNumber } });
+      exists = await prisma.order.findUnique({ where: { orderNumber } });
     }
 
-    // Create order with items
     const order = await prisma.order.create({
       data: {
         orderNumber,
-        restaurantId: params.id,
         tableId: validatedData.tableId,
+        restaurantId: params.id,
+        totalAmount,
         customerName: validatedData.customerName,
+        customerPhone: validatedData.customerPhone,
         notes: validatedData.notes,
-        total,
         items: {
           create: validatedData.items.map((item) => {
-            const menuItem = menuItems.find(
-              (mi: any) => mi.id === item.menuItemId
-            );
+            const menuItem = menuItems.find((mi) => mi.id === item.menuItemId)!;
             return {
               menuItemId: item.menuItemId,
               quantity: item.quantity,
-              price: menuItem?.price || 0,
+              price: menuItem.price,
               notes: item.notes,
             };
           }),
         },
       },
       include: {
+        table: true,
         items: {
           include: {
             menuItem: true,
           },
         },
-        table: true,
       },
     });
 
+    // Emit real-time event
+    if (global.io) {
+      global.io.to(`restaurant:${params.id}`).emit("new-order", order);
+      global.io
+        .to(`table:${validatedData.tableId}`)
+        .emit("order-created", order);
+    }
+
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      );
+    }
+
     console.error("Error creating order:", error);
     return NextResponse.json(
       { error: "Internal server error" },

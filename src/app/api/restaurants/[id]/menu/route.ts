@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
 import { menuItemSchema, menuCategorySchema } from "@/lib/validations";
 
@@ -14,10 +14,10 @@ export async function GET(
       where: { restaurantId: params.id },
       include: {
         items: {
-          orderBy: { sortOrder: "asc" },
+          orderBy: { displayOrder: "asc" },
         },
       },
-      orderBy: { sortOrder: "asc" },
+      orderBy: { displayOrder: "asc" },
     });
 
     return NextResponse.json(categories);
@@ -53,16 +53,17 @@ export async function POST(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "menu.create");
+    authorize(params.id, "menu.create");
 
     const body = await req.json();
     const { type, ...data } = body;
-
+    console.log(type, data);
     if (type === "category") {
       const validatedData = menuCategorySchema.parse(data);
+      const { sortOrder, ...prismaData } = validatedData;
       const category = await prisma.menuCategory.create({
         data: {
-          ...validatedData,
+          ...prismaData,
           restaurantId: params.id,
         },
       });
@@ -70,7 +71,13 @@ export async function POST(
     } else if (type === "item") {
       const validatedData = menuItemSchema.parse(data);
       const item = await prisma.menuItem.create({
-        data: validatedData,
+        data: {
+          ...validatedData,
+          restaurantId: params.id,
+        },
+        include: {
+          category: true,
+        },
       });
       return NextResponse.json(item, { status: 201 });
     }

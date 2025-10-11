@@ -2,8 +2,9 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "./db";
+import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { UserRole } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -77,7 +78,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as "ADMIN" | "OWNER";
+        session.user.role = token.role as UserRole;
         session.user.restaurantId = token.restaurantId as string | null;
       }
       return session;
@@ -95,13 +96,13 @@ declare module "next-auth" {
       email: string;
       name?: string | null;
       image?: string | null;
-      role: "ADMIN" | "OWNER";
+      role: UserRole;
       restaurantId: string | null;
     };
   }
 
   interface User {
-    role: "ADMIN" | "OWNER" | "MANAGER" | "STAFF";
+    role: UserRole;
     restaurantId: string | null;
   }
 }
@@ -109,7 +110,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    role: "ADMIN" | "OWNER" | "MANAGER" | "STAFF";
+    role: UserRole;
     restaurantId: string | null;
   }
 }

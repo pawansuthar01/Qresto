@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { signUpSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
 

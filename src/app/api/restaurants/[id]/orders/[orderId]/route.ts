@@ -1,57 +1,106 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { authorize } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
+import { z } from "zod";
 
+const updateOrderSchema = z.object({
+  status: z.nativeEnum(OrderStatus),
+});
+
+// PATCH - Update order status (permission: order.update)
 export async function PATCH(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { authorized, error } = await authorize(params.id, "order.update");
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authorized) {
+      return NextResponse.json({ error }, { status: 403 });
     }
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!restaurant) {
-      return NextResponse.json(
-        { error: "Restaurant not found" },
-        { status: 404 }
-      );
-    }
-
-    const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "order.update");
-
-    const body = await req.json();
+    const body = await request.json();
+    const { status } = updateOrderSchema.parse(body);
 
     const order = await prisma.order.update({
-      where: { id: params.orderId },
-      data: {
-        status: body.status,
+      where: {
+        id: params.orderId,
+        restaurantId: params.id,
       },
+      data: { status },
       include: {
+        table: true,
         items: {
           include: {
             menuItem: true,
           },
         },
-        table: true,
       },
     });
 
-    return NextResponse.json(order);
-  } catch (error: any) {
-    console.error("Error updating order:", error);
-    if (error.message?.includes("Permission denied")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
+    // Emit real-time status update
+    if (global.io) {
+      global.io.to(`restaurant:${params.id}`).emit("order-updated", order);
+      global.io.to(`table:${order.tableId}`).emit("order-status-changed", {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        order,
+      });
     }
+
+    return NextResponse.json(order);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error("Error updating order:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET - Get single order
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string; orderId: string } }
+) {
+  try {
+    const { authorized, error } = await authorize(params.id, "order.read");
+
+    if (!authorized) {
+      return NextResponse.json({ error }, { status: 403 });
+    }
+
+    const order = await prisma.order.findFirst({
+      where: {
+        id: params.orderId,
+        restaurantId: params.id,
+      },
+      include: {
+        table: true,
+        items: {
+          include: {
+            menuItem: true,
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(order);
+  } catch (error) {
+    console.error("Error fetching order:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

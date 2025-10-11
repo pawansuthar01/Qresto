@@ -1,78 +1,114 @@
+import { authOptions } from "./auth";
+import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
+import { Permission } from "@/types";
+import { getServerSession } from "next-auth";
 
-export type Permission =
-  | "menu.create"
-  | "menu.read"
-  | "menu.update"
-  | "menu.delete"
-  | "menu.customize"
-  | "menu.schedule"
-  | "table.create"
-  | "table.read"
-  | "table.update"
-  | "table.delete"
-  | "qrcode.generate"
-  | "qrcode.read"
-  | "qrcode.update"
-  | "qrcode.delete"
-  | "order.create"
-  | "order.read"
-  | "order.update"
-  | "invoice.generate"
-  | "invoice.download"
-  | "analytics.view"
-  | "staff.manage"
-  | "settings.update"
-  | "media.upload";
+export async function authorize(
+  restaurantId: string,
+  permissionKey: keyof Permission
+): Promise<{ authorized: boolean; user: any; error?: string }> {
+  const session = await getServerSession(authOptions);
 
-export interface PermissionSet {
-  [key: string]: boolean;
-}
-
-export const DEFAULT_PERMISSIONS: PermissionSet = {
-  "menu.create": false,
-  "menu.read": true,
-  "menu.update": false,
-  "menu.delete": false,
-  "menu.customize": false,
-  "menu.schedule": false,
-  "table.create": false,
-  "table.read": true,
-  "table.update": false,
-  "table.delete": false,
-  "qrcode.generate": false,
-  "qrcode.read": true,
-  "qrcode.update": false,
-  "qrcode.delete": false,
-  "order.create": true,
-  "order.read": true,
-  "order.update": false,
-  "invoice.generate": false,
-  "invoice.download": false,
-  "analytics.view": false,
-  "staff.manage": false,
-  "settings.update": false,
-  "media.upload": false,
-};
-
-export function hasPermission(
-  userRole: UserRole,
-  restaurantPermissions: PermissionSet,
-  permission: Permission
-): boolean {
-  // Admin has all permissions
-  if (userRole === "ADMIN") return true;
-
-  // Owner permissions based on restaurant settings
-  return restaurantPermissions[permission] === true;
-}
-
-export function authorize(
-  userRole: UserRole,
-  restaurantPermissions: PermissionSet,
-  permission: Permission
-): void {
-  if (!hasPermission(userRole, restaurantPermissions, permission)) {
-    throw new Error(`Permission denied: ${permission}`);
+  if (!session?.user) {
+    return { authorized: false, user: null, error: "Unauthorized" };
   }
+
+  const user = session.user;
+
+  // Company Owner (ADMIN) has all permissions
+  if (user.role === UserRole.ADMIN) {
+    return { authorized: true, user };
+  }
+
+  // Restaurant Owner needs to check permissions
+  if (user.role === UserRole.OWNER) {
+    // Check if user belongs to this restaurant
+    if (user.restaurantId !== restaurantId) {
+      return {
+        authorized: false,
+        user,
+        error: "Access denied to this restaurant",
+      };
+    }
+
+    // Get restaurant permissions
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { permissions: true },
+    });
+
+    if (!restaurant) {
+      return { authorized: false, user, error: "Restaurant not found" };
+    }
+
+    const permissions = restaurant.permissions as Permission;
+
+    // Check if user has the required permission
+    if (!permissions[permissionKey]) {
+      return {
+        authorized: false,
+        user,
+        error: `Permission denied: ${permissionKey}`,
+      };
+    }
+
+    return { authorized: true, user };
+  }
+
+  return { authorized: false, user, error: "Invalid role" };
+}
+
+export async function checkPermission(
+  restaurantId: string,
+  permissionKey: keyof Permission
+): Promise<boolean> {
+  const result = await authorize(restaurantId, permissionKey);
+  return result.authorized;
+}
+
+export async function getRestaurantPermissions(
+  restaurantId: string
+): Promise<Permission | null> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return null;
+  }
+
+  // Company Owner has all permissions
+  if (session.user.role === UserRole.ADMIN) {
+    return {
+      "menu.create": true,
+      "menu.read": true,
+      "menu.update": true,
+      "menu.delete": true,
+      "menu.customize": true,
+      "table.create": true,
+      "table.read": true,
+      "table.update": true,
+      "table.delete": true,
+      "qrcode.generate": true,
+      "qrcode.read": true,
+      "qrcode.update": true,
+      "qrcode.delete": true,
+      "order.create": true,
+      "order.read": true,
+      "order.update": true,
+      "invoice.generate": true,
+      "invoice.download": true,
+      "analytics.view": true,
+      "staff.manage": true,
+      "settings.update": true,
+      "media.upload": true,
+    };
+  }
+
+  // Restaurant Owner gets assigned permissions
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { permissions: true },
+  });
+
+  return restaurant ? (restaurant.permissions as Permission) : null;
 }

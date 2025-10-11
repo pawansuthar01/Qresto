@@ -1,20 +1,27 @@
 import { useSession } from "next-auth/react";
-import { Permission, hasPermission } from "@/lib/permissions";
+import { Permission } from "@/types";
 
-export function usePermissions(restaurantPermissions?: any) {
+export function usePermissions(restaurantPermissions?: Permission) {
   const { data: session } = useSession();
+  const user = session?.user;
 
-  const checkPermission = (permission: Permission): boolean => {
-    if (!session?.user) return false;
+  const hasPermission = (permission: keyof Permission): boolean => {
+    if (!user) return false;
+
+    // Admin has all permissions
+    if (user.role === "ADMIN") return true;
+
+    // If no permissions provided for restaurant, block
     if (!restaurantPermissions) return false;
 
-    return hasPermission(session.user.role, restaurantPermissions, permission);
+    // Check if permission exists and is true
+    return Boolean(restaurantPermissions[permission]);
   };
 
   return {
-    user: session?.user,
-    hasPermission: checkPermission,
-    isAdmin: session?.user?.role === "ADMIN",
-    isOwner: session?.user?.role === "OWNER",
+    user,
+    hasPermission,
+    isAdmin: user?.role === "ADMIN",
+    isOwner: user?.role === "OWNER",
   };
 }

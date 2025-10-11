@@ -1,33 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 
+// GET - Public access to menu via QR code
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { shortCode: string } }
 ) {
   try {
+    // Find QR code and increment scan count
     const qrCode = await prisma.qRCode.findUnique({
       where: { shortCode: params.shortCode },
       include: {
         table: true,
         restaurant: {
-          include: {
-            categories: {
-              include: {
-                items: {
-                  where: { available: true },
-                  orderBy: { sortOrder: "asc" },
-                },
-              },
-              orderBy: { sortOrder: "asc" },
-            },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            logoUrl: true,
+            coverUrl: true,
+            customization: true,
+            permissions: true,
           },
         },
       },
     });
 
-    if (!qrCode) {
-      return NextResponse.json({ error: "QR code not found" }, { status: 404 });
+    if (!qrCode || !qrCode.isActive) {
+      return NextResponse.json(
+        { error: "QR code not found or inactive" },
+        { status: 404 }
+      );
     }
 
     // Increment scan count
@@ -36,12 +40,33 @@ export async function GET(
       data: { scans: { increment: 1 } },
     });
 
+    // Get menu with categories
+    const categories = await prisma.menuCategory.findMany({
+      where: {
+        restaurantId: qrCode.restaurant.id,
+        isActive: true,
+      },
+      include: {
+        items: {
+          where: { isAvailable: true },
+          orderBy: { displayOrder: "asc" },
+        },
+      },
+      orderBy: { displayOrder: "asc" },
+    });
+
+    // Check if ordering is allowed
+    const permissions = qrCode.restaurant.permissions as any;
+    const canOrder = permissions["order.create"] === true;
+
     return NextResponse.json({
       restaurant: qrCode.restaurant,
       table: qrCode.table,
+      categories,
+      canOrder,
     });
   } catch (error) {
-    console.error("Error fetching menu:", error);
+    console.error("Error fetching guest menu:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

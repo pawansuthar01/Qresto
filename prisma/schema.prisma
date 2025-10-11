@@ -8,8 +8,11 @@ datasource db {
 }
 
 enum UserRole {
-  ADMIN  // Company Owner
-  OWNER  // Restaurant Owner
+  SUPER_ADMIN  // Company Admin - Full access (can't create restaurants)
+  ADMIN        // Company Owner - Can create restaurants + manage content
+  OWNER        // Restaurant Owner
+  MANAGER      // Restaurant Manager (future use)
+  STAFF        // Restaurant Staff (future use)
 }
 
 enum OrderStatus {
@@ -53,6 +56,11 @@ model Restaurant {
   phone       String?
   email       String?
   
+  // Status management
+  status      String   @default("active") // "active", "suspended", "blocked"
+  suspendedAt DateTime?
+  suspendedReason String?
+  
   // Permission system - stored as JSON
   permissions Json     @default("{}")
   
@@ -66,12 +74,15 @@ model Restaurant {
   tables      Table[]
   qrCodes     QRCode[]
   orders      Order[]
+  documents   Document[]
+  media       Media[]
   
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   @@index([slug])
+  @@index([status])
   @@map("restaurants")
 }
 
@@ -110,6 +121,17 @@ model MenuItem {
   isGlutenFree Boolean      @default(false)
   spiceLevel   Int?         @default(0)
   displayOrder Int          @default(0)
+  
+  // Enhanced metadata
+  isPopular    Boolean      @default(false)
+  isTrending   Boolean      @default(false)
+  isNew        Boolean      @default(false)
+  isChefSpecial Boolean     @default(false)
+  rating       Float?
+  orderCount   Int          @default(0)
+  prepTime     Int?         // in minutes
+  discount     Int?         // percentage
+  originalPrice Float?
   
   categoryId   String
   category     MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -215,4 +237,61 @@ model OrderItem {
   @@index([orderId])
   @@index([menuItemId])
   @@map("order_items")
+}
+
+model Document {
+  id           String     @id @default(cuid())
+  title        String
+  content      String     @db.Text
+  type         String     // "menu", "policy", "terms", "about", "contact"
+  isPublished  Boolean    @default(false)
+  slug         String
+  
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  // For company-wide documents (null restaurantId)
+  isGlobal     Boolean    @default(false)
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@unique([restaurantId, slug])
+  @@index([type])
+  @@index([isGlobal])
+  @@map("documents")
+}
+
+model Media {
+  id           String     @id @default(cuid())
+  filename     String
+  url          String
+  mimeType     String
+  size         Int        // in bytes
+  type         String     // "image", "video", "document"
+  category     String?    // "menu", "logo", "banner", "other"
+  
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime   @default(now())
+  
+  @@index([restaurantId])
+  @@index([type])
+  @@map("media")
+}
+
+model CompanyPage {
+  id          String   @id @default(cuid())
+  type        String   @unique // "about", "contact", "privacy", "terms"
+  title       String
+  content     String   @db.Text
+  isPublished Boolean  @default(true)
+  seoTitle    String?
+  seoDescription String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("company_pages")
 }

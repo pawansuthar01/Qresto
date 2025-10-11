@@ -7,8 +7,8 @@ import { OrderBoard } from "@/components/order/OrderBoard";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/hooks/useRestaurant";
-import { usePermissions } from "@/hooks/usePermissions";
 import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Bell, Wifi, WifiOff } from "lucide-react";
 
 export default function OrdersPage() {

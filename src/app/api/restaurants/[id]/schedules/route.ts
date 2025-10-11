@@ -1,33 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { authorize } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
+const updateScheduleSchema = z.object({
+  categoryId: z.string(),
+  scheduleType: z.enum([
+    "always",
+    "time-based",
+    "date-based",
+    "event-based",
+    "season-based",
+  ]),
+  schedule: z.any(), // MenuSchedule type
+});
+
+// GET - Get all menu schedules
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const schedules = await prisma.menuSchedule.findMany({
+    const categories = await prisma.menuCategory.findMany({
       where: { restaurantId: params.id },
-      include: {
-        categories: {
-          include: {
-            items: true,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        scheduleType: true,
+        schedule: true,
+        isActive: true,
       },
-      orderBy: { priority: "desc" },
     });
 
-    return NextResponse.json(schedules);
+    return NextResponse.json(categories);
   } catch (error) {
     console.error("Error fetching schedules:", error);
     return NextResponse.json(
@@ -37,49 +42,67 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
+// PATCH - Update menu schedule (permission: menu.schedule)
+export async function PATCH(
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // Check for special schedule permission
+    const session = await authorize(params.id, "menu.update");
 
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session.authorized) {
+      return NextResponse.json({ error: session.error }, { status: 403 });
     }
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: params.id },
+    const body = await request.json();
+    const { categoryId, scheduleType, schedule } =
+      updateScheduleSchema.parse(body);
+
+    const updated = await prisma.menuCategory.update({
+      where: {
+        id: categoryId,
+        restaurantId: params.id,
+      },
+      data: {
+        scheduleType,
+        schedule,
+      },
     });
 
-    if (!restaurant) {
+    // Emit real-time schedule update
+    if (global.io) {
+      global.io.to(`restaurant:${params.id}`).emit("schedule-updated", {
+        categoryId,
+        scheduleType,
+        schedule,
+      });
+
+      // Notify all tables
+      const tables = await prisma.table.findMany({
+        where: { restaurantId: params.id },
+        select: { id: true },
+      });
+
+      tables.forEach((table) => {
+        global.io.to(`table:${table.id}`).emit("schedule-updated", {
+          categoryId,
+          scheduleType,
+          schedule,
+        });
+      });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Restaurant not found" },
-        { status: 404 }
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
       );
     }
 
-    const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "menu.schedule");
-
-    const body = await req.json();
-
-    const schedule = await prisma.menuSchedule.create({
-      data: {
-        ...body,
-        restaurantId: params.id,
-      },
-      include: {
-        categories: true,
-      },
-    });
-
-    return NextResponse.json(schedule, { status: 201 });
-  } catch (error: any) {
-    console.error("Error creating schedule:", error);
-    if (error.message?.includes("Permission denied")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
+    console.error("Error updating schedule:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
