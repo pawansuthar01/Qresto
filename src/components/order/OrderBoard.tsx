@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRestaurant } from "@/hooks/useRestaurant";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface OrderBoardProps {
   orders: any[];
@@ -39,25 +40,25 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [filter, setFilter] = useState<string>("ALL");
-  const canSoundEnabled = localStorage.getItem("sound");
+  const [soundEnabled, setSoundEnabled] = useLocalStorage("sound-enabled", false);
   const [previousOrderCount, setPreviousOrderCount] = useState(orders.length);
 
   useEffect(() => {
-    const enableSound = () => localStorage.setItem("sound", "true");
+    const enableSound = () => setSoundEnabled(true);
     window.addEventListener("click", enableSound, { once: true });
     return () => window.removeEventListener("click", enableSound);
-  }, []);
+  }, [setSoundEnabled]);
   const canUpdate = hasPermission("order.update");
 
   // Play sound when new order arrives
   useEffect(() => {
-    if (orders.length > previousOrderCount && canSoundEnabled) {
+    if (orders.length > previousOrderCount && soundEnabled) {
       const audio = new Audio("/notification.mp3");
       audio.volume = 0.5;
       audio.play().catch((e) => console.log("Sound play failed:", e));
     }
     setPreviousOrderCount(orders.length);
-  }, [orders.length, previousOrderCount, canSoundEnabled]);
+  }, [orders.length, previousOrderCount, soundEnabled]);
 
   const updateOrderStatus = useMutation({
     mutationFn: async ({
@@ -122,12 +123,10 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            localStorage.setItem("sound", canSoundEnabled ? "false" : "true")
-          }
+          onClick={() => setSoundEnabled(!soundEnabled)}
           className="ml-auto"
         >
-          {canSoundEnabled ? (
+          {soundEnabled ? (
             <>
               <Volume2 className="mr-2 h-4 w-4" />
               Sound On
