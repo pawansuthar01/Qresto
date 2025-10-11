@@ -27,11 +27,11 @@ export async function PATCH(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "menu.schedule");
+    authorize(permissions, "menu.schedule");
 
     const body = await req.json();
 
-    const schedule = await prisma.menuSchedule.update({
+    const schedule = await prisma.menuCategory.update({
       where: { id: params.scheduleId },
       data: body,
     });
@@ -72,9 +72,9 @@ export async function DELETE(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "menu.schedule");
+    authorize(permissions, "menu.schedule");
 
-    await prisma.menuSchedule.delete({
+    await prisma.menuCategory.delete({
       where: { id: params.scheduleId },
     });
 

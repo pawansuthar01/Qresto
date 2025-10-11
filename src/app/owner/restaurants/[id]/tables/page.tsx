@@ -13,19 +13,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function TablesPage() {
   const params = useParams();
-  const restaurantId = params.rid as string;
+  const restaurantId = params.id as string;
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
-  const { data: tables, isLoading } = useQuery({
-    queryKey: ["tables", restaurantId],
-    queryFn: async () => {
-      const res = await fetch(`/api/restaurants/${restaurantId}/tables`);
-      if (!res.ok) throw new Error("Failed to fetch tables");
-      return res.json();
-    },
-  });
 
   const canCreate = hasPermission("table.create");
 
@@ -47,11 +38,11 @@ export default function TablesPage() {
           )}
         </div>
 
-        {isLoading ? (
+        {!restaurant ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Loading tables...</p>
           </div>
-        ) : tables?.length === 0 ? (
+        ) : restaurant?.tables?.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
             <p className="mb-4 text-muted-foreground">No tables yet</p>
             {canCreate && (
@@ -62,7 +53,10 @@ export default function TablesPage() {
             )}
           </div>
         ) : (
-          <TableMap tables={tables || []} restaurantId={restaurantId} />
+          <TableMap
+            tables={restaurant?.tables || []}
+            restaurantId={restaurantId}
+          />
         )}
 
         {canCreate && (

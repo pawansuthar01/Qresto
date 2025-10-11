@@ -14,7 +14,6 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Create a readable stream for SSE
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -24,40 +23,41 @@ export async function GET(
         encoder.encode(`data: ${JSON.stringify({ type: "connected" })}\n\n`)
       );
 
-      // Poll for new orders every 2 seconds
+      let lastCheck = new Date();
+
       const interval = setInterval(async () => {
         try {
-          const orders = await prisma.order.findMany({
+          const newOrders = await prisma.order.findMany({
             where: {
               restaurantId: params.id,
-              createdAt: {
-                gte: new Date(Date.now() - 60000), // Last minute
-              },
+              createdAt: { gt: lastCheck }, // fetch only new orders
             },
             include: {
-              items: {
-                include: {
-                  menuItem: true,
-                },
-              },
+              items: { include: { menuItem: true } },
               table: true,
             },
-            orderBy: { createdAt: "desc" },
+            orderBy: { createdAt: "asc" },
           });
 
-          if (orders.length > 0) {
+          if (newOrders.length > 0) {
             controller.enqueue(
               encoder.encode(
-                `data: ${JSON.stringify({ type: "orders", data: orders })}\n\n`
+                `data: ${JSON.stringify({
+                  type: "orders",
+                  data: newOrders,
+                })}\n\n`
               )
             );
+
+            // Update last check timestamp
+            lastCheck = new Date();
           }
         } catch (error) {
           console.error("SSE Error:", error);
         }
-      }, 2000);
+      }, 2000); // poll every 2s
 
-      // Cleanup on close
+      // Cleanup on client disconnect
       req.signal.addEventListener("abort", () => {
         clearInterval(interval);
         controller.close();

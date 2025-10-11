@@ -9,6 +9,7 @@ export async function DELETE(
   { params }: { params: { id: string; qrId: string } }
 ) {
   try {
+    console.log("yes");
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -27,8 +28,8 @@ export async function DELETE(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "qrcode.delete");
-
+    authorize(permissions, "qrcode.delete");
+    console.log(params.qrId);
     await prisma.qRCode.delete({
       where: { id: params.qrId },
     });

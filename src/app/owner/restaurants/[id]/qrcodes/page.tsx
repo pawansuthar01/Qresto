@@ -10,7 +10,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function QRCodesPage() {
   const params = useParams();
-  const restaurantId = params.rid as string;
+  const restaurantId = params.id as string;
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
 
@@ -22,6 +22,7 @@ export default function QRCodesPage() {
       return res.json();
     },
   });
+  console.log(restaurant);
 
   const canRead = hasPermission("qrcode.read");
   const canGenerate = hasPermission("qrcode.generate");
@@ -37,6 +38,7 @@ export default function QRCodesPage() {
       </MainLayout>
     );
   }
+  console.log(qrCodes);
 
   return (
     <MainLayout>

@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/select";
 import { InvoiceButton } from "./InvoiceButton";
 import { formatCurrency } from "@/lib/utils";
-import { Clock, User, Table, Volume2, VolumeX } from "lucide-react";
+import { Clock, User, Table, Volume2, VolumeX, Phone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRestaurant } from "@/hooks/useRestaurant";
+import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
 
 interface OrderBoardProps {
   orders: any[];
@@ -39,25 +40,52 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [filter, setFilter] = useState<string>("ALL");
-  const canSoundEnabled = localStorage.getItem("sound");
-  const [previousOrderCount, setPreviousOrderCount] = useState(orders.length);
+  const [allOrders, setAllOrders] = useState(orders);
 
-  useEffect(() => {
-    const enableSound = () => localStorage.setItem("sound", "true");
-    window.addEventListener("click", enableSound, { once: true });
-    return () => window.removeEventListener("click", enableSound);
-  }, []);
+  const { newOrderCount, resetNewOrderCount } = useRealtimeOrders(restaurantId);
+
   const canUpdate = hasPermission("order.update");
+  const [canPlaySound, setCanPlaySound] = useState(false);
 
-  // Play sound when new order arrives
   useEffect(() => {
-    if (orders.length > previousOrderCount && canSoundEnabled) {
-      const audio = new Audio("/notification.mp3");
-      audio.volume = 0.5;
-      audio.play().catch((e) => console.log("Sound play failed:", e));
+    const onUserInteract = () => setCanPlaySound(true);
+    window.addEventListener("click", onUserInteract, { once: true });
+    return () => window.removeEventListener("click", onUserInteract);
+  }, []);
+
+  useEffect(() => {
+    setAllOrders(orders);
+  }, [orders]);
+
+  // Play notification sound and refresh orders when new ones arrive
+  useEffect(() => {
+    if (newOrderCount > 0 && "Notification" in window) {
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted") {
+          new Notification("New Order!", {
+            body: `You have ${newOrderCount} new orders.`,
+            icon: "/favicon.ico",
+          });
+        }
+      });
     }
-    setPreviousOrderCount(orders.length);
-  }, [orders.length, previousOrderCount, canSoundEnabled]);
+  }, [newOrderCount]);
+  function playSound() {
+    const audio = new Audio("/notification.mp3");
+    audio.volume = 0.5;
+    audio.play().catch((e) => console.log("Sound play failed:", e));
+  }
+  useEffect(() => {
+    if (newOrderCount > 0) {
+      if (canPlaySound) {
+        playSound();
+      }
+
+      resetNewOrderCount();
+      // Refetch latest orders
+      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+    }
+  }, [newOrderCount, queryClient, restaurantId, resetNewOrderCount]);
 
   const updateOrderStatus = useMutation({
     mutationFn: async ({
@@ -80,10 +108,7 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
-      toast({
-        title: "Success",
-        description: "Order status updated",
-      });
+      toast({ title: "Success", description: "Order status updated" });
     },
     onError: () => {
       toast({
@@ -93,12 +118,11 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
       });
     },
   });
-
   const filteredOrders =
-    filter === "ALL" ? orders : orders.filter((o) => o.status === filter);
-
+    filter === "ALL" ? allOrders : allOrders.filter((o) => o.status === filter);
   return (
     <div className="space-y-4">
+      {/* Filter & Sound Control */}
       <div className="flex items-center gap-4">
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-[200px]">
@@ -106,11 +130,11 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Orders</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-            <SelectItem value="PREPARING">Preparing</SelectItem>
-            <SelectItem value="READY">Ready</SelectItem>
-            <SelectItem value="SERVED">Served</SelectItem>
+            {Object.keys(STATUS_COLORS).map((status) => (
+              <SelectItem key={status} value={status}>
+                {status.charAt(0) + status.slice(1).toLowerCase()}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -122,12 +146,10 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() =>
-            localStorage.setItem("sound", canSoundEnabled ? "false" : "true")
-          }
+          onClick={() => setCanPlaySound(!canPlaySound)}
           className="ml-auto"
         >
-          {canSoundEnabled ? (
+          {canPlaySound ? (
             <>
               <Volume2 className="mr-2 h-4 w-4" />
               Sound On
@@ -139,14 +161,20 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
             </>
           )}
         </Button>
+        {canPlaySound && (
+          <Button type="button" onClick={() => playSound()}>
+            Play try
+          </Button>
+        )}
       </div>
 
+      {/* Orders Grid */}
       {filteredOrders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
           <p className="text-muted-foreground">No orders found</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {filteredOrders.map((order) => (
             <Card key={order.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -160,6 +188,7 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Table & Customer Info */}
                 <div className="space-y-2">
                   {order.table && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -173,12 +202,19 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                       {order.customerName}
                     </div>
                   )}
+                  {order.customerPhone && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                      {order.customerPhone}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
                     {new Date(order.createdAt).toLocaleTimeString()}
                   </div>
                 </div>
 
+                {/* Order Items */}
                 <div className="space-y-1 text-sm">
                   {order.items.map((item: any) => (
                     <div key={item.id} className="flex justify-between">
@@ -192,22 +228,24 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                   ))}
                 </div>
 
+                {/* Notes */}
                 {order.notes && (
-                  <div className="rounded-md bg-muted p-2 text-sm">
+                  <p className="rounded-md bg-muted p-2 text-sm  break-words break-all">
                     <strong>Notes:</strong> {order.notes}
-                  </div>
+                  </p>
                 )}
 
+                {/* Total */}
                 <div className="border-t pt-3">
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>{formatCurrency(order.total)}</span>
+                    <span>{formatCurrency(order.totalAmount)}</span>
                   </div>
                 </div>
 
+                {/* Status Update */}
                 {canUpdate &&
-                  order.status !== "SERVED" &&
-                  order.status !== "CANCELLED" && (
+                  !["SERVED", "CANCELLED"].includes(order.status) && (
                     <Select
                       value={order.status}
                       onValueChange={(status) =>
@@ -218,18 +256,17 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                        <SelectItem value="PREPARING">Preparing</SelectItem>
-                        <SelectItem value="READY">Ready</SelectItem>
-                        <SelectItem value="SERVED">Served</SelectItem>
-                        <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                        {Object.keys(STATUS_COLORS).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status.charAt(0) + status.slice(1).toLowerCase()}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
 
-                {/* Invoice Buttons */}
-                {(order.status === "SERVED" || order.status === "READY") && (
+                {/* Invoice */}
+                {["READY", "SERVED"].includes(order.status) && (
                   <InvoiceButton
                     orderId={order.id}
                     orderNumber={order.orderNumber}

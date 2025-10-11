@@ -21,7 +21,7 @@ export async function POST(
       where: { id: params.id },
       include: {
         tables: {
-          include: { qrCode: true },
+          include: { qrCodes: true },
         },
       },
     });
@@ -34,10 +34,10 @@ export async function POST(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "qrcode.generate");
+    authorize(permissions, "qrcode.generate");
 
     // Find tables without QR codes
-    const tablesWithoutQR = restaurant.tables.filter((t: any) => !t.qrCode);
+    const tablesWithoutQR = restaurant.tables.filter((t: any) => !t.qrCodes);
 
     if (tablesWithoutQR.length === 0) {
       return NextResponse.json({ message: "All tables already have QR codes" });
@@ -66,7 +66,7 @@ export async function POST(
           shortCode,
           tableId: table.id,
           restaurantId: params.id,
-          imageData,
+          dataUrl: imageData,
         },
         include: {
           table: true,

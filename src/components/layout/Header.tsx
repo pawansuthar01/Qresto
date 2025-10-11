@@ -15,20 +15,10 @@ import {
 
 export function Header() {
   const { data: session } = useSession();
-  const { toggleSidebar } = useUserStore();
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="flex h-16 items-center gap-4 px-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="md:hidden"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-bold">QResto</h1>
           {session?.user.role === "ADMIN" && (

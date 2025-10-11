@@ -1,62 +1,79 @@
-"use client";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { UserRole } from "@prisma/client";
+import { getRestaurantPermissions } from "@/lib/permissions";
+import AnalyticsDashboard from "@/components/owner/AnalyticsDashboard";
+import { getServerSession } from "next-auth";
 
-import { useParams } from "next/navigation";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
-import { useQuery } from "@tanstack/react-query";
-import { useRestaurant } from "@/hooks/useRestaurant";
-import { usePermissions } from "@/hooks/usePermissions";
-import { TrendingUp } from "lucide-react";
+export default async function AnalyticsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const session = await getServerSession(authOptions);
 
-export default function AnalyticsPage() {
-  const params = useParams();
-  const restaurantId = params.rid as string;
-  const { data: restaurant } = useRestaurant(restaurantId);
-  const { hasPermission } = usePermissions(restaurant?.permissions);
+  if (!session?.user) {
+    redirect("/login");
+  }
 
-  const { data: analytics, isLoading } = useQuery({
-    queryKey: ["analytics", restaurantId],
-    queryFn: async () => {
-      const res = await fetch(`/api/analytics/${restaurantId}`);
-      if (!res.ok) throw new Error("Failed to fetch analytics");
-      return res.json();
-    },
-    enabled: hasPermission("analytics.view"),
+  if (
+    session.user.role === UserRole.OWNER &&
+    session.user.restaurantId !== params.id
+  ) {
+    redirect("/login");
+  }
+
+  const permissions = await getRestaurantPermissions(params.id);
+
+  if (!permissions?.["analytics.view"]) {
+    redirect(`/owner/restaurants/${params.id}/dashboard`);
+  }
+
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: params.id },
+    select: { id: true, name: true },
   });
 
-  const canView = hasPermission("analytics.view");
+  // Get analytics data
+  const orders = await prisma.order.findMany({
+    where: {
+      restaurantId: params.id,
+      createdAt: {
+        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+      },
+    },
+    include: {
+      items: {
+        include: {
+          menuItem: true,
+        },
+      },
+      table: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
-  if (!canView) {
-    return (
-      <MainLayout>
-        <div className="flex flex-col items-center justify-center py-12">
-          <TrendingUp className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-muted-foreground">
-            You don't have permission to view analytics
-          </p>
-        </div>
-      </MainLayout>
-    );
+  const menuItems = await prisma.menuItem.findMany({
+    where: { restaurantId: params.id },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      orderCount: true,
+    },
+  });
+
+  if (!restaurant) {
+    redirect("/login");
   }
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track your restaurant's performance and insights
-          </p>
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading analytics...</p>
-          </div>
-        ) : (
-          <AnalyticsDashboard data={analytics} restaurantId={restaurantId} />
-        )}
-      </div>
-    </MainLayout>
+    <AnalyticsDashboard
+      restaurant={restaurant}
+      orders={orders}
+      menuItems={menuItems}
+      user={session.user}
+    />
   );
 }

@@ -20,7 +20,7 @@ export function TableMap({ tables }: TableMapProps) {
                 <Table className="h-5 w-5" />
                 Table {table.number}
               </span>
-              {table.qrCode && (
+              {table.qrCodes && (
                 <Badge variant="secondary">
                   <QrCode className="mr-1 h-3 w-3" />
                   QR

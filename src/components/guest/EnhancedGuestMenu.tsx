@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 import { CartItem } from "@/types";
-import Cart from "./Cart";
+import Cart from "./cart";
 import { useTableSocket } from "@/hooks/useSocket";
 import { notificationSound } from "@/lib/notification-sound";
 import MenuItemCard from "./MenuItemCard";

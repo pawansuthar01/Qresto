@@ -20,15 +20,19 @@ interface CartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restaurantId: string;
+  tableId?: string; // optional if QR table is used
 }
 
-export function Cart({ open, onOpenChange, restaurantId }: CartProps) {
+export function Cart({ open, onOpenChange, restaurantId, tableId }: CartProps) {
   const { items, updateQuantity, removeItem, getTotal } = useCartStore();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const total = getTotal();
 
   const handleCheckout = () => {
+    // Don't open checkout if cart is empty
+    if (items.length === 0) return;
+
     onOpenChange(false);
     setCheckoutOpen(true);
   };
@@ -121,6 +125,13 @@ export function Cart({ open, onOpenChange, restaurantId }: CartProps) {
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
         restaurantId={restaurantId}
+        tableId={tableId}
+        cartItems={items.map((item) => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          notes: item.notes || "",
+        }))}
+        totalAmount={total}
       />
     </>
   );

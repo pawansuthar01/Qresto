@@ -5,11 +5,7 @@ async function getMenuData(shortCode: string) {
   const response = await fetch(`${baseUrl}/api/q/${shortCode}`, {
     cache: "no-store",
   });
-
-  if (!response.ok) {
-    return null;
-  }
-
+  if (!response.ok) return null;
   return response.json();
 }
 

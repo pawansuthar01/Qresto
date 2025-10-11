@@ -1,11 +1,4 @@
-"use client";
-
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 import {
   Palette,
   Type,
@@ -14,543 +7,1233 @@ import {
   Eye,
   Save,
   RotateCcw,
+  Video,
+  Settings,
+  Sliders,
+  Square,
+  Circle,
+  Moon,
+  Zap,
 } from "lucide-react";
 
+import { SelectInput } from "../ui/SelectInput";
+import { Card } from "../ui/CardUi";
+import { SliderInput } from "../ui/silderInput";
+import { ToggleSwitch } from "../ui/ToggleSwitch";
 interface FullMenuCustomizerProps {
   restaurant: any;
   onSave: (customization: any) => void;
-  onClose: () => void;
+  onClose?: () => void;
+  isSaving: boolean;
 }
+interface ColorPickerProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="flex gap-2 items-center">
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 w-20 rounded cursor-pointer border"
+      />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono"
+        placeholder="#000000"
+      />
+    </div>
+  </div>
+);
+
+const defaultCustomization = {
+  // Colors
+  primaryColor: "#3b82f6",
+  secondaryColor: "#1e40af",
+  backgroundColor: "#ffffff",
+  textColor: "#1f2937",
+  accentColor: "#10b981",
+  buttonTextColor: "#ffffff",
+  cardBackground: "#ffffff",
+  borderColor: "#e5e7eb",
+  hoverColor: "#2563eb",
+  successColor: "#10b981",
+  errorColor: "#ef4444",
+  warningColor: "#f59e0b",
+
+  // Typography
+  fontFamily: "Inter",
+  headingFont: "Inter",
+  fontSize: 16,
+  lineHeight: 1.5,
+  letterSpacing: 0,
+  fontWeight: 400,
+  headingWeight: 700,
+
+  // Layout
+  layout: "grid",
+  columns: 3,
+  gap: 16,
+  padding: 16,
+  maxWidth: 1200,
+  containerPadding: 16,
+
+  // Cards
+  cardStyle: "modern",
+  borderRadius: 12,
+  cardShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  cardPadding: 16,
+  cardBorder: true,
+  cardBorderWidth: 1,
+
+  // Images
+  showImages: true,
+  imageStyle: "cover",
+  imagePosition: "top",
+  imageHeight: 192,
+  imageRadius: 8,
+
+  // Video
+  showVideos: false,
+  videoAutoplay: false,
+  videoMuted: true,
+  videoLoop: true,
+
+  // Display Elements
+  showPrices: true,
+  showDescription: true,
+  showBadges: true,
+  showRatings: false,
+  showLogo: true,
+  showQuantity: true,
+
+  // Header
+  headerStyle: "gradient",
+  headerHeight: 72,
+  logoPosition: "left",
+  logoSize: 40,
+
+  // Background
+  backgroundImage: "",
+  backgroundVideo: "",
+  backgroundOpacity: 100,
+  backgroundBlur: 0,
+  backgroundOverlay: false,
+  overlayColor: "#000000",
+  overlayOpacity: 50,
+
+  // Theme
+  darkMode: false,
+
+  // Buttons
+  buttonRadius: 8,
+  buttonSize: "medium",
+  buttonStyle: "solid",
+
+  // Spacing
+  spacing: "normal",
+  itemSpacing: 16,
+  sectionSpacing: 32,
+
+  // Animations
+  enableAnimations: true,
+  animationSpeed: "normal",
+  hoverEffect: "lift",
+
+  // Advanced
+  customCSS: "",
+  enableGradients: true,
+  enableShadows: true,
+  enableTransitions: true,
+};
 
 export default function FullMenuCustomizer({
   restaurant,
+  isSaving: loading = false,
   onSave,
-  onClose,
 }: FullMenuCustomizerProps) {
   const [customization, setCustomization] = useState({
-    // Colors
-    primaryColor: restaurant.customization?.primaryColor || "#3b82f6",
-    secondaryColor: restaurant.customization?.secondaryColor || "#1e40af",
-    backgroundColor: restaurant.customization?.backgroundColor || "#ffffff",
-    textColor: restaurant.customization?.textColor || "#1f2937",
-    accentColor: restaurant.customization?.accentColor || "#10b981",
-
-    // Typography
-    fontFamily: restaurant.customization?.fontFamily || "Inter",
-    headingFont: restaurant.customization?.headingFont || "Inter",
-    fontSize: restaurant.customization?.fontSize || "medium",
-
-    // Layout
-    layout: restaurant.customization?.layout || "grid",
-    cardStyle: restaurant.customization?.cardStyle || "modern",
-    borderRadius: restaurant.customization?.borderRadius || "12px",
-    spacing: restaurant.customization?.spacing || "normal",
-    columns: restaurant.customization?.columns || 3,
-
-    // Images
-    showImages: restaurant.customization?.showImages !== false,
-    imageStyle: restaurant.customization?.imageStyle || "cover",
-    imagePosition: restaurant.customization?.imagePosition || "top",
-
-    // Elements
-    showPrices: restaurant.customization?.showPrices !== false,
-    showDescription: restaurant.customization?.showDescription !== false,
-    showBadges: restaurant.customization?.showBadges !== false,
-    showRatings: restaurant.customization?.showRatings !== false,
-
-    // Header
-    headerStyle: restaurant.customization?.headerStyle || "gradient",
-    showLogo: restaurant.customization?.showLogo !== false,
-    logoPosition: restaurant.customization?.logoPosition || "left",
-
-    // Background
-    backgroundImage: restaurant.customization?.backgroundImage || "",
-    backgroundOpacity: restaurant.customization?.backgroundOpacity || 100,
-    darkMode: restaurant.customization?.darkMode || false,
+    ...restaurant.customization,
   });
-
+  const [activeTab, setActiveTab] = useState("colors");
   const [previewMode, setPreviewMode] = useState(false);
-
-  const updateCustomization = (key: string, value: any) => {
-    setCustomization((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSave = () => {
-    onSave(customization);
+  const [isSaving, setSaving] = useState(loading);
+  useEffect(() => {
+    setSaving(loading);
+  }, [loading]);
+  const update = (key: any, value: any) => {
+    setCustomization((prev: any) => ({ ...prev, [key]: value }));
   };
 
   const resetToDefault = () => {
     if (confirm("Reset all customizations to default?")) {
-      setCustomization({
-        primaryColor: "#3b82f6",
-        secondaryColor: "#1e40af",
-        backgroundColor: "#ffffff",
-        textColor: "#1f2937",
-        accentColor: "#10b981",
-        fontFamily: "Inter",
-        headingFont: "Inter",
-        fontSize: "medium",
-        layout: "grid",
-        cardStyle: "modern",
-        borderRadius: "12px",
-        spacing: "normal",
-        columns: 3,
-        showImages: true,
-        imageStyle: "cover",
-        imagePosition: "top",
-        showPrices: true,
-        showDescription: true,
-        showBadges: true,
-        showRatings: true,
-        headerStyle: "gradient",
-        showLogo: true,
-        logoPosition: "left",
-        backgroundImage: "",
-        backgroundOpacity: 100,
-        darkMode: false,
-      });
+      setCustomization({ ...defaultCustomization });
+    }
+  };
+
+  const handleSave = async () => {
+    onSave(customization);
+  };
+
+  const tabs = [
+    { id: "colors", label: "Colors", icon: Palette },
+    { id: "typography", label: "Typography", icon: Type },
+    { id: "layout", label: "Layout", icon: Layout },
+    { id: "cards", label: "Cards", icon: Square },
+    { id: "media", label: "Media", icon: ImageIcon },
+    { id: "elements", label: "Elements", icon: Eye },
+    { id: "background", label: "Background", icon: Video },
+    { id: "buttons", label: "Buttons", icon: Circle },
+    { id: "spacing", label: "Spacing", icon: Sliders },
+    { id: "advanced", label: "Advanced", icon: Settings },
+  ];
+
+  const renderPreview = () => (
+    <div
+      className="p-8 rounded-lg min-h-[70vh] relative overflow-hidden"
+      style={{
+        fontFamily: customization.fontFamily,
+        color: customization.textColor,
+        backgroundColor: customization.backgroundColor,
+        fontSize: `${customization.fontSize}px`,
+        lineHeight: customization.lineHeight,
+        maxWidth: `${customization.maxWidth}px`,
+        margin: "0 auto",
+      }}
+    >
+      {/* Background */}
+      {customization.backgroundVideo && (
+        <video
+          src={customization.backgroundVideo}
+          autoPlay={customization.videoAutoplay}
+          loop={customization.videoLoop}
+          muted={customization.videoMuted}
+          className="absolute inset-0 w-full h-full object-cover -z-20"
+          style={{ filter: `blur(${customization.backgroundBlur}px)` }}
+        />
+      )}
+      {customization.backgroundImage && !customization.backgroundVideo && (
+        <div
+          className="absolute inset-0 bg-cover bg-center -z-20"
+          style={{
+            backgroundImage: `url(${customization.backgroundImage})`,
+            filter: `blur(${customization.backgroundBlur}px)`,
+            opacity: customization.backgroundOpacity / 100,
+          }}
+        />
+      )}
+      {customization.backgroundOverlay && (
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            backgroundColor: customization.overlayColor,
+            opacity: customization.overlayOpacity / 100,
+          }}
+        />
+      )}
+
+      {/* Header */}
+      <div
+        className="sticky top-0 mb-6 p-4 rounded-lg"
+        style={{
+          background:
+            customization.headerStyle === "gradient"
+              ? `linear-gradient(90deg, ${customization.primaryColor}, ${customization.secondaryColor})`
+              : customization.primaryColor,
+          color: customization.buttonTextColor,
+          height: `${customization.headerHeight}px`,
+        }}
+      >
+        <div className="flex items-center gap-4">
+          {customization.showLogo && (
+            <div
+              className="bg-white rounded-full flex items-center justify-center font-bold"
+              style={{
+                width: `${customization.logoSize}px`,
+                height: `${customization.logoSize}px`,
+                color: customization.primaryColor,
+              }}
+            >
+              R
+            </div>
+          )}
+          <h1
+            className="font-bold"
+            style={{
+              fontFamily: customization.headingFont,
+              fontWeight: customization.headingWeight,
+            }}
+          >
+            Restaurant Name
+          </h1>
+        </div>
+      </div>
+
+      {/* Menu Items */}
+      <div
+        className={`grid ${
+          customization.layout === "grid" ? "" : "grid-cols-1"
+        }`}
+        style={{
+          gridTemplateColumns:
+            customization.layout === "grid"
+              ? `repeat(${customization.columns}, 1fr)`
+              : "1fr",
+          gap: `${customization.gap}px`,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div
+            key={i}
+            className={`overflow-hidden transition-all ${
+              customization.hoverEffect === "lift" ? "hover:scale-105" : ""
+            } ${customization.hoverEffect === "glow" ? "hover:shadow-xl" : ""}`}
+            style={{
+              backgroundColor: customization.cardBackground,
+              borderRadius: `${customization.borderRadius}px`,
+              boxShadow: customization.enableShadows
+                ? customization.cardShadow
+                : "none",
+              border: customization.cardBorder
+                ? `${customization.cardBorderWidth}px solid ${customization.borderColor}`
+                : "none",
+              padding: `${customization.cardPadding}px`,
+              transition: customization.enableTransitions
+                ? "all 0.3s ease"
+                : "none",
+            }}
+          >
+            {customization.showImages && (
+              <div
+                className="bg-gradient-to-br from-blue-400 to-purple-500 mb-3"
+                style={{
+                  height: `${customization.imageHeight}px`,
+                  borderRadius: `${customization.imageRadius}px`,
+                }}
+              />
+            )}
+
+            <h3
+              className="font-bold mb-2"
+              style={{
+                fontFamily: customization.headingFont,
+                fontWeight: customization.headingWeight,
+                color: customization.primaryColor,
+              }}
+            >
+              Menu Item {i}
+            </h3>
+
+            {customization.showDescription && (
+              <p
+                className="mb-2 text-sm"
+                style={{ color: customization.accentColor }}
+              >
+                Delicious food item with amazing flavors
+              </p>
+            )}
+
+            {customization.showBadges && (
+              <div className="flex gap-2 mb-2">
+                <span
+                  className="text-xs px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: `${customization.successColor}20`,
+                    color: customization.successColor,
+                  }}
+                >
+                  Vegetarian
+                </span>
+                <span
+                  className="text-xs px-2 py-1 rounded-full"
+                  style={{
+                    backgroundColor: `${customization.errorColor}20`,
+                    color: customization.errorColor,
+                  }}
+                >
+                  Spicy
+                </span>
+              </div>
+            )}
+
+            {customization.showPrices && (
+              <p
+                className="font-bold mb-3"
+                style={{ color: customization.primaryColor }}
+              >
+                ₹{299 + i * 50}
+              </p>
+            )}
+
+            <button
+              className="w-full py-2 font-medium"
+              style={{
+                backgroundColor:
+                  customization.buttonStyle === "solid"
+                    ? customization.primaryColor
+                    : "transparent",
+                color:
+                  customization.buttonStyle === "solid"
+                    ? customization.buttonTextColor
+                    : customization.primaryColor,
+                borderRadius: `${customization.buttonRadius}px`,
+                border:
+                  customization.buttonStyle === "outline"
+                    ? `2px solid ${customization.primaryColor}`
+                    : "none",
+                padding:
+                  customization.buttonSize === "small"
+                    ? "6px 12px"
+                    : customization.buttonSize === "large"
+                    ? "12px 24px"
+                    : "8px 16px",
+              }}
+            >
+              Add to Cart
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSettings = () => {
+    switch (activeTab) {
+      case "colors":
+        return (
+          <div className="space-y-6">
+            <Card title="Brand Colors" icon={Palette}>
+              <div className="grid grid-cols-2 gap-4">
+                <ColorPicker
+                  label="Primary Color"
+                  value={customization.primaryColor}
+                  onChange={(v: any) => update("primaryColor", v)}
+                />
+                <ColorPicker
+                  label="Secondary Color"
+                  value={customization.secondaryColor}
+                  onChange={(v: any) => update("secondaryColor", v)}
+                />
+                <ColorPicker
+                  label="Accent Color"
+                  value={customization.accentColor}
+                  onChange={(v: any) => update("accentColor", v)}
+                />
+                <ColorPicker
+                  label="Background Color"
+                  value={customization.backgroundColor}
+                  onChange={(v: any) => update("backgroundColor", v)}
+                />
+              </div>
+            </Card>
+
+            <Card title="Text Colors">
+              <div className="grid grid-cols-2 gap-4">
+                <ColorPicker
+                  label="Text Color"
+                  value={customization.textColor}
+                  onChange={(v: any) => update("textColor", v)}
+                />
+                <ColorPicker
+                  label="Button Text"
+                  value={customization.buttonTextColor}
+                  onChange={(v: any) => update("buttonTextColor", v)}
+                />
+              </div>
+            </Card>
+
+            <Card title="UI Colors">
+              <div className="grid grid-cols-2 gap-4">
+                <ColorPicker
+                  label="Card Background"
+                  value={customization.cardBackground}
+                  onChange={(v: any) => update("cardBackground", v)}
+                />
+                <ColorPicker
+                  label="Border Color"
+                  value={customization.borderColor}
+                  onChange={(v: any) => update("borderColor", v)}
+                />
+                <ColorPicker
+                  label="Success Color"
+                  value={customization.successColor}
+                  onChange={(v: any) => update("successColor", v)}
+                />
+                <ColorPicker
+                  label="Error Color"
+                  value={customization.errorColor}
+                  onChange={(v: any) => update("errorColor", v)}
+                />
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "typography":
+        return (
+          <div className="space-y-6">
+            <Card title="Font Families" icon={Type}>
+              <div className="space-y-4">
+                <SelectInput
+                  label="Body Font"
+                  value={customization.fontFamily}
+                  onChange={(v) => update("fontFamily", v)}
+                  options={[
+                    { value: "Inter", label: "Inter" },
+                    { value: "Poppins", label: "Poppins" },
+                    { value: "Roboto", label: "Roboto" },
+                    { value: "Open Sans", label: "Open Sans" },
+                    { value: "Lato", label: "Lato" },
+                    { value: "Montserrat", label: "Montserrat" },
+                    { value: "Playfair Display", label: "Playfair Display" },
+                    { value: "Georgia", label: "Georgia" },
+                  ]}
+                />
+                <SelectInput
+                  label="Heading Font"
+                  value={customization.headingFont}
+                  onChange={(v) => update("headingFont", v)}
+                  options={[
+                    { value: "Inter", label: "Inter" },
+                    { value: "Poppins", label: "Poppins" },
+                    { value: "Montserrat", label: "Montserrat" },
+                    { value: "Playfair Display", label: "Playfair Display" },
+                    { value: "Bebas Neue", label: "Bebas Neue" },
+                  ]}
+                />
+              </div>
+            </Card>
+
+            <Card title="Font Sizing">
+              <div className="space-y-4">
+                <SliderInput
+                  label="Base Font Size"
+                  value={customization.fontSize}
+                  onChange={(v) => update("fontSize", v)}
+                  min={12}
+                  max={24}
+                  step={1}
+                  unit="px"
+                />
+                <SliderInput
+                  label="Line Height"
+                  value={customization.lineHeight}
+                  onChange={(v) => update("lineHeight", v)}
+                  min={1}
+                  max={2}
+                  step={0.1}
+                />
+                <SliderInput
+                  label="Letter Spacing"
+                  value={customization.letterSpacing}
+                  onChange={(v) => update("letterSpacing", v)}
+                  min={-2}
+                  max={4}
+                  step={0.5}
+                  unit="px"
+                />
+              </div>
+            </Card>
+
+            <Card title="Font Weights">
+              <div className="space-y-4">
+                <SliderInput
+                  label="Body Weight"
+                  value={customization.fontWeight}
+                  onChange={(v) => update("fontWeight", v)}
+                  min={100}
+                  max={900}
+                  step={100}
+                />
+                <SliderInput
+                  label="Heading Weight"
+                  value={customization.headingWeight}
+                  onChange={(v) => update("headingWeight", v)}
+                  min={100}
+                  max={900}
+                  step={100}
+                />
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "layout":
+        return (
+          <div className="space-y-6">
+            <Card title="Layout Style" icon={Layout}>
+              <div className="space-y-4">
+                <SelectInput
+                  label="Layout Type"
+                  value={customization.layout}
+                  onChange={(v) => update("layout", v)}
+                  options={[
+                    { value: "grid", label: "Grid" },
+                    { value: "list", label: "List" },
+                  ]}
+                />
+                <SliderInput
+                  label="Columns (Grid)"
+                  value={customization.columns}
+                  onChange={(v) => update("columns", v)}
+                  min={1}
+                  max={6}
+                  step={1}
+                />
+                <SliderInput
+                  label="Gap Between Items"
+                  value={customization.gap}
+                  onChange={(v) => update("gap", v)}
+                  min={0}
+                  max={48}
+                  step={4}
+                  unit="px"
+                />
+              </div>
+            </Card>
+
+            <Card title="Container">
+              <div className="space-y-4">
+                <SliderInput
+                  label="Max Width"
+                  value={customization.maxWidth}
+                  onChange={(v) => update("maxWidth", v)}
+                  min={800}
+                  max={1920}
+                  step={40}
+                  unit="px"
+                />
+                <SliderInput
+                  label="Container Padding"
+                  value={customization.containerPadding}
+                  onChange={(v) => update("containerPadding", v)}
+                  min={0}
+                  max={64}
+                  step={4}
+                  unit="px"
+                />
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "cards":
+        return (
+          <div className="space-y-6">
+            <Card title="Card Style" icon={Square}>
+              <div className="space-y-4">
+                <SelectInput
+                  label="Card Style"
+                  value={customization.cardStyle}
+                  onChange={(v) => update("cardStyle", v)}
+                  options={[
+                    { value: "modern", label: "Modern" },
+                    { value: "classic", label: "Classic" },
+                    { value: "minimal", label: "Minimal" },
+                    { value: "elevated", label: "Elevated" },
+                  ]}
+                />
+                <SliderInput
+                  label="Border Radius"
+                  value={customization.borderRadius}
+                  onChange={(v) => update("borderRadius", v)}
+                  min={0}
+                  max={32}
+                  step={2}
+                  unit="px"
+                />
+                <SliderInput
+                  label="Card Padding"
+                  value={customization.cardPadding}
+                  onChange={(v) => update("cardPadding", v)}
+                  min={8}
+                  max={48}
+                  step={4}
+                  unit="px"
+                />
+                <ToggleSwitch
+                  label="Card Border"
+                  checked={customization.cardBorder}
+                  onChange={(v: any) => update("cardBorder", v)}
+                />
+                {customization.cardBorder && (
+                  <SliderInput
+                    label="Border Width"
+                    value={customization.cardBorderWidth}
+                    onChange={(v) => update("cardBorderWidth", v)}
+                    min={1}
+                    max={4}
+                    step={1}
+                    unit="px"
+                  />
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "media":
+        return (
+          <div className="space-y-6">
+            <Card title="Image Settings" icon={ImageIcon}>
+              <div className="space-y-4">
+                <ToggleSwitch
+                  label="Show Images"
+                  checked={customization.showImages}
+                  onChange={(v) => update("showImages", v)}
+                />
+                {customization.showImages && (
+                  <>
+                    <SelectInput
+                      label="Image Style"
+                      value={customization.imageStyle}
+                      onChange={(v) => update("imageStyle", v)}
+                      options={[
+                        { value: "cover", label: "Cover" },
+                        { value: "contain", label: "Contain" },
+                        { value: "fill", label: "Fill" },
+                      ]}
+                    />
+                    <SliderInput
+                      label="Image Height"
+                      value={customization.imageHeight}
+                      onChange={(v) => update("imageHeight", v)}
+                      min={100}
+                      max={400}
+                      step={10}
+                      unit="px"
+                    />
+                    <SliderInput
+                      label="Image Border Radius"
+                      value={customization.imageRadius}
+                      onChange={(v) => update("imageRadius", v)}
+                      min={0}
+                      max={24}
+                      step={2}
+                      unit="px"
+                    />
+                  </>
+                )}
+              </div>
+            </Card>
+
+            <Card title="Video Settings" icon={Video}>
+              <div className="space-y-4">
+                <ToggleSwitch
+                  label="Enable Videos"
+                  checked={customization.showVideos}
+                  onChange={(v) => update("showVideos", v)}
+                />
+                {customization.showVideos && (
+                  <>
+                    <ToggleSwitch
+                      label="Autoplay"
+                      checked={customization.videoAutoplay}
+                      onChange={(v) => update("videoAutoplay", v)}
+                    />
+                    <ToggleSwitch
+                      label="Muted"
+                      checked={customization.videoMuted}
+                      onChange={(v) => update("videoMuted", v)}
+                    />
+                    <ToggleSwitch
+                      label="Loop"
+                      checked={customization.videoLoop}
+                      onChange={(v) => update("videoLoop", v)}
+                    />
+                  </>
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "elements":
+        return (
+          <div className="space-y-6">
+            <Card title="Display Elements" icon={Eye}>
+              <div className="space-y-3">
+                <ToggleSwitch
+                  label="Show Prices"
+                  checked={customization.showPrices}
+                  onChange={(v) => update("showPrices", v)}
+                  description="Display item prices"
+                />
+                <ToggleSwitch
+                  label="Show Descriptions"
+                  checked={customization.showDescription}
+                  onChange={(v) => update("showDescription", v)}
+                  description="Show item descriptions"
+                />
+                <ToggleSwitch
+                  label="Show Badges"
+                  checked={customization.showBadges}
+                  onChange={(v) => update("showBadges", v)}
+                  description="Display dietary badges"
+                />
+                <ToggleSwitch
+                  label="Show Ratings"
+                  checked={customization.showRatings}
+                  onChange={(v) => update("showRatings", v)}
+                  description="Show item ratings"
+                />
+                <ToggleSwitch
+                  label="Show Logo"
+                  checked={customization.showLogo}
+                  onChange={(v) => update("showLogo", v)}
+                  description="Display restaurant logo"
+                />
+                <ToggleSwitch
+                  label="Show Quantity Controls"
+                  checked={customization.showQuantity}
+                  onChange={(v) => update("showQuantity", v)}
+                  description="Show +/- quantity buttons"
+                />
+              </div>
+            </Card>
+
+            <Card title="Header Settings">
+              <div className="space-y-4">
+                <SelectInput
+                  label="Header Style"
+                  value={customization.headerStyle}
+                  onChange={(v) => update("headerStyle", v)}
+                  options={[
+                    { value: "solid", label: "Solid" },
+                    { value: "gradient", label: "Gradient" },
+                    { value: "transparent", label: "Transparent" },
+                  ]}
+                />
+                <SliderInput
+                  label="Header Height"
+                  value={customization.headerHeight}
+                  onChange={(v) => update("headerHeight", v)}
+                  min={48}
+                  max={120}
+                  step={4}
+                  unit="px"
+                />
+                {customization.showLogo && (
+                  <SliderInput
+                    label="Logo Size"
+                    value={customization.logoSize}
+                    onChange={(v) => update("logoSize", v)}
+                    min={24}
+                    max={80}
+                    step={4}
+                    unit="px"
+                  />
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "background":
+        return (
+          <div className="space-y-6">
+            <Card title="Background Image" icon={ImageIcon}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Image URL
+                  </label>
+                  <input
+                    type="text"
+                    value={customization.backgroundImage}
+                    onChange={(e) => update("backgroundImage", e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+                <SliderInput
+                  label="Background Opacity"
+                  value={customization.backgroundOpacity}
+                  onChange={(v) => update("backgroundOpacity", v)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  unit="%"
+                />
+                <SliderInput
+                  label="Background Blur"
+                  value={customization.backgroundBlur}
+                  onChange={(v) => update("backgroundBlur", v)}
+                  min={0}
+                  max={20}
+                  step={1}
+                  unit="px"
+                />
+              </div>
+            </Card>
+
+            <Card title="Background Video" icon={Video}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Video URL
+                  </label>
+                  <input
+                    type="text"
+                    value={customization.backgroundVideo}
+                    onChange={(e) => update("backgroundVideo", e.target.value)}
+                    placeholder="https://example.com/video.mp4"
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Overlay Settings">
+              <div className="space-y-4">
+                <ToggleSwitch
+                  label="Enable Overlay"
+                  checked={customization.backgroundOverlay}
+                  onChange={(v) => update("backgroundOverlay", v)}
+                  description="Add color overlay on background"
+                />
+                {customization.backgroundOverlay && (
+                  <>
+                    <ColorPicker
+                      label="Overlay Color"
+                      value={customization.overlayColor}
+                      onChange={(v: any) => update("overlayColor", v)}
+                    />
+                    <SliderInput
+                      label="Overlay Opacity"
+                      value={customization.overlayOpacity}
+                      onChange={(v) => update("overlayOpacity", v)}
+                      min={0}
+                      max={100}
+                      step={5}
+                      unit="%"
+                    />
+                  </>
+                )}
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "buttons":
+        return (
+          <div className="space-y-6">
+            <Card title="Button Style" icon={Circle}>
+              <div className="space-y-4">
+                <SelectInput
+                  label="Button Style"
+                  value={customization.buttonStyle}
+                  onChange={(v) => update("buttonStyle", v)}
+                  options={[
+                    { value: "solid", label: "Solid" },
+                    { value: "outline", label: "Outline" },
+                    { value: "ghost", label: "Ghost" },
+                  ]}
+                />
+                <SliderInput
+                  label="Button Border Radius"
+                  value={customization.buttonRadius}
+                  onChange={(v) => update("buttonRadius", v)}
+                  min={0}
+                  max={32}
+                  step={2}
+                  unit="px"
+                />
+                <SelectInput
+                  label="Button Size"
+                  value={customization.buttonSize}
+                  onChange={(v) => update("buttonSize", v)}
+                  options={[
+                    { value: "small", label: "Small" },
+                    { value: "medium", label: "Medium" },
+                    { value: "large", label: "Large" },
+                  ]}
+                />
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "spacing":
+        return (
+          <div className="space-y-6">
+            <Card title="Spacing System" icon={Sliders}>
+              <div className="space-y-4">
+                <SelectInput
+                  label="Overall Spacing"
+                  value={customization.spacing}
+                  onChange={(v) => update("spacing", v)}
+                  options={[
+                    { value: "compact", label: "Compact" },
+                    { value: "normal", label: "Normal" },
+                    { value: "relaxed", label: "Relaxed" },
+                  ]}
+                />
+                <SliderInput
+                  label="Item Spacing"
+                  value={customization.itemSpacing}
+                  onChange={(v) => update("itemSpacing", v)}
+                  min={0}
+                  max={48}
+                  step={4}
+                  unit="px"
+                />
+                <SliderInput
+                  label="Section Spacing"
+                  value={customization.sectionSpacing}
+                  onChange={(v) => update("sectionSpacing", v)}
+                  min={0}
+                  max={96}
+                  step={8}
+                  unit="px"
+                />
+              </div>
+            </Card>
+          </div>
+        );
+
+      case "advanced":
+        return (
+          <div className="space-y-6">
+            <Card title="Theme Mode" icon={Moon}>
+              <div className="space-y-4">
+                <ToggleSwitch
+                  label="Dark Mode"
+                  checked={customization.darkMode}
+                  onChange={(v) => update("darkMode", v)}
+                  description="Enable dark theme"
+                />
+              </div>
+            </Card>
+
+            <Card title="Effects & Animations" icon={Zap}>
+              <div className="space-y-4">
+                <ToggleSwitch
+                  label="Enable Animations"
+                  checked={customization.enableAnimations}
+                  onChange={(v) => update("enableAnimations", v)}
+                  description="Smooth transitions and animations"
+                />
+                <ToggleSwitch
+                  label="Enable Shadows"
+                  checked={customization.enableShadows}
+                  onChange={(v) => update("enableShadows", v)}
+                  description="Card and element shadows"
+                />
+                <ToggleSwitch
+                  label="Enable Gradients"
+                  checked={customization.enableGradients}
+                  onChange={(v) => update("enableGradients", v)}
+                  description="Gradient backgrounds"
+                />
+                <ToggleSwitch
+                  label="Enable Transitions"
+                  checked={customization.enableTransitions}
+                  onChange={(v) => update("enableTransitions", v)}
+                  description="Smooth state transitions"
+                />
+                <SelectInput
+                  label="Hover Effect"
+                  value={customization.hoverEffect}
+                  onChange={(v) => update("hoverEffect", v)}
+                  options={[
+                    { value: "none", label: "None" },
+                    { value: "lift", label: "Lift" },
+                    { value: "glow", label: "Glow" },
+                    { value: "scale", label: "Scale" },
+                  ]}
+                />
+                <SelectInput
+                  label="Animation Speed"
+                  value={customization.animationSpeed}
+                  onChange={(v) => update("animationSpeed", v)}
+                  options={[
+                    { value: "slow", label: "Slow" },
+                    { value: "normal", label: "Normal" },
+                    { value: "fast", label: "Fast" },
+                  ]}
+                />
+              </div>
+            </Card>
+
+            <Card title="Custom CSS" icon={Settings}>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Additional CSS (Advanced)
+                </label>
+                <textarea
+                  value={customization.customCSS}
+                  onChange={(e) => update("customCSS", e.target.value)}
+                  placeholder=".custom-class { color: red; }"
+                  className="w-full px-3 py-2 border rounded-lg text-sm font-mono min-h-[120px]"
+                />
+                <p className="text-xs text-gray-500">
+                  Add custom CSS for advanced styling
+                </p>
+              </div>
+            </Card>
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Full Menu Customization
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Complete control over menu appearance • Live preview
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setPreviewMode(!previewMode)}
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              {previewMode ? "Edit" : "Preview"}
-            </Button>
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setPreviewMode(!previewMode)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                {previewMode ? (
+                  <>
+                    <Settings className="w-4 h-4" /> Edit
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" /> Preview
+                  </>
+                )}
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">
+                Advanced Menu Customizer
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={resetToDefault}
+                className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition"
+              >
+                <RotateCcw className="w-4 h-4" /> Reset
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>Saving...</>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="p-6">
-          {!previewMode ? (
-            <Tabs defaultValue="colors" className="w-full">
-              <TabsList className="grid grid-cols-5 w-full">
-                <TabsTrigger value="colors">
-                  <Palette className="w-4 h-4 mr-2" />
-                  Colors
-                </TabsTrigger>
-                <TabsTrigger value="typography">
-                  <Type className="w-4 h-4 mr-2" />
-                  Typography
-                </TabsTrigger>
-                <TabsTrigger value="layout">
-                  <Layout className="w-4 h-4 mr-2" />
-                  Layout
-                </TabsTrigger>
-                <TabsTrigger value="images">
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  Images
-                </TabsTrigger>
-                <TabsTrigger value="elements">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Elements
-                </TabsTrigger>
-              </TabsList>
-
-              {/* Colors Tab */}
-              <TabsContent value="colors" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Color Scheme</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Primary Color</Label>
-                      <Input
-                        type="color"
-                        value={customization.primaryColor}
-                        onChange={(e) =>
-                          updateCustomization("primaryColor", e.target.value)
-                        }
-                        className="h-12"
-                      />
-                    </div>
-                    <div>
-                      <Label>Secondary Color</Label>
-                      <Input
-                        type="color"
-                        value={customization.secondaryColor}
-                        onChange={(e) =>
-                          updateCustomization("secondaryColor", e.target.value)
-                        }
-                        className="h-12"
-                      />
-                    </div>
-                    <div>
-                      <Label>Background Color</Label>
-                      <Input
-                        type="color"
-                        value={customization.backgroundColor}
-                        onChange={(e) =>
-                          updateCustomization("backgroundColor", e.target.value)
-                        }
-                        className="h-12"
-                      />
-                    </div>
-                    <div>
-                      <Label>Text Color</Label>
-                      <Input
-                        type="color"
-                        value={customization.textColor}
-                        onChange={(e) =>
-                          updateCustomization("textColor", e.target.value)
-                        }
-                        className="h-12"
-                      />
-                    </div>
-                    <div>
-                      <Label>Accent Color</Label>
-                      <Input
-                        type="color"
-                        value={customization.accentColor}
-                        onChange={(e) =>
-                          updateCustomization("accentColor", e.target.value)
-                        }
-                        className="h-12"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Typography Tab */}
-              <TabsContent value="typography" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Font Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Body Font</Label>
-                      <select
-                        value={customization.fontFamily}
-                        onChange={(e) =>
-                          updateCustomization("fontFamily", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="Inter">Inter</option>
-                        <option value="Poppins">Poppins</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Open Sans">Open Sans</option>
-                        <option value="Lato">Lato</option>
-                        <option value="Playfair Display">
-                          Playfair Display
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label>Heading Font</Label>
-                      <select
-                        value={customization.headingFont}
-                        onChange={(e) =>
-                          updateCustomization("headingFont", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="Inter">Inter</option>
-                        <option value="Poppins">Poppins</option>
-                        <option value="Montserrat">Montserrat</option>
-                        <option value="Playfair Display">
-                          Playfair Display
-                        </option>
-                      </select>
-                    </div>
-                    <div>
-                      <Label>Font Size</Label>
-                      <select
-                        value={customization.fontSize}
-                        onChange={(e) =>
-                          updateCustomization("fontSize", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                      </select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Layout Tab */}
-              <TabsContent value="layout" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Layout Configuration</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>Layout Style</Label>
-                      <div className="grid grid-cols-2 gap-3 mt-2">
-                        {["grid", "list"].map((style) => (
-                          <button
-                            key={style}
-                            onClick={() => updateCustomization("layout", style)}
-                            className={`p-4 rounded-lg border-2 capitalize ${
-                              customization.layout === style
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-gray-200"
-                            }`}
-                          >
-                            {style}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Card Style</Label>
-                      <div className="grid grid-cols-3 gap-3 mt-2">
-                        {["modern", "classic", "minimal"].map((style) => (
-                          <button
-                            key={style}
-                            onClick={() =>
-                              updateCustomization("cardStyle", style)
-                            }
-                            className={`p-4 rounded-lg border-2 capitalize ${
-                              customization.cardStyle === style
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-gray-200"
-                            }`}
-                          >
-                            {style}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Border Radius</Label>
-                      <Input
-                        type="range"
-                        min="0"
-                        max="24"
-                        value={parseInt(customization.borderRadius)}
-                        onChange={(e) =>
-                          updateCustomization(
-                            "borderRadius",
-                            `${e.target.value}px`
-                          )
-                        }
-                        className="w-full"
-                      />
-                      <span className="text-sm text-gray-600">
-                        {customization.borderRadius}
-                      </span>
-                    </div>
-
-                    <div>
-                      <Label>Columns (Grid)</Label>
-                      <select
-                        value={customization.columns}
-                        onChange={(e) =>
-                          updateCustomization(
-                            "columns",
-                            parseInt(e.target.value)
-                          )
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="1">1 Column</option>
-                        <option value="2">2 Columns</option>
-                        <option value="3">3 Columns</option>
-                        <option value="4">4 Columns</option>
-                      </select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Images Tab */}
-              <TabsContent value="images" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Image Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={customization.showImages}
-                          onChange={(e) =>
-                            updateCustomization("showImages", e.target.checked)
-                          }
-                          className="w-5 h-5"
-                        />
-                        <span>Show Images</span>
-                      </label>
-                    </div>
-
-                    <div>
-                      <Label>Image Style</Label>
-                      <select
-                        value={customization.imageStyle}
-                        onChange={(e) =>
-                          updateCustomization("imageStyle", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="cover">Cover</option>
-                        <option value="contain">Contain</option>
-                        <option value="fill">Fill</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label>Image Position</Label>
-                      <select
-                        value={customization.imagePosition}
-                        onChange={(e) =>
-                          updateCustomization("imagePosition", e.target.value)
-                        }
-                        className="w-full p-2 border rounded-lg"
-                      >
-                        <option value="top">Top</option>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                      </select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Elements Tab */}
-              <TabsContent value="elements" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Display Elements</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {[
-                      { key: "showPrices", label: "Show Prices" },
-                      { key: "showDescription", label: "Show Description" },
-                      { key: "showBadges", label: "Show Badges" },
-                      { key: "showRatings", label: "Show Ratings" },
-                      { key: "showLogo", label: "Show Logo" },
-                      { key: "darkMode", label: "Dark Mode" },
-                    ].map((element) => (
-                      <label
-                        key={element.key}
-                        className="flex items-center gap-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={
-                            customization[
-                              element.key as keyof typeof customization
-                            ] as boolean
-                          }
-                          onChange={(e) =>
-                            updateCustomization(element.key, e.target.checked)
-                          }
-                          className="w-5 h-5"
-                        />
-                        <span>{element.label}</span>
-                      </label>
-                    ))}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <div className="bg-gray-100 p-8 rounded-lg">
-              <div
-                className="bg-white rounded-lg p-6 shadow-lg"
-                style={{
-                  fontFamily: customization.fontFamily,
-                  backgroundColor: customization.backgroundColor,
-                  color: customization.textColor,
-                }}
-              >
-                <h2
-                  className="text-2xl font-bold mb-4"
-                  style={{
-                    fontFamily: customization.headingFont,
-                    color: customization.primaryColor,
-                  }}
-                >
-                  Menu Preview
-                </h2>
-                <div
-                  className={`grid gap-4 ${
-                    customization.layout === "grid"
-                      ? `grid-cols-${customization.columns}`
-                      : "grid-cols-1"
-                  }`}
-                >
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="border rounded-lg overflow-hidden"
-                      style={{ borderRadius: customization.borderRadius }}
-                    >
-                      {customization.showImages && (
-                        <div className="h-48 bg-gray-200" />
-                      )}
-                      <div className="p-4">
-                        <h3 className="font-bold text-lg mb-2">
-                          Sample Item {i}
-                        </h3>
-                        {customization.showDescription && (
-                          <p className="text-sm text-gray-600 mb-2">
-                            Delicious food item description
-                          </p>
-                        )}
-                        {customization.showPrices && (
-                          <p
-                            className="font-bold"
-                            style={{ color: customization.primaryColor }}
-                          >
-                            ₹299
-                          </p>
-                        )}
-                        {customization.showBadges && (
-                          <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full mt-2">
-                            NEW
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-4">
+        {previewMode ? (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            {renderPreview()}
+          </div>
+        ) : (
+          <div className="grid grid-cols-12 gap-6">
+            {/* Sidebar */}
+            <div className="col-span-3">
+              <div className="bg-white rounded-xl shadow-sm border overflow-hidden sticky top-24">
+                <div className="p-3 border-b bg-gray-50">
+                  <h3 className="font-semibold text-gray-900">Settings</h3>
                 </div>
+                <nav className="p-2">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                          activeTab === tab.id
+                            ? "bg-blue-50 text-blue-700"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </nav>
               </div>
             </div>
-          )}
 
-          <div className="flex items-center justify-between pt-6 border-t mt-6">
-            <Button variant="outline" onClick={resetToDefault}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset to Default
-            </Button>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Changes
-              </Button>
+            {/* Settings Panel */}
+            <div className="col-span-9">
+              <div className="bg-white rounded-xl shadow-sm border p-6 mb-2">
+                {renderSettings()}
+              </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Quick Stats Bar */}
+      <div className=" bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 ">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex gap-6 text-sm">
+            <div>
+              <span className="text-gray-600">Active Tab:</span>{" "}
+              <span className="font-semibold text-gray-900">
+                {tabs.find((t) => t.id === activeTab)?.label}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Primary Color:</span>{" "}
+              <span className="font-mono text-sm">
+                {customization.primaryColor}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Layout:</span>{" "}
+              <span className="font-semibold capitalize">
+                {customization.layout}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  JSON.stringify(customization, null, 2)
+                );
+                alert("Settings copied to clipboard!");
+              }}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+            >
+              Export JSON
+            </button>
+            <button
+              onClick={() => {
+                const json = prompt("Paste JSON settings:");
+                if (json) {
+                  try {
+                    setCustomization(JSON.parse(json));
+                    alert("Settings imported successfully!");
+                  } catch (e) {
+                    alert("Invalid JSON format");
+                  }
+                }
+              }}
+              className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
+            >
+              Import JSON
+            </button>
           </div>
         </div>
       </div>

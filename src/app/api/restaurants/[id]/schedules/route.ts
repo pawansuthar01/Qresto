@@ -85,7 +85,7 @@ export async function PATCH(
       });
 
       tables.forEach((table) => {
-        global.io.to(`table:${table.id}`).emit("schedule-updated", {
+        global?.io?.to(`table:${table.id}`).emit("schedule-updated", {
           categoryId,
           scheduleType,
           schedule,

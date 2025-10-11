@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { generateOrderNumber } from '@/lib/utils';
-import { z } from 'zod';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { generateOrderNumber } from "@/lib/utils";
+import { z } from "zod";
 
+// Schema for guest order creation
 const createGuestOrderSchema = z.object({
   items: z.array(
     z.object({
@@ -22,6 +23,7 @@ export async function POST(
   { params }: { params: { shortCode: string } }
 ) {
   try {
+    // Find QR code and related table + restaurant
     const qrCode = await prisma.qRCode.findUnique({
       where: { shortCode: params.shortCode },
       include: {
@@ -37,22 +39,25 @@ export async function POST(
 
     if (!qrCode || !qrCode.isActive) {
       return NextResponse.json(
-        { error: 'QR code not found or inactive' },
+        { error: "QR code not found or inactive" },
         { status: 404 }
       );
     }
 
-    const permissions = qrCode.restaurant.permissions as any;
-    if (permissions['order.create'] !== true) {
+    // Check if restaurant allows ordering
+    const permissions = qrCode.restaurant?.permissions as any;
+    if (!permissions?.["order.create"]) {
       return NextResponse.json(
-        { error: 'Ordering is not enabled for this restaurant' },
+        { error: "Ordering is not enabled for this restaurant" },
         { status: 403 }
       );
     }
 
+    // Validate request body
     const body = await request.json();
     const validatedData = createGuestOrderSchema.parse(body);
 
+    // Fetch menu items
     const menuItems = await prisma.menuItem.findMany({
       where: {
         id: { in: validatedData.items.map((item) => item.menuItemId) },
@@ -63,24 +68,24 @@ export async function POST(
 
     if (menuItems.length !== validatedData.items.length) {
       return NextResponse.json(
-        { error: 'Some menu items not found or unavailable' },
+        { error: "Some menu items not found or unavailable" },
         { status: 400 }
       );
     }
 
+    // Calculate total
     const totalAmount = validatedData.items.reduce((sum, item) => {
       const menuItem = menuItems.find((mi) => mi.id === item.menuItemId);
       return sum + (menuItem?.price || 0) * item.quantity;
     }, 0);
 
+    // Generate unique order number
     let orderNumber = generateOrderNumber();
-    let exists = await prisma.order.findUnique({ where: { orderNumber } });
-
-    while (exists) {
+    while (await prisma.order.findUnique({ where: { orderNumber } })) {
       orderNumber = generateOrderNumber();
-      exists = await prisma.order.findUnique({ where: { orderNumber } });
     }
 
+    // Create order
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -104,32 +109,34 @@ export async function POST(
       },
       include: {
         table: true,
-        items: {
-          include: {
-            menuItem: true,
-          },
-        },
+        items: { include: { menuItem: true } },
       },
     });
 
-    // Emit real-time event to restaurant owner and table
-    if (global.io) {
-      global.io.to(`restaurant:${qrCode.restaurant.id}`).emit('new-order', order);
-      global.io.to(`table:${qrCode.table.id}`).emit('order-created', order);
+    // Emit real-time event safely
+    if (global?.io?.to) {
+      try {
+        global.io
+          .to(`restaurant:${qrCode.restaurant.id}`)
+          ?.emit("new-order", order);
+        global.io.to(`table:${qrCode.table.id}`)?.emit("order-created", order);
+      } catch (emitError) {
+        console.warn("Failed to emit real-time order event:", emitError);
+      }
     }
 
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: "Validation error", details: error.errors },
         { status: 400 }
       );
     }
 
-    console.error('Error creating guest order:', error);
+    console.error("Error creating guest order:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const restaurants = await prisma.restaurant.findMany({
       where,
       include: {
-        users: {
+        owners: {
           select: {
             id: true,
             email: true,
@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    console.log(body);
     const validatedData = restaurantSchema.parse(body);
 
     const restaurant = await prisma.restaurant.create({

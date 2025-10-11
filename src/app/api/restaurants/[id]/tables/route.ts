@@ -18,9 +18,7 @@ export async function GET(
 
     const tables = await prisma.table.findMany({
       where: { restaurantId: params.id },
-      include: {
-        qrCode: true,
-      },
+
       orderBy: { number: "asc" },
     });
 
@@ -57,7 +55,7 @@ export async function POST(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "table.create");
+    authorize(permissions, "table.create");
 
     const body = await req.json();
     const validatedData = tableSchema.parse(body);

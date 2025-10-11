@@ -33,12 +33,32 @@ export const menuCategorySchema = z.object({
 
 export const menuItemSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().optional(),
+  description: z.string().optional().default(""),
   price: z.number().positive("Price must be positive"),
-  image: z.string().url().optional(),
-  categoryId: z.string().cuid(),
-  available: z.boolean().default(true),
-  sortOrder: z.number().int().min(0).default(0),
+  originalPrice: z
+    .number()
+    .positive("Original price must be positive")
+    .optional(),
+  discount: z.number().int().min(0).max(100).optional().default(0),
+  imageUrl: z.string().url("Must be a valid URL").optional().default(""),
+  isAvailable: z.boolean().default(true),
+  isVegetarian: z.boolean().default(false),
+  isVegan: z.boolean().default(false),
+  isGlutenFree: z.boolean().default(false),
+  spiceLevel: z.number().int().min(0).max(5).optional().default(0),
+  displayOrder: z.number().int().min(0).default(0),
+
+  // Enhanced metadata
+  isPopular: z.boolean().default(false),
+  isTrending: z.boolean().default(false),
+  isNew: z.boolean().default(false),
+  isChefSpecial: z.boolean().default(false),
+  rating: z.number().min(0).max(5).optional().default(0),
+  orderCount: z.number().int().min(0).default(0),
+  prepTime: z.number().int().min(0).optional().default(10), // minutes
+
+  categoryId: z.string().min(1, "Category is required"), // CUID check optional
+  restaurantId: z.string().min(1, "Restaurant ID is required"),
 });
 
 export const tableSchema = z.object({

@@ -7,6 +7,7 @@ export interface Permission {
   "menu.read"?: boolean;
   "menu.update"?: boolean;
   "menu.delete"?: boolean;
+  "menu.schedule"?: boolean;
   "menu.customize"?: boolean;
   "table.create"?: boolean;
   "table.read"?: boolean;

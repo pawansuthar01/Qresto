@@ -1,11 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { OrderBoard } from "@/components/order/OrderBoard";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -13,30 +12,50 @@ import { Bell, Wifi, WifiOff } from "lucide-react";
 
 export default function OrdersPage() {
   const params = useParams();
-  const restaurantId = params.rid as string;
+  const restaurantId = params.id as string;
   const { data: restaurant } = useRestaurant(restaurantId);
+  const [orders, setOrders] = useState<any[]>([]);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  const { isConnected, newOrderCount, resetNewOrderCount } =
+  const { isConnected, newOrderCount, resetNewOrderCount, socket } =
     useRealtimeOrders(restaurantId);
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ["orders", restaurantId],
-    queryFn: async () => {
-      const res = await fetch(`/api/restaurants/${restaurantId}/orders`);
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      return res.json();
-    },
-    refetchInterval: 5000, // Fallback polling every 5 seconds
-  });
+  const [isLoading, setLoading] = useState(true);
+
+  // Initial fetch
+  async function fetchOrders() {
+    setLoading(true);
+    const res = await fetch(`/api/restaurants/${restaurantId}/orders`);
+    if (!res.ok) throw new Error("Failed to fetch orders");
+    const data = await res.json();
+    setOrders(data);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    fetchOrders();
+  }, [restaurantId]);
+
+  // Listen to new orders via Socket.IO
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewOrder = (order: any) => {
+      setOrders((prev) => [order, ...prev]); // Add new order at the top
+    };
+
+    socket.on("new-order", handleNewOrder);
+
+    return () => {
+      socket.off("new-order", handleNewOrder);
+    };
+  }, [socket]);
 
   const canRead = hasPermission("order.read");
 
   useEffect(() => {
-    // Reset count whenever the user actively views the page
     if (newOrderCount > 0) resetNewOrderCount();
   }, [newOrderCount, resetNewOrderCount]);
 
   useEffect(() => {
-    // Update document title
     document.title =
       newOrderCount > 0
         ? `(${newOrderCount}) New Orders - QResto`
@@ -94,7 +113,7 @@ export default function OrdersPage() {
             <p className="text-muted-foreground">Loading orders...</p>
           </div>
         ) : (
-          <OrderBoard orders={orders || []} restaurantId={restaurantId} />
+          <OrderBoard orders={orders} restaurantId={restaurantId} />
         )}
       </div>
     </MainLayout>

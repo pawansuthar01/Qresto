@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/store/userStore";
 import {
@@ -16,14 +16,27 @@ import {
   TrendingUp,
   Calendar,
 } from "lucide-react";
-
-export function Sidebar() {
+import { Button } from "../ui/button";
+interface SidebarProps {
+  className?: string;
+}
+export function Sidebar({ className }: SidebarProps) {
   const { data: session } = useSession();
+  const router = useRouter();
   const pathname = usePathname();
   const { sidebarOpen } = useUserStore();
 
   const adminLinks = [
-    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    {
+      href: `/company/dashboard`,
+      label: "Dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      href: `/company/analytics`,
+      label: "Analytics",
+      icon: TrendingUp,
+    },
   ];
 
   const ownerLinks = session?.user.restaurantId
@@ -58,41 +71,63 @@ export function Sidebar() {
           label: "Orders",
           icon: ShoppingCart,
         },
-        {
-          href: `/owner/restaurants/${session.user.restaurantId}/analytics`,
-          label: "Analytics",
-          icon: TrendingUp,
-        },
       ]
     : [];
 
   const links = session?.user.role === "ADMIN" ? adminLinks : ownerLinks;
-
+  console.log(links);
   if (!sidebarOpen) return null;
+  // On click or action
+  const openAnalyticsInNewTab = () => {
+    if (session?.user?.restaurantId) {
+      const url = `/owner/restaurants/${session.user.restaurantId}/analytics`;
+      window.open(url, "_blank"); // "_blank" = new tab
+    } else {
+      console.warn("Restaurant ID not found in session");
+    }
+  };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)]">
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
+    >
       <nav className="flex flex-col gap-2 p-4">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
-
+          console.log({ pathname, href: link.href, isActive });
           return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              <Icon className="h-5 w-5" />
-              {link.label}
-            </Link>
+            <>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {link.label}
+              </Link>
+            </>
           );
         })}
+        {links.length !== 0 && session?.user.role === "OWNER" && (
+          <button
+            type="reset"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+
+              "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            )}
+            onClick={() => openAnalyticsInNewTab()}
+          >
+            <TrendingUp className="h-5 w-5" />
+            Analytics
+          </button>
+        )}
       </nav>
     </aside>
   );

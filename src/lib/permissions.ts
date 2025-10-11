@@ -8,107 +8,148 @@ export async function authorize(
   restaurantId: string,
   permissionKey: keyof Permission
 ): Promise<{ authorized: boolean; user: any; error?: string }> {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
-    return { authorized: false, user: null, error: "Unauthorized" };
-  }
-
-  const user = session.user;
-
-  // Company Owner (ADMIN) has all permissions
-  if (user.role === UserRole.ADMIN) {
-    return { authorized: true, user };
-  }
-
-  // Restaurant Owner needs to check permissions
-  if (user.role === UserRole.OWNER) {
-    // Check if user belongs to this restaurant
-    if (user.restaurantId !== restaurantId) {
-      return {
-        authorized: false,
-        user,
-        error: "Access denied to this restaurant",
-      };
+    if (!session?.user) {
+      return { authorized: false, user: null, error: "Unauthorized" };
     }
 
-    // Get restaurant permissions
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: restaurantId },
-      select: { permissions: true },
-    });
+    const user = session.user;
 
-    if (!restaurant) {
-      return { authorized: false, user, error: "Restaurant not found" };
+    // Company Owner (ADMIN) has all permissions
+    if (user.role === UserRole.ADMIN) {
+      return { authorized: true, user };
     }
 
-    const permissions = restaurant.permissions as Permission;
+    // Restaurant Owner needs to check permissions
+    if (user.role === UserRole.OWNER) {
+      if (user.restaurantId !== restaurantId) {
+        return {
+          authorized: false,
+          user,
+          error: "Access denied to this restaurant",
+        };
+      }
 
-    // Check if user has the required permission
-    if (!permissions[permissionKey]) {
-      return {
-        authorized: false,
-        user,
-        error: `Permission denied: ${permissionKey}`,
-      };
+      const restaurant = await prisma.restaurant.findUnique({
+        where: { id: restaurantId },
+        select: { permissions: true },
+      });
+
+      if (!restaurant) {
+        return { authorized: false, user, error: "Restaurant not found" };
+      }
+
+      const permissions = restaurant.permissions as Permission;
+
+      if (!permissions[permissionKey]) {
+        return {
+          authorized: false,
+          user,
+          error: `Permission denied: ${permissionKey}`,
+        };
+      }
+
+      return { authorized: true, user };
     }
 
-    return { authorized: true, user };
+    return { authorized: false, user, error: "Invalid role" };
+  } catch (err: any) {
+    console.error("Authorization error:", err);
+    return {
+      authorized: false,
+      user: null,
+      error: err?.message || "Unknown error",
+    };
   }
-
-  return { authorized: false, user, error: "Invalid role" };
 }
 
 export async function checkPermission(
   restaurantId: string,
   permissionKey: keyof Permission
 ): Promise<boolean> {
-  const result = await authorize(restaurantId, permissionKey);
-  return result.authorized;
+  try {
+    const result = await authorize(restaurantId, permissionKey);
+    return result.authorized;
+  } catch (err) {
+    console.error("checkPermission error:", err);
+    return false;
+  }
 }
 
 export async function getRestaurantPermissions(
   restaurantId: string
 ): Promise<Permission | null> {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user) {
+    if (!session?.user) return null;
+
+    // Company Owner has all permissions
+    if (session.user.role === UserRole.ADMIN) {
+      return {
+        "menu.create": true,
+        "menu.read": true,
+        "menu.update": true,
+        "menu.schedule": true,
+        "menu.delete": true,
+        "menu.customize": true,
+        "table.create": true,
+        "table.read": true,
+        "table.update": true,
+        "table.delete": true,
+        "qrcode.generate": true,
+        "qrcode.read": true,
+        "qrcode.update": true,
+        "qrcode.delete": true,
+        "order.create": true,
+        "order.read": true,
+        "order.update": true,
+        "invoice.generate": true,
+        "invoice.download": true,
+        "analytics.view": true,
+        "staff.manage": true,
+        "settings.update": true,
+        "media.upload": true,
+      };
+    }
+
+    // Restaurant Owner gets assigned permissions
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: restaurantId },
+      select: { permissions: true },
+    });
+
+    return restaurant ? (restaurant.permissions as Permission) : null;
+  } catch (err) {
+    console.error("getRestaurantPermissions error:", err);
     return null;
   }
-
-  // Company Owner has all permissions
-  if (session.user.role === UserRole.ADMIN) {
-    return {
-      "menu.create": true,
-      "menu.read": true,
-      "menu.update": true,
-      "menu.delete": true,
-      "menu.customize": true,
-      "table.create": true,
-      "table.read": true,
-      "table.update": true,
-      "table.delete": true,
-      "qrcode.generate": true,
-      "qrcode.read": true,
-      "qrcode.update": true,
-      "qrcode.delete": true,
-      "order.create": true,
-      "order.read": true,
-      "order.update": true,
-      "invoice.generate": true,
-      "invoice.download": true,
-      "analytics.view": true,
-      "staff.manage": true,
-      "settings.update": true,
-      "media.upload": true,
-    };
-  }
-
-  // Restaurant Owner gets assigned permissions
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: restaurantId },
-    select: { permissions: true },
-  });
-
-  return restaurant ? (restaurant.permissions as Permission) : null;
 }
+
+export const DEFAULT_PERMISSIONS = {
+  "menu.create": false,
+  "menu.read": true,
+  "menu.update": false,
+  "menu.schedule": false,
+  "menu.delete": false,
+  "menu.customize": false,
+  "table.create": false,
+  "table.read": true,
+  "table.update": false,
+  "table.delete": false,
+  "qrcode.generate": false,
+  "qrcode.read": false,
+  "qrcode.update": false,
+  "qrcode.delete": false,
+  "order.create": false,
+  "order.read": true,
+  "order.update": false,
+  "invoice.generate": false,
+  "invoice.download": false,
+  "analytics.view": false,
+  "staff.manage": false,
+  "settings.update": false,
+  "media.upload": false,
+};

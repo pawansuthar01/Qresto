@@ -1,49 +1,54 @@
+"use client";
+
 import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { io, Socket } from "socket.io-client";
 
 export function useRealtimeOrders(restaurantId: string) {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
   const queryClient = useQueryClient();
 
-  // Play notification sound
-
   useEffect(() => {
     if (!restaurantId) return;
 
-    const eventSource = new EventSource(
-      `/api/restaurants/${restaurantId}/orders/realtime`
+    const socketClient = io(
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      {
+        path: "/api/socket",
+      }
     );
 
-    eventSource.onopen = () => {
+    socketClient.on("connect", () => {
       setIsConnected(true);
-      console.log("Real-time connection established");
-    };
+      console.log("✅ Connected to real-time server");
+      socketClient.emit("join-restaurant", restaurantId);
+    });
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.type === "orders" && data.data.length > 0) {
-          // Invalidate orders query to refetch
-          queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
-
-          // Increment new order count
-          setNewOrderCount((prev) => prev + data.data.length);
-        }
-      } catch (error) {
-        console.error("Error parsing SSE data:", error);
-      }
-    };
-
-    eventSource.onerror = () => {
+    socketClient.on("disconnect", () => {
       setIsConnected(false);
-      console.log("Real-time connection error");
-      eventSource.close();
-    };
+      console.log("⚠️ Disconnected from real-time server");
+    });
+
+    socketClient.on("new-order", (order) => {
+      // Refetch orders
+      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+
+      // Increment new order count
+      setNewOrderCount((prev) => prev + 1);
+
+      // Play notification sound
+      const audio = new Audio("/notification.mp3");
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    });
+
+    setSocket(socketClient);
 
     return () => {
-      eventSource.close();
+      socketClient.disconnect();
+      setSocket(null);
       setIsConnected(false);
     };
   }, [restaurantId, queryClient]);
@@ -52,5 +57,5 @@ export function useRealtimeOrders(restaurantId: string) {
     setNewOrderCount(0);
   }, []);
 
-  return { isConnected, newOrderCount, resetNewOrderCount };
+  return { isConnected, newOrderCount, resetNewOrderCount, socket };
 }

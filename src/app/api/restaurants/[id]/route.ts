@@ -17,9 +17,12 @@ export async function GET(
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
       include: {
-        users: { select: { id: true, name: true, email: true, role: true } },
-        categories: { include: { items: true }, orderBy: { sortOrder: "asc" } },
-        tables: { include: { qrCode: true }, orderBy: { number: "asc" } },
+        owners: { select: { id: true, name: true, email: true, role: true } },
+        categories: {
+          include: { items: true },
+          orderBy: { displayOrder: "asc" },
+        },
+        tables: { include: { qrCodes: true }, orderBy: { number: "asc" } },
       },
     });
 
@@ -141,7 +144,7 @@ export async function POST(req: Request) {
         slug,
         address,
         phone,
-        users: {
+        owners: {
           connect: ownerId ? { id: ownerId } : undefined,
         },
       },

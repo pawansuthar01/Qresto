@@ -15,7 +15,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 export default function SchedulesPage() {
   const params = useParams();
-  const restaurantId = params.rid as string;
+  const restaurantId = params.id as string;
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -31,7 +31,7 @@ export default function SchedulesPage() {
   });
 
   const canSchedule = hasPermission("menu.schedule");
-
+  console.log(canSchedule);
   if (!canSchedule) {
     return (
       <MainLayout>

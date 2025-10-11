@@ -58,7 +58,7 @@ export async function POST(
     }
 
     const permissions = restaurant.permissions as any;
-    authorize(session.user.role, permissions, "qrcode.generate");
+    authorize(permissions, "qrcode.generate");
 
     const body = await req.json();
     const { tableId } = body;
@@ -85,7 +85,7 @@ export async function POST(
         shortCode,
         tableId,
         restaurantId: params.id,
-        imageData,
+        dataUrl: imageData,
       },
       include: {
         table: true,
