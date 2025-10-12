@@ -14,14 +14,14 @@ export default async function CategoriesPage({
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/login");
+    redirect("/signin");
   }
 
   if (
     session.user.role === UserRole.OWNER &&
     session.user.restaurantId !== params.id
   ) {
-    redirect("/login");
+    redirect("/signin");
   }
 
   const permissions = await getRestaurantPermissions(params.id);
@@ -46,7 +46,7 @@ export default async function CategoriesPage({
   });
 
   if (!restaurant) {
-    redirect("/login");
+    redirect("/signin");
   }
 
   return (
