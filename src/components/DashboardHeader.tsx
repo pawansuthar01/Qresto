@@ -37,7 +37,7 @@ export default function DashboardHeader({ user, title }: DashboardHeaderProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => signOut({ callbackUrl: "/signin" })}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout

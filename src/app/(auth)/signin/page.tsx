@@ -27,25 +27,30 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-function SignInForm() {
+function useRoleBasedRedirect() {
   const router = useRouter();
   const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role) {
+      const role = session.user.role;
+      const redirectMap: Record<string, string> = {
+        ADMIN: "/company/dashboard",
+        SUPER_ADMIN: "/admin/dashboard",
+        OWNER: `/owner/restaurants/${
+          session.user.restaurantId || "padding"
+        }/dashboard`,
+      };
+      router.push(redirectMap[role] || "/");
+    }
+  }, [session, status, router]);
+}
+
+function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      if (session.user.role === "ADMIN") {
-        router.push("/admin/dashboard");
-      } else if (session.user.role === "OWNER") {
-        router.push(
-          `/owner/restaurants/${
-            session.user.restaurantId ? session.user.restaurantId : "padding"
-          }/dashboard`
-        );
-      }
-    }
-  }, [session, status, router]);
+  useRoleBasedRedirect();
 
   const {
     register,
@@ -57,62 +62,37 @@ function SignInForm() {
 
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
+    const result = await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
 
-    try {
-      const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        toast({
-          title: "Error",
-          description: "Invalid email or password",
-          variant: "destructive",
-        });
-      } else if (result?.ok) {
-        toast({
-          title: "Success",
-          description: "Signed in successfully",
-        });
-      }
-    } catch (error) {
+    if (result?.error) {
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: "Invalid email or password",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    try {
-      const res = await signIn("google", {
-        redirect: false,
-        callbackUrl: process.env.CALL_BACK_URL_AUTH_GOOGLE,
-      });
-      console.log(res);
-    } catch (error) {
+    await signIn("google", {
+      redirect: false,
+      callbackUrl: process.env.CALL_BACK_URL_AUTH_GOOGLE,
+    }).catch(() => {
       toast({
         title: "Error",
         description: "Failed to sign in with Google",
         variant: "destructive",
       });
       setIsGoogleLoading(false);
-    }
+    });
   };
-
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">

@@ -36,8 +36,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
-        <link rel="icon" href="./icons/logo_Qresto.png" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="icon" href="/logo_Qresto.png" />
+        <link rel="apple-touch-icon" href="/logo_Qresto.png" />
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>

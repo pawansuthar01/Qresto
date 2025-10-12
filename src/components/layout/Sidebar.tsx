@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, generateShortCode } from "@/lib/utils";
 import { useUserStore } from "@/store/userStore";
 import {
   LayoutDashboard,
@@ -91,7 +91,7 @@ export function Sidebar({ className }: SidebarProps) {
         <nav className="flex flex-col gap-2 p-4 text-center mt-20">
           <Settings className="w-4 h-4 text-gray-400 mx-auto mb-4" />
           <h3 className="text-sm font-semibold text-gray-900 mb-2">
-            No permissions assigned
+            No restaurant assigned
           </h3>
           <p className="text-gray-600 text-xs">
             Contact your administrator to get access to features
@@ -105,13 +105,13 @@ export function Sidebar({ className }: SidebarProps) {
       className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
     >
       <nav className="flex flex-col gap-2 p-4 mt-10">
-        {links.map((link) => {
+        {links.map((link, index) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
           return (
             <>
               <Link
-                key={link.href}
+                key={index}
                 href={link.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
@@ -128,6 +128,7 @@ export function Sidebar({ className }: SidebarProps) {
         })}
         {links.length !== 0 && session?.user.role === "OWNER" && (
           <button
+            key={generateShortCode(10)}
             type="reset"
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
