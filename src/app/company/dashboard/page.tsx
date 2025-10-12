@@ -10,7 +10,7 @@ export default async function CompanyDashboardPage() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return redirect("/login");
+      return redirect("/signin");
     }
 
     // Fetch restaurants with related owners and counts
@@ -40,6 +40,6 @@ export default async function CompanyDashboardPage() {
     console.error("Error loading company dashboard:", error);
 
     // Optional: Redirect to a generic error page
-    redirect("/error");
+    throw Error(error instanceof Error ? error.message : "Unknown error");
   }
 }

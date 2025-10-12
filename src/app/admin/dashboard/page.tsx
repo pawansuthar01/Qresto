@@ -9,7 +9,7 @@ export default async function AdminDashboardPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== UserRole.SUPER_ADMIN) {
-    redirect("/login");
+    redirect("/signin");
   }
 
   // Get all company pages
