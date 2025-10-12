@@ -45,7 +45,6 @@ export function useCreateRestaurant() {
 }
 
 export function useUpdateRestaurant(id: string) {
-  if (!id) return;
   const queryClient = useQueryClient();
 
   return useMutation({

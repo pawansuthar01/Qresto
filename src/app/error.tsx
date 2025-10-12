@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-interface ErrorProps {
-  error: Error;
-  reset: () => void; // Provided by Next.js error boundaries
-}
-
-export default function GlobalError({ error, reset }: ErrorProps) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   const router = useRouter();
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
       <p className="mt-2 text-gray-600">{error?.message}</p>
       <div className="mt-6 flex gap-4">
         <button
-          onClick={() => (reset ? reset() : router.forward())}
+          onClick={() => reset()}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
         >
           Retry
