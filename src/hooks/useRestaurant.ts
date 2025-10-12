@@ -15,6 +15,8 @@ export function useRestaurant(id: string) {
   return useQuery({
     queryKey: ["restaurants", id],
     queryFn: async () => {
+      if (!id) return;
+
       const res = await fetch(`/api/restaurants/${id}`);
       if (!res.ok) throw new Error("Failed to fetch restaurant");
       return res.json();
@@ -43,6 +45,7 @@ export function useCreateRestaurant() {
 }
 
 export function useUpdateRestaurant(id: string) {
+  if (!id) return;
   const queryClient = useQueryClient();
 
   return useMutation({

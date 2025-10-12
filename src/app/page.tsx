@@ -32,7 +32,7 @@ export default async function HomePage() {
             <QrCode className="w-8 h-8 text-blue-600" />
             <span className="text-2xl font-bold text-gray-900">QResto</span>
           </div>
-          <Link href="/login">
+          <Link href="/signin">
             <Button>Login</Button>
           </Link>
         </div>
@@ -85,7 +85,7 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <Link href="/login">
+          <Link href="/signin">
             <Button size="lg" className="text-lg px-8 py-6">
               Get Started
             </Button>

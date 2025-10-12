@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 interface ErrorProps {
   error: Error;
-  reset: () => void; // Provided by Next.js error boundaries
+  reset: () => void;
 }
 
 export default function GlobalError({ error, reset }: ErrorProps) {

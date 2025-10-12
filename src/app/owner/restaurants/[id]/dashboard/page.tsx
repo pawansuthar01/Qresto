@@ -4,11 +4,38 @@ import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UtensilsCrossed, Table, QrCode, ShoppingCart } from "lucide-react";
+import {
+  UtensilsCrossed,
+  Table,
+  QrCode,
+  ShoppingCart,
+  Settings,
+} from "lucide-react";
 
 export default function OwnerDashboardPage() {
   const params = useParams();
+
   const restaurantId = params.id as string;
+
+  if (
+    restaurantId == "padding" ||
+    restaurantId == "undefined" ||
+    !restaurantId
+  ) {
+    return (
+      <MainLayout>
+        <Card className="p-12 text-center">
+          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No restaurant assigned
+          </h3>
+          <p className="text-gray-600">
+            Contact your administrator to get access to features
+          </p>
+        </Card>
+      </MainLayout>
+    );
+  }
   const { data: restaurant, isLoading } = useRestaurant(restaurantId);
 
   if (isLoading) {

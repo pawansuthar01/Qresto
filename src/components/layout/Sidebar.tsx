@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   TrendingUp,
   Calendar,
+  Settings,
 } from "lucide-react";
 interface SidebarProps {
   className?: string;
@@ -71,7 +72,6 @@ export function Sidebar({ className }: SidebarProps) {
     : [];
 
   const links = session?.user.role === "ADMIN" ? adminLinks : ownerLinks;
-  console.log(links);
   if (!sidebarOpen) return null;
   // On click or action
   const openAnalyticsInNewTab = () => {
@@ -83,15 +83,31 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
+  if (session?.user.role === "OWNER" && !session?.user.restaurantId) {
+    return (
+      <aside
+        className={`fixed  inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
+      >
+        <nav className="flex flex-col gap-2 p-4 text-center mt-20">
+          <Settings className="w-4 h-4 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">
+            No permissions assigned
+          </h3>
+          <p className="text-gray-600 text-xs">
+            Contact your administrator to get access to features
+          </p>
+        </nav>
+      </aside>
+    );
+  }
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
     >
-      <nav className="flex flex-col gap-2 p-4">
+      <nav className="flex flex-col gap-2 p-4 mt-10">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
-          console.log({ pathname, href: link.href, isActive });
           return (
             <>
               <Link

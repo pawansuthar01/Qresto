@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { ToastProvider } from "@radix-ui/react-toast";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,13 +35,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning={true}>
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="./icons/logo_Qresto.png" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <Toaster />
       </body>
     </html>
   );

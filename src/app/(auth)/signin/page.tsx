@@ -12,14 +12,13 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { signIn, useSession } from "next-auth/react";
+import { toast } from "@/components/ui/use-toast";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -30,7 +29,6 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 function SignInForm() {
   const router = useRouter();
-  const { toast } = useToast();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -78,7 +76,6 @@ function SignInForm() {
           title: "Success",
           description: "Signed in successfully",
         });
-        // Session will be updated and useEffect will handle redirect
       }
     } catch (error) {
       toast({
@@ -94,7 +91,11 @@ function SignInForm() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/admin/dashboard" });
+      const res = await signIn("google", {
+        redirect: false,
+        callbackUrl: process.env.CALL_BACK_URL_AUTH_GOOGLE,
+      });
+      console.log(res);
     } catch (error) {
       toast({
         title: "Error",
@@ -235,26 +236,6 @@ function SignInForm() {
             )}
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <div className="rounded-md bg-muted p-3 text-center w-full">
-            <p className="text-xs font-medium text-muted-foreground">
-              Demo Admin Credentials
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Email:{" "}
-              <code className="bg-background px-1">admin@qresto.com</code>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Password: <code className="bg-background px-1">password123</code>
-            </p>
-          </div>
-          <p className="text-xs text-center text-muted-foreground">
-            Demo credentials: admin@qresto.com / password123
-          </p>
-          <p className="text-xs text-center text-muted-foreground">
-            Contact your administrator for account access
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
