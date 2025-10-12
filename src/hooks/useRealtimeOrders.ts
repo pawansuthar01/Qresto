@@ -13,12 +13,9 @@ export function useRealtimeOrders(restaurantId: string) {
   useEffect(() => {
     if (!restaurantId) return;
 
-    const socketClient = io(
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-      {
-        path: "/api/socket",
-      }
-    );
+    const socketClient = io(process.env.NEXTAUTH_URL, {
+      path: "/api/socket",
+    });
 
     socketClient.on("connect", () => {
       setIsConnected(true);

@@ -25,7 +25,7 @@ app.prepare().then(() => {
   const { Server } = require("socket.io");
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      origin: process.env.NEXTAUTH_URL,
       methods: ["GET", "POST"],
     },
     path: "/api/socket",
