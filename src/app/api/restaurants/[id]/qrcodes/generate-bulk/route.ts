@@ -37,7 +37,9 @@ export async function POST(
     authorize(permissions, "qrcode.generate");
 
     // Find tables without QR codes
-    const tablesWithoutQR = restaurant.tables.filter((t: any) => !t.qrCodes);
+    const tablesWithoutQR = restaurant.tables.filter(
+      (t: any) => t.qrCodes.length === 0
+    );
 
     if (tablesWithoutQR.length === 0) {
       return NextResponse.json({ message: "All tables already have QR codes" });
