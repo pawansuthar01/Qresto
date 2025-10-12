@@ -27,12 +27,11 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-function useRoleBasedRedirect() {
-  const router = useRouter();
+function SignInForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { data: session, status } = useSession();
-  useEffect(() => {
-    console.log("SESSION STATUS:", status, session);
-  }, [status, session]);
+  const router = useRouter();
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
@@ -47,13 +46,6 @@ function useRoleBasedRedirect() {
       router.push(redirectMap[role] || "/");
     }
   }, [session, status, router]);
-}
-
-function SignInForm() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  useRoleBasedRedirect();
 
   const {
     register,
