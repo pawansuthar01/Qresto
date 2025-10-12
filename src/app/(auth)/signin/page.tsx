@@ -30,6 +30,9 @@ type SignInFormData = z.infer<typeof signInSchema>;
 function useRoleBasedRedirect() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  useEffect(() => {
+    console.log("SESSION STATUS:", status, session);
+  }, [status, session]);
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
@@ -65,7 +68,8 @@ function SignInForm() {
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
-      redirect: false,
+      redirect: true,
+      callbackUrl: "/",
     });
 
     if (result?.error) {
@@ -82,7 +86,7 @@ function SignInForm() {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     await signIn("google", {
-      redirect: false,
+      redirect: true,
       callbackUrl: process.env.CALL_BACK_URL_AUTH_GOOGLE,
     }).catch(() => {
       toast({
