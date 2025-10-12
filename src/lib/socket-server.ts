@@ -16,7 +16,7 @@ const tableSessions = new Map<string, TableSession>();
 export function initSocketServer(httpServer: HTTPServer): SocketIOServer {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      origin: process.env.NEXTAUTH_URL,
       methods: ["GET", "POST"],
     },
     path: "/api/socket",
