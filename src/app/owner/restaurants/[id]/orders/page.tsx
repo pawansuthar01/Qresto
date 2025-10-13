@@ -9,6 +9,7 @@ import { useRestaurant } from "@/hooks/useRestaurant";
 import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Bell, Wifi, WifiOff } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 export default function OrdersPage() {
   const params = useParams();
@@ -16,7 +17,7 @@ export default function OrdersPage() {
   const { data: restaurant } = useRestaurant(restaurantId);
   const [orders, setOrders] = useState<any[]>([]);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  const { isConnected, newOrderCount, resetNewOrderCount, socket } =
+  const { isConnected, newOrderCount, resetNewOrderCount } =
     useRealtimeOrders(restaurantId);
   const [isLoading, setLoading] = useState(true);
 
@@ -24,7 +25,13 @@ export default function OrdersPage() {
   async function fetchOrders() {
     setLoading(true);
     const res = await fetch(`/api/restaurants/${restaurantId}/orders`);
-    if (!res.ok) throw new Error("Failed to fetch orders");
+    if (!res.ok) {
+      toast({
+        title: "something went wrong",
+        description: "failed to fetch orders",
+        variant: "destructive",
+      });
+    }
     const data = await res.json();
     setOrders(data);
     setLoading(false);
@@ -34,26 +41,16 @@ export default function OrdersPage() {
     fetchOrders();
   }, [restaurantId]);
 
-  // Listen to new orders via Socket.IO
+  // Update orders when new order arrives
   useEffect(() => {
-    if (!socket) return;
+    if (newOrderCount <= 0) return;
 
-    const handleNewOrder = (order: any) => {
-      setOrders((prev) => [order, ...prev]); // Add new order at the top
-    };
-
-    socket.on("new-order", handleNewOrder);
-
-    return () => {
-      socket.off("new-order", handleNewOrder);
-    };
-  }, [socket]);
+    // Refetch latest orders whenever a new order is detected
+    fetchOrders();
+    resetNewOrderCount();
+  }, [newOrderCount, resetNewOrderCount, restaurantId]);
 
   const canRead = hasPermission("order.read");
-
-  useEffect(() => {
-    if (newOrderCount > 0) resetNewOrderCount();
-  }, [newOrderCount, resetNewOrderCount]);
 
   useEffect(() => {
     document.title =

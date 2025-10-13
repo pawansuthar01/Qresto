@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/utils";
 import { z } from "zod";
+import { supabaseAdmin } from "@/lib/supabase"; // Use Supabase Admin client
 
 // Schema for guest order creation
 const createGuestOrderSchema = z.object({
@@ -29,10 +30,7 @@ export async function POST(
       include: {
         table: true,
         restaurant: {
-          select: {
-            id: true,
-            permissions: true,
-          },
+          select: { id: true, permissions: true },
         },
       },
     });
@@ -113,16 +111,13 @@ export async function POST(
       },
     });
 
-    // Emit real-time event safely
-    if (global?.io?.to) {
-      try {
-        global.io
-          .to(`restaurant:${qrCode.restaurant.id}`)
-          ?.emit("new-order", order);
-        global.io.to(`table:${qrCode.table.id}`)?.emit("order-created", order);
-      } catch (emitError) {
-        console.warn("Failed to emit real-time order event:", emitError);
-      }
+    // Emit real-time event using Supabase Realtime
+    try {
+      await supabaseAdmin
+        .from(`orders:restaurantId=eq.${qrCode.restaurant.id}`)
+        .insert([order]);
+    } catch (emitError) {
+      console.warn("Failed to emit Supabase Realtime order:", emitError);
     }
 
     return NextResponse.json(order, { status: 201 });

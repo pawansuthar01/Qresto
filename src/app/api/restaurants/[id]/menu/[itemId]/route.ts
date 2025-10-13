@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { z } from "zod";
 
 const updateMenuItemSchema = z.object({
@@ -16,62 +17,39 @@ const updateMenuItemSchema = z.object({
   displayOrder: z.number().optional(),
 });
 
-// PATCH - Update menu item (permission: menu.update)
+// PATCH - Update menu item
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { authorized, error } = await authorize(params.id, "menu.update");
-
-    if (!authorized) {
-      return NextResponse.json({ error }, { status: 403 });
-    }
+    if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
     const body = await request.json();
     const validatedData = updateMenuItemSchema.parse(body);
 
     const menuItem = await prisma.menuItem.update({
-      where: {
-        id: params.itemId,
-        restaurantId: params.id,
-      },
+      where: { id: params.itemId, restaurantId: params.id },
       data: validatedData,
-      include: {
-        category: true,
-      },
+      include: { category: true },
     });
 
-    // Emit real-time update to all connected clients
-    if (global.io) {
-      global.io
-        .to(`restaurant:${params.id}`)
-        .emit("menu-item-updated", menuItem);
-
-      // Notify all tables in restaurant
-      const tables = await prisma.table.findMany({
-        where: { restaurantId: params.id },
-        select: { id: true },
-      });
-
-      if (global.io) {
-        const io = global.io;
-        tables.forEach((table) => {
-          io.to(`table:${table.id}`).emit("menu-item-updated", menuItem);
-        });
-      }
-    }
+    // Broadcast to Supabase Realtime channel
+    await supabaseAdmin
+      .from(`menu:restaurantId=eq.${params.id}`)
+      .upsert(menuItem, { onConflict: "id" });
 
     return NextResponse.json(menuItem);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+  } catch (err) {
+    if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: err.errors },
         { status: 400 }
       );
     }
-
-    console.error("Error updating menu item:", error);
+    console.error("Error updating menu item:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -79,48 +57,29 @@ export async function PATCH(
   }
 }
 
-// DELETE - Delete menu item (permission: menu.delete)
+// DELETE - Delete menu item
 export async function DELETE(
   _: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { authorized, error } = await authorize(params.id, "menu.delete");
-
-    if (!authorized) {
-      return NextResponse.json({ error }, { status: 403 });
-    }
+    if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
     await prisma.menuItem.delete({
-      where: {
-        id: params.itemId,
-        restaurantId: params.id,
-      },
+      where: { id: params.itemId, restaurantId: params.id },
     });
 
-    // Emit real-time deletion
-    if (global.io) {
-      global.io.to(`restaurant:${params.id}`).emit("menu-item-deleted", {
-        itemId: params.itemId,
-      });
-
-      const tables = await prisma.table.findMany({
-        where: { restaurantId: params.id },
-        select: { id: true },
-      });
-      if (global.io) {
-        const io = global.io;
-        tables.forEach((table) => {
-          io.to(`table:${table.id}`).emit("menu-item-deleted", {
-            itemId: params.itemId,
-          });
-        });
-      }
-    }
+    // Broadcast deletion via Supabase
+    await supabaseAdmin
+      .from(`menu:restaurantId=eq.${params.id}`)
+      .delete()
+      .eq("id", params.itemId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting menu item:", error);
+  } catch (err) {
+    console.error("Error deleting menu item:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const updateStatusSchema = z.object({
   status: z.enum(["active", "suspended", "blocked"]),
@@ -34,22 +35,27 @@ export async function PATCH(
       },
     });
 
-    // ✅ Emit real-time status change safely
-    if (typeof global !== "undefined" && global.io) {
-      global?.io
-        .to(`restaurant:${params.id}`)
-        .emit("restaurant-status-changed", { status, reason });
+    // ✅ Emit real-time status change via Supabase Realtime
+    await supabaseAdmin
+      .from(`restaurants:id=eq.${params.id}`)
+      .upsert(
+        { ...restaurant, _realtime_event: "status-changed" },
+        { onConflict: "id" }
+      );
 
-      const tables = await prisma.table.findMany({
-        where: { restaurantId: params.id },
-        select: { id: true },
-      });
+    // Optional: also update all tables in this restaurant (if you have a tables table in Supabase)
+    const tables = await prisma.table.findMany({
+      where: { restaurantId: params.id },
+      select: { id: true },
+    });
 
-      tables.forEach((table: any) => {
-        global?.io
-          ?.to(`table:${table.id}`)
-          .emit("restaurant-status-changed", { status, reason });
-      });
+    for (const table of tables) {
+      await supabaseAdmin
+        .from(`tables:id=eq.${table.id}`)
+        .upsert({
+          restaurantStatus: status,
+          _realtime_event: "restaurant-status-changed",
+        });
     }
 
     return NextResponse.json(restaurant);

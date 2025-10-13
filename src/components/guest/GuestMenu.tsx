@@ -15,9 +15,8 @@ import { formatCurrency } from "@/lib/utils";
 import { CartItem } from "@/types";
 import Cart from "./cart";
 import Image from "next/image";
-import { useTableSocket } from "@/hooks/useSocket";
 import { notificationSound } from "@/lib/notification-sound";
-
+import { supabaseClient } from "@/lib/supabase";
 interface GuestMenuProps {
   data: any;
   shortCode: string;
@@ -147,6 +146,13 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
     initialCategories[0]?.id || ""
   );
   const [categories, setCategories] = useState(initialCategories);
+  const [tableStatus, setTableStatus] = useState({
+    joined: true,
+    isFull: false,
+    error: "",
+    userCount: 0,
+    capacity: table.capacity,
+  });
 
   // Merge restaurant customization with defaults
   const theme = {
@@ -154,29 +160,55 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
     ...restaurant.customization,
   };
 
-  const { socket, connected, tableStatus } = useTableSocket(
-    table.id,
-    restaurant.id,
-    table.capacity
-  );
-
   useEffect(() => {
-    if (!socket) return;
-    socket.on("menu-updated", (updatedMenu) =>
-      setCategories(updatedMenu.categories)
-    );
-    socket.on("order-status-changed", () =>
-      notificationSound.playStatusUpdate()
-    );
-    socket.on("order-created", (order) =>
-      console.log("Order confirmed:", order)
-    );
+    // Subscribe to menu updates for this restaurant
+    const menuChannel = supabaseClient
+      .channel(`public:menu_categories:restaurant_id=eq.${restaurant.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "menu_categories" },
+        (payload: any) => {
+          if (
+            payload.eventType === "UPDATE" ||
+            payload.eventType === "INSERT"
+          ) {
+            const updatedCategory = payload.new;
+            setCategories((prev: any) =>
+              prev.map((cat: any) =>
+                cat.id === updatedCategory.id
+                  ? { ...cat, ...updatedCategory }
+                  : cat
+              )
+            );
+            notificationSound.playStatusUpdate();
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to table updates (e.g., seat count / table full)
+    const tableChannel = supabaseClient
+      .channel(`public:tables:id=eq.${table.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tables" },
+        (payload: any) => {
+          const updatedTable = payload.new;
+          setTableStatus((prev) => ({
+            ...prev,
+            userCount: updatedTable.userCount,
+            isFull: updatedTable.userCount >= updatedTable.capacity,
+            error: updatedTable.isFullMessage || "",
+          }));
+        }
+      )
+      .subscribe();
+
     return () => {
-      socket.off("menu-updated");
-      socket.off("order-status-changed");
-      socket.off("order-created");
+      supabaseClient.removeChannel(menuChannel);
+      supabaseClient.removeChannel(tableChannel);
     };
-  }, [socket]);
+  }, [restaurant.id, table.id]);
 
   useEffect(() => {
     const enableAudio = () => {
@@ -192,7 +224,6 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
       ...menuItem,
       imageUrl: menuItem.imageUrl || undefined,
     };
-
     setCart((prev) => {
       const existing = prev.find(
         (item) => item.menuItem.id === normalizedItem.id
@@ -229,7 +260,6 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   );
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Table Full Error Screen
   if (tableStatus.isFull) {
     return (
       <div
@@ -404,7 +434,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
           )}
         </div>
 
-        {!connected && (
+        {!tableStatus.joined && (
           <div
             className="mt-2 text-xs rounded px-2 py-1 text-center"
             style={{

@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
-    "build": "prisma generate && next build",
-    "start": "NODE_ENV=production node server.js",
-    "lint": "next lint",
-    "postinstall": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "seed": "ts-node prisma/seed-updated.ts"
-  },
+  "dev": "next dev",
+  "build": "prisma generate && next build",
+  "start": "NODE_ENV=production next start",
+  "lint": "next lint",
+  "postinstall": "prisma generate",
+  "db:push": "prisma db push",
+  "db:migrate": "prisma migrate dev",
+  "db:studio": "prisma studio",
+  "seed": "ts-node prisma/seed-updated.ts"
+},
+
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",
     "@hookform/resolvers": "^5.2.2",
@@ -51,6 +52,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.75.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.20",
     "@types/qrcode": "^1.5.5",

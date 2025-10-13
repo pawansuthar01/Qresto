@@ -3,6 +3,7 @@ import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 import { z } from "zod";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 const updateOrderSchema = z.object({
   status: z.nativeEnum(OrderStatus),
@@ -13,53 +14,37 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
+  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { authorized, error } = await authorize(params.id, "order.update");
-
-    if (!authorized) {
-      return NextResponse.json({ error }, { status: 403 });
-    }
+    if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
     const body = await request.json();
     const { status } = updateOrderSchema.parse(body);
 
     const order = await prisma.order.update({
-      where: {
-        id: params.orderId,
-        restaurantId: params.id,
-      },
+      where: { id: params.orderId, restaurantId: params.id },
       data: { status },
       include: {
         table: true,
-        items: {
-          include: {
-            menuItem: true,
-          },
-        },
+        items: { include: { menuItem: true } },
       },
     });
 
-    // Emit real-time status update
-    if (global.io) {
-      global.io.to(`restaurant:${params.id}`).emit("order-updated", order);
-      global.io.to(`table:${order.tableId}`).emit("order-status-changed", {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        status: order.status,
-        order,
-      });
-    }
+    // Broadcast order update via Supabase Realtime
+    await supabaseAdmin
+      .from(`orders:restaurantId=eq.${params.id}`)
+      .upsert(order, { onConflict: "id" });
 
     return NextResponse.json(order);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+  } catch (err) {
+    if (err instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: err.errors },
         { status: 400 }
       );
     }
-
-    console.error("Error updating order:", error);
+    console.error("Error updating order:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

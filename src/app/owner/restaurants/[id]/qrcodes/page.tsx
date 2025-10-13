@@ -22,7 +22,6 @@ export default function QRCodesPage() {
       return res.json();
     },
   });
-  console.log(restaurant);
 
   const canRead = hasPermission("qrcode.read");
   const canGenerate = hasPermission("qrcode.generate");
@@ -38,7 +37,6 @@ export default function QRCodesPage() {
       </MainLayout>
     );
   }
-  console.log(qrCodes);
 
   return (
     <MainLayout>

@@ -84,7 +84,6 @@ export function CreateMenuItemDialog({
       });
     }
   };
-  console.log("All current form values:", itemForm.getValues());
   const onSubmitItem = async (data: any) => {
     try {
       const payload = { restaurantId, ...data, type: "item" };

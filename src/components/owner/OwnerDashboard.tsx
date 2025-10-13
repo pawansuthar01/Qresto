@@ -19,7 +19,7 @@ import {
 import DashboardHeader from "@/components/DashboardHeader";
 import { formatCurrency, formatRelativeTime } from "@/lib/utils";
 import { Permission } from "@/types";
-import { useRestaurantSocket } from "@/hooks/useSocket";
+import { supabaseClient } from "@/lib/supabase";
 import { notificationSound } from "@/lib/notification-sound";
 
 interface OwnerDashboardProps {
@@ -40,52 +40,57 @@ export default function OwnerDashboard({
   const [newOrderAlert, setNewOrderAlert] = useState(false);
 
   // Connect to restaurant socket
-  const { socket, connected } = useRestaurantSocket(restaurant.id);
-
-  // Listen for real-time order updates
   useEffect(() => {
-    if (!socket) return;
+    const channel = supabaseClient
+      .channel(`public:orders:restaurant_id=eq.${restaurant.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `restaurant_id=eq.${restaurant.id}`,
+        },
+        (payload) => {
+          const order = payload.new;
+          console.log("🔔 New order received:", order);
+          setOrders((prev) => [order, ...prev]);
 
-    // New order received
-    socket.on("new-order", (order) => {
-      console.log("🔔 New order received:", order);
+          // Play sound alert
+          if (soundEnabled) {
+            notificationSound.playOrderAlert();
+          }
 
-      // Add to orders list
-      setOrders((prev) => [order, ...prev]);
+          // Show visual alert
+          setNewOrderAlert(true);
+          setTimeout(() => setNewOrderAlert(false), 3000);
 
-      // Play sound alert
-      if (soundEnabled) {
-        notificationSound.playOrderAlert();
-      }
-
-      // Show visual alert
-      setNewOrderAlert(true);
-      setTimeout(() => setNewOrderAlert(false), 3000);
-
-      // Show browser notification if permitted
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("New Order!", {
-          body: `Order ${order.orderNumber} from Table ${order.table.number}`,
-          icon: "/icon-192x192.png",
-          badge: "/icon-192x192.png",
-        });
-      }
-    });
-
-    // Order updated
-    socket.on("order-updated", (updatedOrder) => {
-      setOrders((prev) =>
-        prev.map((order) =>
-          order.id === updatedOrder.id ? updatedOrder : order
-        )
-      );
-    });
+          // Browser notification
+          if (
+            "Notification" in window &&
+            Notification.permission === "granted"
+          ) {
+            new Notification("New Order!", {
+              body: `Order ${order.orderNumber} from Table ${order.tableNumber}`,
+              icon: "/icon-192x192.png",
+              badge: "/icon-192x192.png",
+            });
+          }
+        }
+      )
+      .subscribe();
 
     return () => {
-      socket.off("new-order");
-      socket.off("order-updated");
+      supabaseClient.removeChannel(channel);
     };
-  }, [socket, soundEnabled]);
+  }, [restaurant.id, soundEnabled]);
+
+  // Request browser notification permission
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Request notification permission
   useEffect(() => {
@@ -187,12 +192,10 @@ export default function OwnerDashboard({
               </h1>
               <p className="text-gray-600 mt-1 flex items-center gap-2">
                 Welcome back! Here's your overview.
-                {connected && (
-                  <span className="inline-flex items-center gap-1 text-green-600 text-sm">
-                    <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                    Live
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 text-green-600 text-sm">
+                  <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+                  Live
+                </span>
               </p>
             </div>
             <Button

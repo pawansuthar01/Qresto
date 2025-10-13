@@ -24,7 +24,6 @@ export default function MenuPage() {
   const { data: menu, isLoading } = useMenu(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [customizerOpen, setCustomizerOpen] = useState(false);
   const canCreate = hasPermission("menu.create");
   const canCustomize = hasPermission("menu.customize");
 
@@ -123,34 +122,6 @@ export default function MenuPage() {
           </Card>
         </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Menu Management</h1>
-            <p className="text-muted-foreground">
-              Manage your restaurant menu items
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {canCustomize && (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  router.push(`/owner/restaurants/${restaurant.id}/menu/theme`)
-                }
-              >
-                <Palette className="mr-2 h-4 w-4" />
-                Customize Design
-              </Button>
-            )}
-            {canCreate && (
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Item
-              </Button>
-            )}
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Loading menu...</p>
@@ -176,14 +147,6 @@ export default function MenuPage() {
             categories={menu || []}
             open={createDialogOpen}
             onOpenChange={setCreateDialogOpen}
-          />
-        )}
-
-        {canCustomize && (
-          <MenuCustomizer
-            restaurant={restaurant}
-            open={customizerOpen}
-            onOpenChange={setCustomizerOpen}
           />
         )}
       </div>

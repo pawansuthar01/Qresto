@@ -3,6 +3,7 @@ import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { updateThemeSchema } from "@/lib/schemas/theme";
 import z from "zod";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 // GET - Get current theme
 export async function GET(
@@ -38,6 +39,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { authorized, error } = await authorize(params.id, "menu.customize");
 
     if (!authorized) {
@@ -64,21 +66,23 @@ export async function PATCH(
       ...(restaurant.customization as any),
       ...validatedData,
     };
+
     const updated = await prisma.restaurant.update({
       where: { id: params.id },
       data: { customization: updatedCustomization },
     });
 
-    if (global.io) {
-      const io = global.io;
-      const tables = await prisma.table.findMany({
-        where: { restaurantId: params.id },
-        select: { id: true },
-      });
-
-      tables.forEach((table) => {
-        io.to(`table:${table.id}`).emit("theme-updated", updatedCustomization);
-      });
+    // ✅ Emit real-time update via Supabase Realtime
+    try {
+      await supabaseAdmin.from(`restaurants:id=eq.${params.id}`).upsert(
+        {
+          customization: updatedCustomization,
+          _realtime_event: "theme-updated",
+        },
+        { onConflict: "id" }
+      );
+    } catch (supabaseError) {
+      console.warn("Supabase Realtime failed:", supabaseError);
     }
 
     return NextResponse.json(updated);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const updateScheduleSchema = z.object({
   categoryId: z.string(),
@@ -12,10 +13,10 @@ const updateScheduleSchema = z.object({
     "event-based",
     "season-based",
   ]),
-  schedule: z.any(), // MenuSchedule type
+  schedule: z.any(), // Can be typed more strictly if you have a MenuSchedule type
 });
 
-// GET - Get all menu schedules
+// GET - Fetch all menu schedules
 export async function GET(
   _: NextRequest,
   { params }: { params: { id: string } }
@@ -42,17 +43,16 @@ export async function GET(
   }
 }
 
-// PATCH - Update menu schedule (permission: menu.schedule)
+// PATCH - Update menu schedule (permission: menu.update)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Check for special schedule permission
-    const session = await authorize(params.id, "menu.update");
-
-    if (!session.authorized) {
-      return NextResponse.json({ error: session.error }, { status: 403 });
+    // Check permission
+    const { authorized, error } = await authorize(params.id, "menu.update");
+    if (!authorized) {
+      return NextResponse.json({ error }, { status: 403 });
     }
 
     const body = await request.json();
@@ -60,37 +60,20 @@ export async function PATCH(
       updateScheduleSchema.parse(body);
 
     const updated = await prisma.menuCategory.update({
-      where: {
-        id: categoryId,
-        restaurantId: params.id,
-      },
-      data: {
-        scheduleType,
-        schedule,
-      },
+      where: { id: categoryId, restaurantId: params.id },
+      data: { scheduleType, schedule },
     });
 
-    // Emit real-time schedule update
-    if (global.io) {
-      global.io.to(`restaurant:${params.id}`).emit("schedule-updated", {
-        categoryId,
-        scheduleType,
-        schedule,
-      });
-
-      // Notify all tables
-      const tables = await prisma.table.findMany({
-        where: { restaurantId: params.id },
-        select: { id: true },
-      });
-
-      tables.forEach((table) => {
-        global?.io?.to(`table:${table.id}`).emit("schedule-updated", {
-          categoryId,
-          scheduleType,
-          schedule,
-        });
-      });
+    // ✅ Push real-time update via Supabase Realtime only
+    try {
+      await supabaseAdmin
+        .from(`menu_categories:id=eq.${categoryId}`)
+        .upsert(
+          { scheduleType, schedule, _realtime_event: "schedule-updated" },
+          { onConflict: "id" }
+        );
+    } catch (supabaseError) {
+      console.warn("Supabase Realtime failed:", supabaseError);
     }
 
     return NextResponse.json(updated);
