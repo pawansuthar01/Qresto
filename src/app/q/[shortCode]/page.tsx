@@ -1,7 +1,7 @@
 import GuestMenu from "@/components/guest/GuestMenu";
 
 async function getMenuData(shortCode: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/q/${shortCode}`, {
     cache: "no-store",
   });
@@ -15,7 +15,6 @@ export default async function GuestMenuPage({
   params: { shortCode: string };
 }) {
   const data = await getMenuData(params.shortCode);
-
   if (!data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -30,6 +29,20 @@ export default async function GuestMenuPage({
       </div>
     );
   }
+  if (data?.categories.length <= 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-sm w-full text-center">
+          <div className="text-6xl mb-4">📭</div>
 
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+            No Menu available
+          </h1>
+
+          <p className="text-gray-600 mb-6">Content to staff.</p>
+        </div>
+      </div>
+    );
+  }
   return <GuestMenu data={data} shortCode={params.shortCode} />;
 }

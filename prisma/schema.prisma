@@ -24,6 +24,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum Status {
+ active
+  suspended
+  blocked
+  deleted
+}
+
 model User {
   id            String       @id @default(cuid())
   email         String       @unique
@@ -97,7 +104,7 @@ model Restaurant {
   email       String?
   
   // Status management
-  status      String   @default("active") // "active", "suspended", "blocked"
+  status      Status   @default(active) // "active", "suspended", "blocked"
   suspendedAt DateTime?
   suspendedReason String?
   
@@ -125,29 +132,45 @@ model Restaurant {
   @@index([status])
   @@map("restaurants")
 }
-
 model MenuCategory {
   id           String     @id @default(cuid())
   name         String
   description  String?
   displayOrder Int        @default(0)
   isActive     Boolean    @default(true)
-  
-  // Time-based scheduling
-  scheduleType String     @default("always") // "always", "time-based", "date-based", "event-based"
-  schedule     Json?      @default("{}") // Flexible schedule configuration
-  
+
+  // Scheduling
+  scheduleType String     @default("always") // "always", "DAILY", "WEEKLY", "DATE_RANGE", "EVENT", "SEASONAL"
+
+  // Daily / Weekly schedule
+  startTime    String?    // "HH:mm"
+  endTime      String?    // "HH:mm"
+  daysOfWeek   String[]  // ["monday", "tuesday"] only for WEEKLY
+
+  // Date range schedule
+  startDate    DateTime?  // only for DATE_RANGE
+  endDate      DateTime?  // only for DATE_RANGE
+
+  // Event-based schedule
+  eventName    String?    // only for EVENT
+  eventActive  Boolean?   // true if the event is active
+
+  // Seasonal schedule
+  startMonth   Int?       // 1-12
+  endMonth     Int?       // 1-12
+
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  
+
   items        MenuItem[]
-  
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  
+status      Status   @default(active) // "active", "suspended", "blocked" ,"deleted"
   @@index([restaurantId])
   @@map("menu_categories")
 }
+
 
 model MenuItem {
   id           String       @id @default(cuid())
@@ -172,7 +195,7 @@ model MenuItem {
   prepTime     Int?         // in minutes
   discount     Int?         // percentage
   originalPrice Float?
-  
+  status      Status   @default(active)
   categoryId   String
   category     MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
@@ -198,7 +221,9 @@ model Table {
   
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  
+   onlyCapacity Boolean @default(false)
+   joinGuests    String[] @default([])
+   currentUsers    Int  @default(0)
   qrCodes      QRCode[]
   orders       Order[]
   

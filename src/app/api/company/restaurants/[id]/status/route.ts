@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 const updateStatusSchema = z.object({
   status: z.enum(["active", "suspended", "blocked"]),
@@ -22,7 +22,7 @@ export async function PATCH(
     if (!session?.user || session.user.role !== UserRole.ADMIN) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    const supabaseAdmin = await getSupabaseAdmin();
     const body = await request.json();
     const { status, reason } = updateStatusSchema.parse(body);
 
@@ -50,12 +50,10 @@ export async function PATCH(
     });
 
     for (const table of tables) {
-      await supabaseAdmin
-        .from(`tables:id=eq.${table.id}`)
-        .upsert({
-          restaurantStatus: status,
-          _realtime_event: "restaurant-status-changed",
-        });
+      await supabaseAdmin.from(`tables:id=eq.${table.id}`).upsert({
+        restaurantStatus: status,
+        _realtime_event: "restaurant-status-changed",
+      });
     }
 
     return NextResponse.json(restaurant);

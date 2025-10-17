@@ -19,6 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
+import { Spinner } from "../ui/spinner";
 
 interface OrderBoardProps {
   orders: any[];
@@ -34,13 +35,14 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-red-500",
 };
 
-export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
+export function OrderBoard({ orders = [], restaurantId }: OrderBoardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [filter, setFilter] = useState<string>("ALL");
   const [allOrders, setAllOrders] = useState(orders);
+  const [orderStatusChange, setOrderStatusChange] = useState<string[]>([]);
 
   const { newOrderCount, resetNewOrderCount } = useRealtimeOrders(restaurantId);
 
@@ -95,16 +97,30 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
       orderId: string;
       status: string;
     }) => {
-      const res = await fetch(
-        `/api/restaurants/${restaurantId}/orders/${orderId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to update order");
-      return res.json();
+      setOrderStatusChange((prev) => [...prev, orderId]);
+      console.log("AFTER SET (stale log):", orderStatusChange);
+      try {
+        const res = await fetch(
+          `/api/restaurants/${restaurantId}/orders/${orderId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          }
+        );
+        setOrderStatusChange((prev) =>
+          prev.filter((o) => !o.includes(orderId))
+        );
+        console.log(orderStatusChange);
+        if (!res.ok) throw new Error("Failed to update order");
+        return res.json();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update order status",
+          variant: "destructive",
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
@@ -180,10 +196,10 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-lg">
-                    #{order.orderNumber.slice(-6)}
+                    #{order.orderNumber?.slice(-6)}
                   </span>
                   <Badge className={STATUS_COLORS[order.status]}>
-                    {order.status}
+                    {order?.status}
                   </Badge>
                 </CardTitle>
               </CardHeader>
@@ -244,7 +260,12 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                 </div>
 
                 {/* Status Update */}
-                {canUpdate &&
+
+                {canUpdate && orderStatusChange.includes(order.id) ? (
+                  <div className="flex gap-2 justify-center items-center ">
+                    order status : updating... <Spinner size={1} />
+                  </div>
+                ) : (
                   !["SERVED", "CANCELLED"].includes(order.status) && (
                     <Select
                       value={order.status}
@@ -263,7 +284,8 @@ export function OrderBoard({ orders, restaurantId }: OrderBoardProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                  )}
+                  )
+                )}
 
                 {/* Invoice */}
                 {["READY", "SERVED"].includes(order.status) && (

@@ -8,23 +8,34 @@ const withPWA = require("next-pwa")({
 
 const nextConfig = {
   reactStrictMode: true,
+
   images: {
-    domains: ["localhost", "res.cloudinary.com", "lh3.googleusercontent.com"],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
+    // Production: allow only listed domains
+    domains:
+      process.env.NODE_ENV === "production"
+        ? ["pawansuthar.in", "another-allowed-domain.com"]
+        : [],
+
+    // Development: allow all remote images using remotePatterns
+    remotePatterns:
+      process.env.NODE_ENV === "development"
+        ? [
+            { protocol: "https", hostname: "**" },
+            { protocol: "http", hostname: "**" },
+          ]
+        : [],
   },
+
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      allowedOrigins: ["http://localhost:3000"],
     },
   },
+
   typescript: {
     ignoreBuildErrors: false,
   },
+
   eslint: {
     ignoreDuringBuilds: false,
   },

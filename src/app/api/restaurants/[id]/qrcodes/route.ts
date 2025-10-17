@@ -1,3 +1,5 @@
+// ---------------------------------------------------
+// src/app/api/restaurants/[id]/qrcodes/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -7,7 +9,7 @@ import { generateShortCode } from "@/lib/utils";
 import QRCode from "qrcode";
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -17,15 +19,51 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+
+    // Pagination
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "25");
+    const skip = (page - 1) * limit;
+
+    // Filters
+    const search = searchParams.get("search") || "";
+    const tableId = searchParams.get("tableId");
+
+    const where: any = { restaurantId: params.id };
+
+    if (search) {
+      where.OR = [
+        { shortCode: { contains: search, mode: "insensitive" } },
+        { table: { number: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    if (tableId) {
+      where.tableId = tableId;
+    }
+
+    const total = await prisma.qRCode.count({ where });
+
     const qrCodes = await prisma.qRCode.findMany({
-      where: { restaurantId: params.id },
+      where,
       include: {
         table: true,
       },
       orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
     });
 
-    return NextResponse.json(qrCodes);
+    return NextResponse.json({
+      qrCodes,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching QR codes:", error);
     return NextResponse.json(

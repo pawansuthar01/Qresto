@@ -7,10 +7,12 @@ import { QrCode } from "lucide-react";
 
 interface QRCodeBulkGeneratorProps {
   restaurantId: string;
+  onData: (data: any) => void;
 }
 
 export function QRCodeBulkGenerator({
   restaurantId,
+  onData,
 }: QRCodeBulkGeneratorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -25,9 +27,12 @@ export function QRCodeBulkGenerator({
         const error = await res.json();
         throw new Error(error.error || "Failed to generate QR codes");
       }
-      return res.json();
+      const resData = res.json();
+      return resData;
     },
     onSuccess: (data) => {
+      onData(data);
+
       queryClient.invalidateQueries({ queryKey: ["qrcodes", restaurantId] });
       toast({
         title: "Success",

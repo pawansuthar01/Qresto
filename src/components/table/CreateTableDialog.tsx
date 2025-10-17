@@ -21,11 +21,13 @@ interface CreateTableDialogProps {
   restaurantId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onData: (data: any) => void;
 }
 
 export function CreateTableDialog({
   restaurantId,
   open,
+  onData,
   onOpenChange,
 }: CreateTableDialogProps) {
   const { toast } = useToast();
@@ -51,7 +53,9 @@ export function CreateTableDialog({
         const error = await res.json();
         throw new Error(error.error || "Failed to create table");
       }
-      return res.json();
+      const resData = await res.json();
+      onData(resData);
+      return resData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tables", restaurantId] });
@@ -60,6 +64,7 @@ export function CreateTableDialog({
         description: "Table created successfully",
       });
       reset();
+
       onOpenChange(false);
     },
     onError: (error: any) => {

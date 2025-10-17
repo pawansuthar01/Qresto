@@ -1,10 +1,10 @@
+// src/app/api/q/[shortCode]/order/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOrderNumber } from "@/lib/utils";
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase"; // Use Supabase Admin client
+import { getSupabaseAdmin } from "@/lib/supabase"; // add this
 
-// Schema for guest order creation
 const createGuestOrderSchema = z.object({
   items: z.array(
     z.object({
@@ -18,13 +18,12 @@ const createGuestOrderSchema = z.object({
   notes: z.string().optional(),
 });
 
-// POST - Guest order placement
 export async function POST(
   request: NextRequest,
   { params }: { params: { shortCode: string } }
 ) {
   try {
-    // Find QR code and related table + restaurant
+    // Find QR code with related data
     const qrCode = await prisma.qRCode.findUnique({
       where: { shortCode: params.shortCode },
       include: {
@@ -42,7 +41,7 @@ export async function POST(
       );
     }
 
-    // Check if restaurant allows ordering
+    // Check ordering permission
     const permissions = qrCode.restaurant?.permissions as any;
     if (!permissions?.["order.create"]) {
       return NextResponse.json(
@@ -51,7 +50,7 @@ export async function POST(
       );
     }
 
-    // Validate request body
+    // Validate request
     const body = await request.json();
     const validatedData = createGuestOrderSchema.parse(body);
 
@@ -111,13 +110,19 @@ export async function POST(
       },
     });
 
-    // Emit real-time event using Supabase Realtime
+    // Broadcast order via Supabase Realtime
     try {
-      await supabaseAdmin
-        .from(`orders:restaurantId=eq.${qrCode.restaurant.id}`)
-        .insert([order]);
-    } catch (emitError) {
-      console.warn("Failed to emit Supabase Realtime order:", emitError);
+      const supabaseAdmin = getSupabaseAdmin();
+      await supabaseAdmin.channel(`orders:${qrCode.restaurant.id}`).send({
+        type: "broadcast",
+        event: "new_order",
+        payload: order,
+      });
+      console.log(
+        `✅ Order broadcast sent for restaurant ${qrCode.restaurant.id}`
+      );
+    } catch (broadcastError) {
+      console.error("❌ Supabase broadcast failed:", broadcastError);
     }
 
     return NextResponse.json(order, { status: 201 });

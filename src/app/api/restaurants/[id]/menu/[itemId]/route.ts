@@ -67,8 +67,11 @@ export async function DELETE(
     const { authorized, error } = await authorize(params.id, "menu.delete");
     if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
-    await prisma.menuItem.delete({
+    await prisma.menuItem.update({
       where: { id: params.itemId, restaurantId: params.id },
+      data: {
+        status: "deleted",
+      },
     });
 
     // Broadcast deletion via Supabase

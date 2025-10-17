@@ -32,7 +32,6 @@ export default async function CompanyDashboardPage() {
     },
     orderBy: { createdAt: "desc" },
   });
-
   // Return the dashboard with props
   return <CompanyDashboard restaurants={restaurants} user={session.user} />;
 }

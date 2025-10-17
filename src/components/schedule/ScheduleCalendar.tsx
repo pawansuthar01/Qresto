@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Clock, Edit, Trash2, Power, PowerOff } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
+import { CreateScheduleDialog } from "./CreateScheduleDialog";
+import { useState } from "react";
 
 interface ScheduleCalendarProps {
   schedules: any[];
@@ -14,6 +16,7 @@ interface ScheduleCalendarProps {
 
 const SCHEDULE_TYPE_COLORS: Record<string, string> = {
   DAILY: "bg-blue-500",
+  always: "bg-green-700",
   WEEKLY: "bg-green-500",
   DATE_RANGE: "bg-purple-500",
   EVENT: "bg-orange-500",
@@ -22,6 +25,7 @@ const SCHEDULE_TYPE_COLORS: Record<string, string> = {
 
 const SCHEDULE_TYPE_LABELS: Record<string, string> = {
   DAILY: "Daily",
+  always: "always",
   WEEKLY: "Weekly",
   DATE_RANGE: "Date Range",
   EVENT: "Event",
@@ -32,8 +36,11 @@ export function ScheduleCalendar({
   schedules,
   restaurantId,
 }: ScheduleCalendarProps) {
+  console.log(schedules);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState(undefined);
 
   // 🔄 Toggle schedule active/inactive
   const toggleSchedule = useMutation({
@@ -98,8 +105,10 @@ export function ScheduleCalendar({
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   {schedule.name}
-                  <Badge className={SCHEDULE_TYPE_COLORS[schedule.type]}>
-                    {SCHEDULE_TYPE_LABELS[schedule.type]}
+                  <Badge
+                    className={SCHEDULE_TYPE_COLORS[schedule.scheduleType]}
+                  >
+                    {SCHEDULE_TYPE_LABELS[schedule.scheduleType]}
                   </Badge>
                 </CardTitle>
                 {schedule.description && (
@@ -130,16 +139,26 @@ export function ScheduleCalendar({
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* 🕒 Time Info */}
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {schedule.startTime || "00:00"} - {schedule.endTime || "23:59"}
-              </span>
-            </div>
+            {/* 🕒 Time Info (Shown for all except ALWAYS & EVENT without time) */}
+            {schedule.scheduleType !== "ALWAYS" && (
+              <div className="flex items-center gap-2 text-sm">
+                {/* ✅ Add DAILY Badge */}
+                {schedule.scheduleType === "DAILY" && (
+                  <Badge variant="outline" className="text-xs">
+                    Daily
+                  </Badge>
+                )}
+
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>
+                  {schedule.startTime || "00:00"} -{" "}
+                  {schedule.endTime || "23:59"}
+                </span>
+              </div>
+            )}
 
             {/* 📅 Days of Week */}
-            {schedule.type === "WEEKLY" && schedule.daysOfWeek && (
+            {schedule.scheduleType === "WEEKLY" && schedule.daysOfWeek && (
               <div className="flex flex-wrap gap-1">
                 {(schedule.daysOfWeek as string[]).map((day) => (
                   <Badge key={day} variant="outline" className="text-xs">
@@ -150,7 +169,7 @@ export function ScheduleCalendar({
             )}
 
             {/* 📆 Date Range */}
-            {schedule.type === "DATE_RANGE" && (
+            {schedule.scheduleType === "DATE_RANGE" && (
               <div className="text-sm text-muted-foreground">
                 {schedule.startDate &&
                   new Date(schedule.startDate).toLocaleDateString()}{" "}
@@ -160,22 +179,65 @@ export function ScheduleCalendar({
               </div>
             )}
 
+            {/* 🎉 Event-based */}
+            {schedule.scheduleType === "EVENT" && (
+              <div className="text-sm text-muted-foreground">
+                Event: <strong>{schedule.eventName || "Unnamed Event"}</strong>{" "}
+                •{" "}
+                {schedule.eventActive ? (
+                  <Badge variant="outline">Active</Badge>
+                ) : (
+                  <Badge variant="destructive">Inactive</Badge>
+                )}
+              </div>
+            )}
+
+            {/* 🌤️ Seasonal */}
+            {schedule.scheduleType === "SEASONAL" && (
+              <div className="text-sm text-muted-foreground">
+                {new Date(2000, (schedule.startMonth || 1) - 1).toLocaleString(
+                  "default",
+                  {
+                    month: "short",
+                  }
+                )}{" "}
+                →{" "}
+                {new Date(2000, (schedule.endMonth || 12) - 1).toLocaleString(
+                  "default",
+                  {
+                    month: "short",
+                  }
+                )}
+              </div>
+            )}
+
+            {/* ♾️ Always Available */}
+            {schedule.scheduleType === "ALWAYS" && (
+              <Badge variant="outline" className="text-xs">
+                Always Available
+              </Badge>
+            )}
+
             {/* 🍽️ Category + Item count */}
             <div className="text-sm text-muted-foreground">
-              {schedule.categories?.length || 0} categories •{" "}
-              {schedule.categories?.reduce(
-                (sum: number, cat: any) => sum + (cat.items?.length || 0),
-                0
-              ) || 0}{" "}
-              items
+              {schedule._count.items || 0} items
             </div>
 
             {/* 🔢 Priority + Actions */}
             <div className="flex items-center justify-between">
-              <Badge variant="secondary">Priority: {schedule.priority}</Badge>
+              <Badge variant="secondary">
+                displayOrder: {schedule.displayOrder}
+              </Badge>
 
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm">
+                <Button
+                  onClick={() => {
+                    setCreateDialogOpen(true);
+                    setCategoryId(schedule.id);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                >
                   <Edit className="h-4 w-4" />
                 </Button>
                 <Button
@@ -201,6 +263,14 @@ export function ScheduleCalendar({
           No schedules created yet.
         </div>
       )}
+      <CreateScheduleDialog
+        categoryId={categoryId}
+        open={createDialogOpen}
+        onOpenChange={() => {
+          setCreateDialogOpen(false), setCategoryId(undefined);
+        }}
+        restaurantId={restaurantId}
+      />
     </div>
   );
 }

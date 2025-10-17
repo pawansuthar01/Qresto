@@ -74,7 +74,7 @@ export function QRCard({ qrCode, restaurantId }: QRCardProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Table {qrCode.table.number}</CardTitle>
+          <CardTitle>Table {qrCode?.table?.number}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <img

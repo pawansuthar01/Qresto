@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import FullMenuCustomizer from "./FullMenuCustomizer";
 import { useRestaurant } from "@/hooks/useRestaurant";
+import { Toaster } from "../ui/toaster";
 
 interface MenuThemeCustomizerProps {
   restaurant: any;
@@ -25,7 +26,6 @@ export default function MenuThemeCustomizer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(customization),
       });
-      console.log(response);
       setSaving(false);
       if (response.ok) {
         alert("Theme saved successfully!");
@@ -45,7 +45,7 @@ export default function MenuThemeCustomizer({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <DashboardHeader user={user} title="Menu Theme Customization" /> */}
+      <Toaster />
       <FullMenuCustomizer
         restaurant={restaurant}
         onSave={handleSave}

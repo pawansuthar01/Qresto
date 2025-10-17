@@ -1,3 +1,4 @@
+// src/app/api/restaurants/[id]/orders/[orderId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -9,12 +10,11 @@ const updateOrderSchema = z.object({
   status: z.nativeEnum(OrderStatus),
 });
 
-// PATCH - Update order status (permission: order.update)
+// PATCH - Update order status with realtime broadcast
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string; orderId: string } }
 ) {
-  const supabaseAdmin = getSupabaseAdmin();
   try {
     const { authorized, error } = await authorize(params.id, "order.update");
     if (!authorized) return NextResponse.json({ error }, { status: 403 });
@@ -31,10 +31,22 @@ export async function PATCH(
       },
     });
 
-    // Broadcast order update via Supabase Realtime
-    await supabaseAdmin
-      .from(`orders:restaurantId=eq.${params.id}`)
-      .upsert(order, { onConflict: "id" });
+    // Broadcast status update via Supabase Realtime
+    try {
+      const supabaseAdmin = getSupabaseAdmin();
+
+      await supabaseAdmin.channel(`orders:${params.id}`).send({
+        type: "broadcast",
+        event: "order_updated",
+        payload: order,
+      });
+
+      console.log(
+        `✅ Order status update broadcast for order ${order.orderNumber}`
+      );
+    } catch (realtimeError) {
+      console.error("❌ Realtime broadcast failed:", realtimeError);
+    }
 
     return NextResponse.json(order);
   } catch (err) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { TableMap } from "@/components/table/TableMap";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "@/components/ui/use-toast";
 
 export default function TablesPage() {
   const params = useParams();
@@ -16,6 +17,13 @@ export default function TablesPage() {
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [tables, setTables] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (restaurant?.tables) {
+      setTables(restaurant.tables);
+    }
+  }, [restaurant]);
 
   const canCreate = hasPermission("table.create");
 
@@ -29,19 +37,29 @@ export default function TablesPage() {
               Manage your restaurant tables
             </p>
           </div>
-          {canCreate && (
-            <Button onClick={() => setCreateDialogOpen(true)}>
+          {
+            <Button
+              onClick={() =>
+                canCreate
+                  ? setCreateDialogOpen(true)
+                  : toast({
+                      title: "You don't have permission to create tables",
+                      description: "Please contact the company",
+                      variant: "destructive",
+                    })
+              }
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Table
             </Button>
-          )}
+          }
         </div>
 
         {!restaurant ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Loading tables...</p>
           </div>
-        ) : restaurant?.tables?.length === 0 ? (
+        ) : tables.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
             <p className="mb-4 text-muted-foreground">No tables yet</p>
             {canCreate && (
@@ -52,14 +70,23 @@ export default function TablesPage() {
             )}
           </div>
         ) : (
-          <TableMap
-            tables={restaurant?.tables || []}
-            restaurantId={restaurantId}
-          />
+          <TableMap tables={tables || []} restaurantId={restaurantId} />
         )}
 
         {canCreate && (
           <CreateTableDialog
+            onData={(data) => {
+              setTables((prev) => {
+                const index = prev.findIndex((table) => table.id === data.id);
+                if (index !== -1) {
+                  const updated = [...prev];
+                  updated[index] = data;
+                  return updated;
+                } else {
+                  return [...prev, data];
+                }
+              });
+            }}
             restaurantId={restaurantId}
             open={createDialogOpen}
             onOpenChange={setCreateDialogOpen}

@@ -24,6 +24,7 @@ interface CreateScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restaurantId: string;
+  categoryId?: string;
 }
 
 const DAYS_OF_WEEK = [
@@ -40,6 +41,7 @@ export function CreateScheduleDialog({
   open,
   onOpenChange,
   restaurantId,
+  categoryId,
 }: CreateScheduleDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -51,12 +53,12 @@ export function CreateScheduleDialog({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm();
+  } = useForm({});
 
   const createSchedule = useMutation({
     mutationFn: async (data: any) => {
       const res = await fetch(`/api/restaurants/${restaurantId}/schedules`, {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -89,7 +91,8 @@ export function CreateScheduleDialog({
     const scheduleData = {
       name: data.name,
       description: data.description,
-      type: scheduleType,
+      categoryId,
+      scheduleType,
       daysOfWeek: data.daysOfWeek,
       startDate: data.startDate,
       eventName: data.eventName,

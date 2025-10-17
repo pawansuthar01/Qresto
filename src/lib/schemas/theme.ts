@@ -25,7 +25,7 @@ export const updateThemeSchema = z.object({
   headingWeight: z.number().optional(),
 
   // Layout
-  layout: z.enum(["grid", "list"]).optional(),
+  layout: z.string().optional(),
   columns: z.number().optional(),
   gap: z.number().optional(),
   padding: z.number().optional(),
@@ -33,7 +33,7 @@ export const updateThemeSchema = z.object({
   containerPadding: z.number().optional(),
 
   // Cards
-  cardStyle: z.enum(["modern", "classic", "minimal"]).optional(),
+  cardStyle: z.string().optional(),
   borderRadius: z.number().optional(),
   cardShadow: z.string().optional(),
   cardPadding: z.number().optional(),
@@ -42,8 +42,8 @@ export const updateThemeSchema = z.object({
 
   // Images
   showImages: z.boolean().optional(),
-  imageStyle: z.enum(["cover", "contain", "auto"]).optional(),
-  imagePosition: z.enum(["top", "bottom", "left", "right"]).optional(),
+  imageStyle: z.string().optional(),
+  imagePosition: z.string().optional(),
   imageHeight: z.number().optional(),
   imageRadius: z.number().optional(),
 
@@ -62,9 +62,9 @@ export const updateThemeSchema = z.object({
   showQuantity: z.boolean().optional(),
 
   // Header
-  headerStyle: z.enum(["gradient", "solid", "transparent"]).optional(),
+  headerStyle: z.string().optional(),
   headerHeight: z.number().optional(),
-  logoPosition: z.enum(["left", "center", "right"]).optional(),
+  logoPosition: z.string().optional(),
   logoSize: z.number().optional(),
 
   // Background
@@ -81,18 +81,18 @@ export const updateThemeSchema = z.object({
 
   // Buttons
   buttonRadius: z.number().optional(),
-  buttonSize: z.enum(["small", "medium", "large"]).optional(),
-  buttonStyle: z.enum(["solid", "outline", "text"]).optional(),
+  buttonSize: z.string().optional(),
+  buttonStyle: z.string().optional(),
 
   // Spacing
-  spacing: z.enum(["tight", "normal", "loose"]).optional(),
+  spacing: z.string().optional(),
   itemSpacing: z.number().optional(),
   sectionSpacing: z.number().optional(),
 
   // Animations
   enableAnimations: z.boolean().optional(),
-  animationSpeed: z.enum(["slow", "normal", "fast"]).optional(),
-  hoverEffect: z.enum(["lift", "shadow", "scale", "none"]).optional(),
+  animationSpeed: z.string().optional(),
+  hoverEffect: z.string().optional(),
 
   // Advanced
   customCSS: z.string().optional(),

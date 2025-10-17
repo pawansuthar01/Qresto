@@ -10,7 +10,6 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -18,7 +17,6 @@ export async function PATCH(
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
     });
-
     if (!restaurant) {
       return NextResponse.json(
         { error: "Restaurant not found" },
@@ -31,9 +29,29 @@ export async function PATCH(
 
     const body = await req.json();
 
+    // Extract only schedule-related fields from body
+    const allowedFields = [
+      "scheduleType",
+      "startTime",
+      "endTime",
+      "daysOfWeek",
+      "startDate",
+      "endDate",
+      "eventName",
+      "eventActive",
+      "startMonth",
+      "endMonth",
+      "isActive",
+    ];
+
+    const updateData: any = {};
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) updateData[field] = body[field];
+    }
+
     const schedule = await prisma.menuCategory.update({
       where: { id: params.scheduleId },
-      data: body,
+      data: updateData,
     });
 
     return NextResponse.json(schedule);
@@ -51,15 +69,10 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  {
-    params,
-  }: {
-    params: { id: string; scheduleId: string };
-  }
+  { params }: { params: { id: string; scheduleId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,7 +80,6 @@ export async function DELETE(
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
     });
-
     if (!restaurant) {
       return NextResponse.json(
         { error: "Restaurant not found" },
@@ -78,8 +90,11 @@ export async function DELETE(
     const permissions = restaurant.permissions as any;
     authorize(permissions, "menu.schedule");
 
-    await prisma.menuCategory.delete({
+    await prisma.menuCategory.update({
       where: { id: params.scheduleId },
+      data: {
+        status: "deleted",
+      },
     });
 
     return NextResponse.json({ success: true });

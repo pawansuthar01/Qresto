@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { menuCategorySchema, menuItemSchema } from "@/lib/validations";
@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { useCreateMenuItem } from "@/hooks/useMenu";
+import { useCreateMenuItem, useUpdateMenuItem } from "@/hooks/useMenu";
 import {
   Accordion,
   AccordionItem,
@@ -31,22 +31,27 @@ interface CreateMenuItemDialogProps {
   restaurantId: string;
   restaurantName: string;
   categories: any[];
+  MenuData?: any | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onData: (Data: any, type: "category" | "item") => void;
 }
 
 export function CreateMenuItemDialog({
   restaurantId,
+  onData,
   restaurantName,
+  MenuData = null,
   categories,
   open,
   onOpenChange,
 }: CreateMenuItemDialogProps) {
   const { toast } = useToast();
   const createMenuItem = useCreateMenuItem(restaurantId);
-  const [selectedType, setSelectedType] = useState<"category" | "item">(
-    "category"
-  );
+  const updateMenuItem = useUpdateMenuItem(restaurantId);
+  const [selectedType, setSelectedType] = useState<
+    "category" | "item" | "update_item"
+  >("category");
 
   const categoryForm = useForm({
     resolver: zodResolver(menuCategorySchema),
@@ -69,13 +74,34 @@ export function CreateMenuItemDialog({
       restaurantId,
     },
   });
+  useEffect(() => {
+    if (MenuData) {
+      setSelectedType("update_item");
+      itemForm.reset({
+        ...itemForm.getValues(),
+        ...MenuData,
+      });
+    }
+  }, [MenuData]);
 
   const onSubmitCategory = async (data: any) => {
     try {
-      await createMenuItem.mutateAsync({ type: "category", ...data });
+      const same = categories.some((cat) => cat.name == data.name);
+      if (same) {
+        toast({
+          title: "Menu name is already edit..",
+          description: "please change the Menu name",
+          variant: "destructive",
+        });
+        return;
+      }
+      const res = await createMenuItem.mutateAsync({
+        type: "category",
+        ...data,
+      });
       toast({ title: "Success", description: "Category created successfully" });
       categoryForm.reset();
-      onOpenChange(false);
+      onData(res, "category");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -87,12 +113,21 @@ export function CreateMenuItemDialog({
   const onSubmitItem = async (data: any) => {
     try {
       const payload = { restaurantId, ...data, type: "item" };
-      await createMenuItem.mutateAsync(payload);
+      let res = {};
+      MenuData
+        ? (res = await updateMenuItem.mutateAsync({
+            itemId: MenuData.id,
+            data,
+          }))
+        : (res = await createMenuItem.mutateAsync(payload));
+
       toast({
         title: "Success",
         description: "Menu item created successfully",
       });
       itemForm.reset();
+
+      onData(res, "item");
       onOpenChange(false);
     } catch (error: any) {
       toast({
@@ -108,7 +143,11 @@ export function CreateMenuItemDialog({
       <DialogContent className="w-full max-w-lg p-6 sm:p-8 overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {selectedType === "category" ? "Add Category" : "Add Menu Item"}
+            {selectedType === "category"
+              ? "Add Menu"
+              : selectedType === "update_item"
+              ? "Update Menu Item"
+              : "Add Menu Item"}
           </DialogTitle>
           <DialogDescription className="text-sm text-gray-600 mt-1">
             Restaurant: <strong>{restaurantName}</strong>
@@ -119,18 +158,23 @@ export function CreateMenuItemDialog({
           {/* Type Selector */}
           <div className="flex gap-4">
             <Button
+              disabled={selectedType == "update_item"}
               variant={selectedType === "category" ? "default" : "outline"}
               onClick={() => setSelectedType("category")}
               className="flex-1"
             >
-              Category
+              Menu
             </Button>
             <Button
-              variant={selectedType === "item" ? "default" : "outline"}
+              variant={
+                ["update_item", "item"].includes(selectedType)
+                  ? "default"
+                  : "outline"
+              }
               onClick={() => setSelectedType("item")}
               className="flex-1"
             >
-              Menu Item
+              {selectedType === "update_item" ? "Update Menu " : "Menu Item"}
             </Button>
           </div>
 
@@ -141,7 +185,7 @@ export function CreateMenuItemDialog({
               className="space-y-4 mt-4"
             >
               <div className="space-y-2">
-                <Label htmlFor="catName">Category Name</Label>
+                <Label htmlFor="catName">Menu Name</Label>
                 <Input
                   id="catName"
                   placeholder="Appetizers"
@@ -172,23 +216,32 @@ export function CreateMenuItemDialog({
           )}
 
           {/* Menu Item Form */}
-          {selectedType === "item" && (
+          {["update_item", "item"].includes(selectedType) && (
             <form
               onSubmit={itemForm.handleSubmit(onSubmitItem)}
               className="space-y-4 mt-4"
             >
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>Menu</Label>
                 <select
                   className="w-full border rounded px-3 py-2"
                   {...itemForm.register("categoryId")}
                 >
-                  <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
+                  <option value="" disabled>
+                    Select Menu
+                  </option>
+
+                  {categories.length <= 0 ? (
+                    <option value="" disabled className="text-center">
+                      Create first menu
                     </option>
-                  ))}
+                  ) : (
+                    categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -233,6 +286,14 @@ export function CreateMenuItemDialog({
                 <Textarea
                   placeholder="Crispy fried wings..."
                   {...itemForm.register("description")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="imageUrl">Image URL*</Label>
+                <Input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  {...itemForm.register("imageUrl")}
                 />
               </div>
 
@@ -326,15 +387,6 @@ export function CreateMenuItemDialog({
                           })}
                         />
                       </div>
-
-                      <div className="space-y-1">
-                        <Label htmlFor="imageUrl">Image URL (Optional)</Label>
-                        <Input
-                          type="url"
-                          placeholder="https://example.com/image.jpg"
-                          {...itemForm.register("imageUrl")}
-                        />
-                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -349,7 +401,13 @@ export function CreateMenuItemDialog({
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createMenuItem.isPending}>
-                  {createMenuItem.isPending ? "Creating..." : "Create"}
+                  {selectedType === "update_item"
+                    ? updateMenuItem.isPending
+                      ? "Updating..."
+                      : "Update"
+                    : createMenuItem.isPending
+                    ? "Creating..."
+                    : "Create"}
                 </Button>
               </DialogFooter>
             </form>

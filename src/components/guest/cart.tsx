@@ -1,5 +1,16 @@
 import { CartItem, EnhancedTheme } from "@/types";
 import { useState } from "react";
+import {
+  X,
+  Minus,
+  Plus,
+  Trash2,
+  Tag,
+  Gift,
+  Clock,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 interface CartProps {
   open: boolean;
@@ -25,7 +36,6 @@ export default function EnhancedCart({
   cart,
   setCart,
   shortCode,
-
   tableName,
   theme = {},
 }: CartProps) {
@@ -71,6 +81,7 @@ export default function EnhancedCart({
     showItemImages: theme.showItemImages !== false,
     showItemBadges: theme.showItemBadges !== false,
     cartLayout: theme.cartLayout || "comfortable",
+    enableGradients: theme.enableGradients !== false,
   };
 
   // Cart calculations
@@ -109,34 +120,34 @@ export default function EnhancedCart({
       alert("Invalid coupon code. Try 'SAVE10'");
     }
   };
-  console.log(cart);
-  console.log(specialInstructions);
+
   const handlePlaceOrder = async () => {
     if (!cart.length) return;
 
     setLoading(true);
     setError("");
-    const response = await fetch(`/api/q/${shortCode}/order`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        items: cart.map((item) => ({
-          menuItemId: item.menuItem.id,
-          quantity: item.quantity,
-        })),
-        customerName: customerName || undefined,
-        customerPhone: customerPhone || undefined,
-        notes: specialInstructions,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to place order");
-    }
 
     try {
+      const response = await fetch(`/api/q/${shortCode}/order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((item) => ({
+            menuItemId: item.menuItem.id,
+            quantity: item.quantity,
+          })),
+          customerName: customerName || undefined,
+          customerPhone: customerPhone || undefined,
+          notes: specialInstructions,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to place order");
+      }
+
       setSuccess(true);
       setTimeout(() => {
         setCart([]);
@@ -165,65 +176,59 @@ export default function EnhancedCart({
       ? "max-w-2xl"
       : "max-w-lg";
 
-  const paddingClass =
-    t.cartLayout === "compact"
-      ? "p-3"
-      : t.cartLayout === "spacious"
-      ? "p-6"
-      : "p-4";
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
       onClick={() => onOpenChange(false)}
     >
       <div
-        className={`${widthClass} w-full bg-white rounded-xl shadow-2xl max-h-[95vh] overflow-hidden flex flex-col`}
+        className={`${widthClass} w-full bg-white sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-slide-up`}
         style={{
           fontFamily: t.fontFamily,
           fontSize: `${t.fontSize}px`,
           lineHeight: t.lineHeight,
-          borderRadius: `${t.borderRadius}px`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between border-b"
+          className="flex items-center justify-between border-b sticky top-0 z-10"
           style={{
-            padding: `${t.cardPadding}px`,
+            padding: "16px 20px",
             borderColor: t.borderColor,
-            background: theme.enableGradients
+            background: t.enableGradients
               ? `linear-gradient(135deg, ${t.primaryColor}, ${t.secondaryColor})`
               : t.primaryColor,
             color: t.buttonTextColor,
           }}
         >
           <div className="flex items-center gap-3">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+            </div>
             <div>
               <h2
+                className="text-lg sm:text-xl font-bold"
                 style={{
                   fontFamily: t.headingFont,
                   fontWeight: t.headingWeight,
-                  fontSize: "1.25rem",
                 }}
               >
                 Your Cart
               </h2>
-              <p style={{ fontSize: "0.875rem", opacity: 0.9 }}>
+              <p className="text-xs sm:text-sm opacity-90">
                 {tableName} • {cart.length}{" "}
                 {cart.length === 1 ? "item" : "items"}
               </p>
@@ -231,79 +236,57 @@ export default function EnhancedCart({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 rounded-full hover:bg-white/20 transition"
+            className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className={`flex-1 overflow-y-auto ${paddingClass}`}>
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {success ? (
-            <div className="py-16 text-center">
-              <svg
-                width="80"
-                height="80"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={t.successColor}
-                strokeWidth="2"
-                className="mx-auto mb-4"
-              >
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
+            <div className="py-12 sm:py-16 px-6 text-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
+                <CheckCircle
+                  className="w-12 h-12 sm:w-14 sm:h-14"
+                  style={{ color: t.successColor }}
+                />
+              </div>
               <h3
-                className="text-2xl font-bold mb-2"
+                className="text-2xl sm:text-3xl font-bold mb-3"
                 style={{ color: t.successColor, fontFamily: t.headingFont }}
               >
-                Order Placed Successfully! 🎉
+                Order Placed! 🎉
               </h3>
-              <p style={{ color: t.accentColor, fontSize: "1rem" }}>
+              <p
+                className="text-base sm:text-lg mb-6"
+                style={{ color: t.accentColor }}
+              >
                 Your order has been sent to the kitchen
               </p>
               {theme.showEstimatedTime && (
                 <div
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full"
                   style={{
                     backgroundColor: `${t.primaryColor}20`,
                     color: t.primaryColor,
                   }}
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  <span className="font-semibold">Estimated: 15-20 mins</span>
+                  <Clock className="w-4 h-4" />
+                  <span className="font-semibold text-sm">
+                    Estimated: 15-20 mins
+                  </span>
                 </div>
               )}
             </div>
           ) : (
-            <>
+            <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
               {error && (
                 <div
-                  className="mb-4 p-4 rounded-lg flex items-center gap-3"
+                  className="p-4 rounded-xl flex items-center gap-3"
                   style={{
                     backgroundColor: `${t.errorColor}20`,
                     color: t.errorColor,
-                    borderRadius: `${t.inputRadius}px`,
                   }}
                 >
                   <svg
@@ -318,68 +301,62 @@ export default function EnhancedCart({
                     <line x1="12" y1="8" x2="12" y2="12" />
                     <line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
-                  <span>{error}</span>
+                  <span className="text-sm font-medium">{error}</span>
                 </div>
               )}
 
               {cart.length === 0 ? (
-                <div className="py-16 text-center">
-                  <svg
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={t.accentColor}
-                    strokeWidth="2"
-                    className="mx-auto mb-4 opacity-30"
-                  >
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                  </svg>
-                  <p style={{ color: t.accentColor, fontSize: "1.125rem" }}>
+                <div className="py-12 sm:py-16 text-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-gray-50 flex items-center justify-center">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={t.accentColor}
+                      strokeWidth="2"
+                      className="opacity-40"
+                    >
+                      <circle cx="9" cy="21" r="1" />
+                      <circle cx="20" cy="21" r="1" />
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                    </svg>
+                  </div>
+                  <p className="text-lg mb-6" style={{ color: t.accentColor }}>
                     Your cart is empty
                   </p>
                   <button
                     onClick={() => onOpenChange(false)}
-                    className="mt-4 px-6 py-2 rounded-lg font-medium"
+                    className="px-8 py-3 rounded-xl font-semibold text-sm"
                     style={{
                       backgroundColor: t.primaryColor,
                       color: t.buttonTextColor,
-                      borderRadius: `${t.buttonRadius}px`,
                     }}
                   >
                     Continue Shopping
                   </button>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <>
                   {/* Cart Items */}
-                  <div className="space-y-3">
+                  <div className="space-y-3 sm:space-y-4">
                     {cart.map((item) => (
                       <div
                         key={item.menuItem.id}
-                        className={`rounded-lg border ${
-                          t.enableAnimations
-                            ? "transition-transform hover:scale-102"
-                            : ""
-                        }`}
+                        className="rounded-xl border transition-all hover:shadow-md"
                         style={{
-                          padding: `${t.cardPadding}px`,
+                          padding: "12px",
                           borderColor: t.borderColor,
                           backgroundColor: t.cardBackground,
-                          borderRadius: `${t.borderRadius}px`,
-                          boxShadow: t.cardShadow,
                         }}
                       >
                         <div className="flex gap-3">
                           {t.showItemImages && item.menuItem.imageUrl && (
                             <div
-                              className="flex-shrink-0 bg-gray-200 rounded-lg overflow-hidden"
+                              className="flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden"
                               style={{
-                                width: "80px",
-                                height: "80px",
-                                borderRadius: `${t.inputRadius}px`,
+                                width: "70px",
+                                height: "70px",
                               }}
                             >
                               <img
@@ -391,10 +368,10 @@ export default function EnhancedCart({
                           )}
 
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex-1 min-w-0">
                                 <h4
-                                  className="font-semibold"
+                                  className="font-semibold text-sm sm:text-base truncate"
                                   style={{
                                     color: t.textColor,
                                     fontFamily: t.headingFont,
@@ -404,7 +381,7 @@ export default function EnhancedCart({
                                 </h4>
                                 {item.menuItem.category && (
                                   <p
-                                    className="text-sm"
+                                    className="text-xs"
                                     style={{ color: t.accentColor }}
                                   >
                                     {item.menuItem.category}
@@ -413,28 +390,18 @@ export default function EnhancedCart({
                               </div>
                               <button
                                 onClick={() => removeItem(item.menuItem.id)}
-                                className="p-1 rounded hover:bg-red-50 transition"
+                                className="p-1.5 rounded-lg hover:bg-red-50 transition flex-shrink-0"
                                 style={{ color: t.errorColor }}
                               >
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                >
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
 
                             {t.showItemBadges && (
-                              <div className="flex gap-2 mt-2">
+                              <div className="flex gap-1.5 mb-2">
                                 {item.menuItem.isVegetarian && (
                                   <span
-                                    className="text-xs px-2 py-1 rounded-full"
+                                    className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                                     style={{
                                       backgroundColor: `${t.successColor}20`,
                                       color: t.successColor,
@@ -446,7 +413,7 @@ export default function EnhancedCart({
                                 {item.menuItem.spiceLevel &&
                                   item.menuItem.spiceLevel > 0 && (
                                     <span
-                                      className="text-xs px-2 py-1 rounded-full"
+                                      className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                                       style={{
                                         backgroundColor: `${t.errorColor}20`,
                                         color: t.errorColor,
@@ -458,31 +425,21 @@ export default function EnhancedCart({
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between mt-3">
-                              <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
                                 <button
                                   onClick={() =>
                                     updateQuantity(item.menuItem.id, -1)
                                   }
-                                  className="p-1 rounded border"
+                                  className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white transition"
                                   style={{
-                                    borderColor: t.borderColor,
                                     color: t.primaryColor,
                                   }}
                                 >
-                                  <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                  >
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                  </svg>
+                                  <Minus className="w-3.5 h-3.5" />
                                 </button>
                                 <span
-                                  className="font-semibold w-8 text-center"
+                                  className="font-semibold w-8 text-center text-sm"
                                   style={{ color: t.textColor }}
                                 >
                                   {item.quantity}
@@ -491,27 +448,17 @@ export default function EnhancedCart({
                                   onClick={() =>
                                     updateQuantity(item.menuItem.id, 1)
                                   }
-                                  className="p-1 rounded"
+                                  className="w-7 h-7 rounded-md flex items-center justify-center transition"
                                   style={{
                                     backgroundColor: t.primaryColor,
                                     color: t.buttonTextColor,
                                   }}
                                 >
-                                  <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                  >
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                  </svg>
+                                  <Plus className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                               <span
-                                className="font-bold"
+                                className="font-bold text-sm sm:text-base"
                                 style={{ color: t.primaryColor }}
                               >
                                 {formatCurrency(
@@ -528,27 +475,19 @@ export default function EnhancedCart({
                   {/* Coupon Section */}
                   {theme.enableCoupon && !appliedCoupon && (
                     <div
-                      className="p-4 rounded-lg border"
+                      className="p-4 rounded-xl border"
                       style={{
                         borderColor: t.borderColor,
                         backgroundColor: `${t.primaryColor}05`,
-                        borderRadius: `${t.borderRadius}px`,
                       }}
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={t.primaryColor}
-                          strokeWidth="2"
-                        >
-                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                          <line x1="7" y1="7" x2="7.01" y2="7" />
-                        </svg>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Tag
+                          className="w-4 h-4"
+                          style={{ color: t.primaryColor }}
+                        />
                         <span
-                          className="font-semibold"
+                          className="font-semibold text-sm"
                           style={{ color: t.textColor }}
                         >
                           Have a coupon?
@@ -560,19 +499,17 @@ export default function EnhancedCart({
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value)}
                           placeholder="Enter code (try SAVE10)"
-                          className="flex-1 px-3 py-2 border rounded"
+                          className="flex-1 px-3 py-2 border rounded-lg text-sm"
                           style={{
                             borderColor: t.borderColor,
-                            borderRadius: `${t.inputRadius}px`,
                           }}
                         />
                         <button
                           onClick={applyCoupon}
-                          className="px-4 py-2 rounded font-medium"
+                          className="px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap"
                           style={{
                             backgroundColor: t.primaryColor,
                             color: t.buttonTextColor,
-                            borderRadius: `${t.buttonRadius}px`,
                           }}
                         >
                           Apply
@@ -583,13 +520,15 @@ export default function EnhancedCart({
 
                   {appliedCoupon && (
                     <div
-                      className="p-3 rounded-lg flex items-center justify-between"
+                      className="p-3 rounded-xl flex items-center justify-between"
                       style={{
                         backgroundColor: `${t.successColor}20`,
-                        borderRadius: `${t.borderRadius}px`,
                       }}
                     >
-                      <span style={{ color: t.successColor, fontWeight: 600 }}>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{ color: t.successColor }}
+                      >
                         ✓ Coupon "{appliedCoupon.code}" applied!
                       </span>
                       <button
@@ -605,35 +544,24 @@ export default function EnhancedCart({
                   {/* Tips Section */}
                   {theme.enableTips && (
                     <div
-                      className="p-4 rounded-lg border"
+                      className="p-4 rounded-xl border"
                       style={{
                         borderColor: t.borderColor,
-                        borderRadius: `${t.borderRadius}px`,
                       }}
                     >
                       <div className="flex items-center gap-2 mb-3">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke={t.primaryColor}
-                          strokeWidth="2"
-                        >
-                          <polyline points="20 12 20 22 4 22 4 12" />
-                          <rect x="2" y="7" width="20" height="5" />
-                          <line x1="12" y1="22" x2="12" y2="7" />
-                          <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-                          <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-                        </svg>
+                        <Gift
+                          className="w-4 h-4"
+                          style={{ color: t.primaryColor }}
+                        />
                         <span
-                          className="font-semibold"
+                          className="font-semibold text-sm"
                           style={{ color: t.textColor }}
                         >
                           Add a tip for the staff
                         </span>
                       </div>
-                      <div className="grid grid-cols-4 gap-2 mb-2">
+                      <div className="grid grid-cols-4 gap-2 mb-3">
                         {[10, 20, 50, 100].map((amount) => (
                           <button
                             key={amount}
@@ -641,7 +569,7 @@ export default function EnhancedCart({
                               setSelectedTip(amount);
                               setCustomTip("");
                             }}
-                            className="py-2 rounded border font-medium"
+                            className="py-2 rounded-lg border font-medium text-sm transition"
                             style={{
                               borderColor:
                                 selectedTip === amount
@@ -655,7 +583,6 @@ export default function EnhancedCart({
                                 selectedTip === amount
                                   ? t.primaryColor
                                   : t.textColor,
-                              borderRadius: `${t.inputRadius}px`,
                             }}
                           >
                             ₹{amount}
@@ -670,10 +597,9 @@ export default function EnhancedCart({
                           setSelectedTip(0);
                         }}
                         placeholder="Custom amount"
-                        className="w-full px-3 py-2 border rounded"
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
                         style={{
                           borderColor: t.borderColor,
-                          borderRadius: `${t.inputRadius}px`,
                         }}
                       />
                     </div>
@@ -681,125 +607,72 @@ export default function EnhancedCart({
 
                   {/* Customer Details */}
                   <div className="space-y-3">
-                    <div>
-                      <label
-                        className="block mb-1 font-medium text-sm  items-center gap-1"
-                        style={{ color: t.labelColor }}
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        Your Name (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="John Doe"
-                        className="w-full px-3 py-2 border rounded"
-                        style={{
-                          borderColor: t.borderColor,
-                          borderRadius: `${t.inputRadius}px`,
-                        }}
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Your Name (Optional)"
+                      className="w-full px-4 py-3 border rounded-xl text-sm"
+                      style={{
+                        borderColor: t.borderColor,
+                      }}
+                    />
 
-                    <div>
-                      <label
-                        className="block mb-1 font-medium text-sm  items-center gap-1"
-                        style={{ color: t.labelColor }}
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                        Phone Number (Optional)
-                      </label>
-                      <input
-                        type="tel"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
-                        className="w-full px-3 py-2 border rounded"
-                        style={{
-                          borderColor: t.borderColor,
-                          borderRadius: `${t.inputRadius}px`,
-                        }}
-                      />
-                    </div>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      placeholder="Phone Number (Optional)"
+                      className="w-full px-4 py-3 border rounded-xl text-sm"
+                      style={{
+                        borderColor: t.borderColor,
+                      }}
+                    />
 
-                    <div>
-                      <label
-                        className="block mb-1 font-medium text-sm  items-center gap-1"
-                        style={{ color: t.labelColor }}
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        Special Instructions (Optional)
-                      </label>
-                      <textarea
-                        value={specialInstructions}
-                        onChange={(e) => setSpecialInstructions(e.target.value)}
-                        placeholder="Any special requests..."
-                        rows={2}
-                        className="w-full px-3 py-2 border rounded resize-none"
-                        style={{
-                          borderColor: t.borderColor,
-                          borderRadius: `${t.inputRadius}px`,
-                        }}
-                      />
-                    </div>
+                    <textarea
+                      value={specialInstructions}
+                      onChange={(e) => setSpecialInstructions(e.target.value)}
+                      placeholder="Special Instructions (Optional)"
+                      rows={2}
+                      className="w-full px-4 py-3 border rounded-xl resize-none text-sm"
+                      style={{
+                        borderColor: t.borderColor,
+                      }}
+                    />
                   </div>
 
                   {/* Price Breakdown */}
                   <div
-                    className="p-4 rounded-lg space-y-2"
+                    className="p-4 rounded-xl space-y-2.5"
                     style={{
                       backgroundColor: `${t.accentColor}10`,
-                      borderRadius: `${t.borderRadius}px`,
                     }}
                   >
                     {theme.showSubtotal && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span style={{ color: t.accentColor }}>Subtotal</span>
-                        <span style={{ color: t.textColor }}>
+                        <span
+                          style={{ color: t.textColor }}
+                          className="font-medium"
+                        >
                           {formatCurrency(subtotal)}
                         </span>
                       </div>
                     )}
                     {theme.showTax && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span style={{ color: t.accentColor }}>GST (5%)</span>
-                        <span style={{ color: t.textColor }}>
+                        <span
+                          style={{ color: t.textColor }}
+                          className="font-medium"
+                        >
                           {formatCurrency(tax)}
                         </span>
                       </div>
                     )}
                     {theme.showDiscount && appliedCoupon && (
                       <div
-                        className="flex justify-between"
+                        className="flex justify-between text-sm font-medium"
                         style={{ color: t.successColor }}
                       >
                         <span>Discount ({appliedCoupon.code})</span>
@@ -807,15 +680,18 @@ export default function EnhancedCart({
                       </div>
                     )}
                     {theme.enableTips && tipAmount > 0 && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span style={{ color: t.accentColor }}>Tip</span>
-                        <span style={{ color: t.textColor }}>
+                        <span
+                          style={{ color: t.textColor }}
+                          className="font-medium"
+                        >
                           {formatCurrency(tipAmount)}
                         </span>
                       </div>
                     )}
                     <div
-                      className="flex justify-between text-lg font-bold pt-2 border-t"
+                      className="flex justify-between text-base sm:text-lg font-bold pt-2.5 border-t"
                       style={{ borderColor: t.borderColor }}
                     >
                       <span style={{ color: t.textColor }}>Total</span>
@@ -829,68 +705,48 @@ export default function EnhancedCart({
                   <button
                     onClick={handlePlaceOrder}
                     disabled={loading}
-                    className="w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
+                    className="w-full py-3.5 sm:py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition text-base sm:text-lg shadow-lg"
                     style={{
                       backgroundColor: loading ? t.accentColor : t.primaryColor,
                       color: t.buttonTextColor,
-                      borderRadius: `${t.buttonRadius}px`,
-                      fontSize: "1.125rem",
                       opacity: loading ? 0.7 : 1,
                       cursor: loading ? "not-allowed" : "pointer",
                     }}
                   >
                     {loading ? (
                       <>
-                        <svg
-                          className="animate-spin"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <line x1="12" y1="2" x2="12" y2="6" />
-                          <line x1="12" y1="18" x2="12" y2="22" />
-                          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-                          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-                          <line x1="2" y1="12" x2="6" y2="12" />
-                          <line x1="18" y1="12" x2="22" y2="12" />
-                          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-                          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-                        </svg>
+                        <Loader2 className="w-5 h-5 animate-spin" />
                         Placing Order...
                       </>
                     ) : (
-                      <>
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <rect
-                            x="1"
-                            y="4"
-                            width="22"
-                            height="16"
-                            rx="2"
-                            ry="2"
-                          />
-                          <line x1="1" y1="10" x2="23" y2="10" />
-                        </svg>
-                        Place Order • {formatCurrency(finalTotal)}
-                      </>
+                      <>Place Order • {formatCurrency(finalTotal)}</>
                     )}
                   </button>
-                </div>
+                </>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+        @media (min-width: 640px) {
+          .animate-slide-up {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

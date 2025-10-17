@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ScheduleCalendar } from "@/components/schedule/ScheduleCalendar";
-import { CreateScheduleDialog } from "@/components/schedule/CreateScheduleDialog";
 import { SchedulePreview } from "@/components/schedule/SchedulePreview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,6 @@ export default function SchedulesPage() {
   const restaurantId = params.id as string;
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
   const { data: schedules, isLoading } = useQuery({
@@ -31,7 +29,6 @@ export default function SchedulesPage() {
   });
 
   const canSchedule = hasPermission("menu.schedule");
-  console.log(canSchedule);
   if (!canSchedule) {
     return (
       <MainLayout>
@@ -62,10 +59,6 @@ export default function SchedulesPage() {
             >
               <Calendar className="mr-2 h-4 w-4" />
               Preview
-            </Button>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Schedule
             </Button>
           </div>
         </div>
@@ -106,9 +99,9 @@ export default function SchedulesPage() {
             <p className="mb-4 text-muted-foreground">
               No schedules created yet
             </p>
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            <Button onClick={() => {}}>
               <Plus className="mr-2 h-4 w-4" />
-              Create your first schedule
+              Create your first Menu
             </Button>
           </div>
         ) : (
@@ -117,12 +110,6 @@ export default function SchedulesPage() {
             restaurantId={restaurantId}
           />
         )}
-
-        <CreateScheduleDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-          restaurantId={restaurantId}
-        />
 
         <SchedulePreview
           open={previewDialogOpen}

@@ -1,3 +1,5 @@
+// ---------------------------------------------------
+// src/app/api/restaurants/[id]/tables/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +8,7 @@ import { authorize } from "@/lib/permissions";
 import { tableSchema } from "@/lib/validations";
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -16,13 +18,60 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const tables = await prisma.table.findMany({
-      where: { restaurantId: params.id },
+    const { searchParams } = new URL(request.url);
 
+    // Pagination
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "25");
+    const skip = (page - 1) * limit;
+
+    // Filters
+    const search = searchParams.get("search") || "";
+    const hasQR = searchParams.get("hasQR");
+    const minCapacity = searchParams.get("minCapacity");
+    const maxCapacity = searchParams.get("maxCapacity");
+
+    const where: any = { restaurantId: params.id };
+
+    if (search) {
+      where.number = { contains: search, mode: "insensitive" };
+    }
+
+    if (hasQR === "true") {
+      where.qrCodes = { some: {} };
+    } else if (hasQR === "false") {
+      where.qrCodes = { none: {} };
+    }
+
+    if (minCapacity) {
+      where.capacity = { ...where.capacity, gte: parseInt(minCapacity) };
+    }
+
+    if (maxCapacity) {
+      where.capacity = { ...where.capacity, lte: parseInt(maxCapacity) };
+    }
+
+    const total = await prisma.table.count({ where });
+
+    const tables = await prisma.table.findMany({
+      where,
+      include: {
+        qrCodes: true,
+      },
       orderBy: { number: "asc" },
+      skip,
+      take: limit,
     });
 
-    return NextResponse.json(tables);
+    return NextResponse.json({
+      tables,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching tables:", error);
     return NextResponse.json(

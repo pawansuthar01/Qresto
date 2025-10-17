@@ -181,3 +181,15 @@ export interface CartItem {
   quantity: number;
   notes?: string;
 }
+
+export interface PaginationState {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationState;
+}

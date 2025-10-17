@@ -3,6 +3,19 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
+import { supabaseClient } from "@/lib/supabase";
+
+async function broadcastUpdate(tableId: string, payload: any) {
+  try {
+    await supabaseClient.channel(`table_presence:${tableId}`).send({
+      type: "broadcast",
+      event: "users-updated",
+      payload,
+    });
+  } catch (error) {
+    console.error("Supabase broadcast error:", error);
+  }
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -35,6 +48,8 @@ export async function PATCH(
       where: { id: params.tableId },
       data: body,
     });
+
+    await broadcastUpdate(table.id, table);
 
     return NextResponse.json(table);
   } catch (error: any) {

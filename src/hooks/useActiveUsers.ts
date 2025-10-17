@@ -1,67 +1,105 @@
+"use client";
+
 import { useEffect, useState, useCallback } from "react";
+import { supabaseClient } from "@/lib/supabase";
 
-export function useActiveUsers(shortCode: string) {
-  const [userId] = useState(
-    () => `user-${Math.random().toString(36).substr(2, 9)}`
+export function useActiveUser(tableData: any) {
+  const [currentUsers, setCurrentUsers] = useState(
+    tableData?.joinGuests?.length || 0
   );
-  const [currentUsers, setCurrentUsers] = useState(0);
-  const [capacity, setCapacity] = useState(4);
-  const [isFull, setIsFull] = useState(false);
-
-  const updateActiveUsers = useCallback(
-    async (action: "join" | "leave") => {
-      try {
-        const res = await fetch(`/api/q/${shortCode}/active-users`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, action }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setCurrentUsers(data.currentUsers);
-          setCapacity(data.capacity);
-          setIsFull(data.isFull);
-        }
-      } catch (error) {
-        console.error("Error updating active users:", error);
-      }
-    },
-    [shortCode, userId]
-  );
+  const [joinGuests, setJoinGuests] = useState(tableData?.joinGuests || []);
+  const [capacity, setCapacity] = useState(tableData?.capacity || 0);
+  const [onlyCapacity, setOnlyCapacity] = useState(tableData?.onlyCapacity);
 
   useEffect(() => {
-    // Join on mount
-    updateActiveUsers("join");
+    setCurrentUsers(tableData?.joinGuests?.length || 0);
+    setJoinGuests(tableData?.joinGuests || []);
+    setCapacity(tableData?.capacity || 0);
+    setOnlyCapacity(tableData?.onlyCapacity);
+  }, [tableData]);
 
-    // Poll for updates every 5 seconds
-    const interval = setInterval(() => {
-      fetch(`/api/q/${shortCode}/active-users`)
-        .then((res) => res.json())
-        .then((data) => {
-          setCurrentUsers(data.currentUsers);
-          setCapacity(data.capacity);
-          setIsFull(data.isFull);
-        })
-        .catch(console.error);
-    }, 5000);
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!tableData?.id) return;
 
-    // Leave on unmount or page close
-    const handleBeforeUnload = () => {
-      navigator.sendBeacon(
-        `/api/q/${shortCode}/active-users`,
-        JSON.stringify({ userId, action: "leave" })
-      );
-    };
+    const channel = supabaseClient
+      .channel(`table_presence:${tableData.id}`)
+      .on("broadcast", { event: "users-updated" }, (msg: any) => {
+        const { currentUsers, capacity, onlyCapacity, joinGuests } =
+          msg.payload;
+        setCurrentUsers(currentUsers);
+        setCapacity(capacity);
+        setJoinGuests(joinGuests || []);
+        setOnlyCapacity(onlyCapacity);
+      })
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("Successfully subscribed to real-time channel!");
+        }
+      });
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    return channel;
+  }, [tableData?.id]);
+
+  useEffect(() => {
+    const channel = setupRealtimeSubscription();
 
     return () => {
-      updateActiveUsers("leave");
-      clearInterval(interval);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (channel) {
+        channel.unsubscribe();
+      }
     };
-  }, [shortCode, updateActiveUsers]);
+  }, [setupRealtimeSubscription]);
 
-  return { currentUsers, capacity, isFull, userId };
+  return { onlyCapacity, capacity, currentUsers, joinGuests };
+}
+
+// ✅ Add Active User Function
+export async function addActiveUser(
+  shortCode: string,
+  tableId: string,
+  userId: string
+) {
+  try {
+    const res = await fetch(`/api/q/${shortCode}/active-users`, {
+      method: "POST",
+      body: JSON.stringify({ userId, action: "join" }),
+    });
+    const data = await res.json();
+
+    // Broadcast realtime update
+    await supabaseClient.channel(`table_presence:${tableId}`).send({
+      type: "broadcast",
+      event: "users-updated",
+      payload: data,
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error adding user:", error);
+  }
+}
+
+// ✅ Remove Active User Function
+export async function removeActiveUser(
+  shortCode: string,
+  tableId: string,
+  userId: string
+) {
+  try {
+    const res = await fetch(`/api/q/${shortCode}/active-users`, {
+      method: "POST",
+      body: JSON.stringify({ userId, action: "leave" }),
+    });
+    const data = await res.json();
+
+    await supabaseClient.channel(`table_presence:${tableId}`).send({
+      type: "broadcast",
+      event: "users-updated",
+      payload: data,
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error removing user:", error);
+  }
 }
