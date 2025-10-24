@@ -10,28 +10,31 @@ export default async function PermissionsPage({
 }: {
   params: { id: string };
 }) {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== UserRole.ADMIN) {
-    redirect("/login");
-  }
-
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: params.id },
-    include: {
-      owners: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+    if (!session?.user || session.user.role !== UserRole.ADMIN) {
+      redirect("/login");
+    }
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: params.id },
+      include: {
+        owners: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!restaurant) {
-    redirect("/company/dashboard");
+    if (!restaurant) {
+      redirect("/company/dashboard");
+    }
+
+    return <PermissionsManager restaurant={restaurant} user={session.user} />;
+  } catch (_) {
+    throw Error("Something went wrong");
   }
-
-  return <PermissionsManager restaurant={restaurant} user={session.user} />;
 }

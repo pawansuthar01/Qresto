@@ -26,21 +26,27 @@ export default function RestaurantCard({ restaurant }: RestaurantCardProps) {
               <ShoppingBag className="w-4 h-4" />
               Menu Items
             </span>
-            <span className="font-semibold">{restaurant._count.items}</span>
+            <span className="font-semibold">
+              {restaurant?._count?.items || 0}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 flex items-center gap-2">
               <Users className="w-4 h-4" />
               Tables
             </span>
-            <span className="font-semibold">{restaurant._count.tables}</span>
+            <span className="font-semibold">
+              {restaurant?._count?.tables || 0}
+            </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 flex items-center gap-2">
               <Settings className="w-4 h-4" />
               Orders
             </span>
-            <span className="font-semibold">{restaurant._count.orders}</span>
+            <span className="font-semibold">
+              {restaurant?._count?.orders || 0}
+            </span>
           </div>
 
           <div className="pt-4 flex gap-2">

@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "@/components/ui/use-toast";
+import Loading from "@/components/ui/loading";
 
 export default function TablesPage() {
   const params = useParams();
@@ -24,6 +25,13 @@ export default function TablesPage() {
       setTables(restaurant.tables);
     }
   }, [restaurant]);
+  if (!restaurant) {
+    return (
+      <MainLayout>
+        <Loading h="h-full" />
+      </MainLayout>
+    );
+  }
 
   const canCreate = hasPermission("table.create");
 

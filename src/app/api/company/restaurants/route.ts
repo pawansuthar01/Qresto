@@ -3,43 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { generateSlug } from "@/lib/utils";
-import { z } from "zod";
 import { getServerSession } from "next-auth";
-
-const createRestaurantSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  ownerName: z.string().min(2),
-  description: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  permissions: z.object({
-    "menu.create": z.boolean().optional(),
-    "menu.read": z.boolean().optional(),
-    "menu.update": z.boolean().optional(),
-    "menu.delete": z.boolean().optional(),
-    "menu.customize": z.boolean().optional(),
-    "table.create": z.boolean().optional(),
-    "table.read": z.boolean().optional(),
-    "table.update": z.boolean().optional(),
-    "table.delete": z.boolean().optional(),
-    "qrcode.generate": z.boolean().optional(),
-    "qrcode.read": z.boolean().optional(),
-    "qrcode.update": z.boolean().optional(),
-    "qrcode.delete": z.boolean().optional(),
-    "order.create": z.boolean().optional(),
-    "order.read": z.boolean().optional(),
-    "order.update": z.boolean().optional(),
-    "invoice.generate": z.boolean().optional(),
-    "invoice.download": z.boolean().optional(),
-    "analytics.view": z.boolean().optional(),
-    "staff.manage": z.boolean().optional(),
-    "settings.update": z.boolean().optional(),
-    "media.upload": z.boolean().optional(),
-  }),
-});
+import { DEFAULT_PERMISSIONS } from "@/lib/permissions";
 
 // GET - List all restaurants (Company Owner only)
 export async function GET() {
@@ -81,80 +46,128 @@ export async function GET() {
   }
 }
 
-// POST - Create new restaurant with owner (Company Owner only)
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || session.user.role !== UserRole.ADMIN) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Only ADMIN (Company Owner) can create restaurants
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const validatedData = createRestaurantSchema.parse(body);
-
-    // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email },
-    });
-
-    if (existingUser) {
+    const body = await req.json();
+    const { restaurant, owner } = body;
+    // Validate input
+    if (!restaurant?.name || !owner?.email || !restaurant.logoUrl) {
       return NextResponse.json(
-        { error: "Email already exists" },
+        { message: "Restaurant details and owner email are required" },
         { status: 400 }
       );
     }
 
-    // Generate unique slug
-    let slug = generateSlug(validatedData.name);
-    let slugExists = await prisma.restaurant.findUnique({ where: { slug } });
-    let counter = 1;
+    // Check if slug already exists
+    const existingRestaurant = await prisma.restaurant.findUnique({
+      where: { slug: restaurant.slug },
+    });
 
-    while (slugExists) {
-      slug = `${generateSlug(validatedData.name)}-${counter}`;
-      slugExists = await prisma.restaurant.findUnique({ where: { slug } });
-      counter++;
+    if (existingRestaurant) {
+      return NextResponse.json(
+        { message: "Slug already taken" },
+        { status: 400 }
+      );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+    // Find existing user by email
+    const existingUser = await prisma.user.findUnique({
+      where: { email: owner.email },
+    });
 
-    // Create restaurant with owner
-    const restaurant = await prisma.restaurant.create({
-      data: {
-        name: validatedData.name,
-        slug,
-        email: validatedData.email,
-        description: validatedData.description,
-        phone: validatedData.phone,
-        address: validatedData.address,
-        permissions: validatedData.permissions,
-        owners: {
-          create: {
-            email: validatedData.email,
-            password: hashedPassword,
-            name: validatedData.ownerName,
-            role: UserRole.OWNER,
+    if (restaurant.email) {
+      const existingRestaurantEmail = await prisma.restaurant.findUnique({
+        where: { email: restaurant.email },
+      });
+      if (existingRestaurantEmail) {
+        return NextResponse.json(
+          { message: "restaurant email is  already taken" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // If user exists and already linked to a restaurant → reject
+    if (existingUser && existingUser.restaurantId) {
+      return NextResponse.json(
+        {
+          message: `User with email ${owner.email} is already linked to another restaurant.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Create restaurant + handle user assignment in a transaction
+    const result = await prisma.$transaction(async (tx: any) => {
+      // Create restaurant
+      const newRestaurant = await tx.restaurant.create({
+        data: {
+          name: restaurant.name,
+          description: restaurant.description,
+          slug: restaurant.slug,
+          email: restaurant.email,
+          address: restaurant.address,
+          phone: restaurant.phone,
+          logoUrl: restaurant.logoUrl,
+          coverUrl: restaurant.coverUrl,
+          permissions: DEFAULT_PERMISSIONS,
+          customization: {},
+        },
+      });
+
+      // If existing user → link restaurantId and set role OWNER
+      if (existingUser) {
+        await tx.user.update({
+          where: { email: owner.email },
+          data: {
+            restaurantId: newRestaurant.id,
+            role: "OWNER",
           },
+        });
+
+        return { restaurant: newRestaurant, owner: existingUser };
+      }
+      const hashedPassword = await bcrypt.hash(owner.password, 10);
+      // Otherwise, create a new user as OWNER
+      const newOwner = await tx.user.create({
+        data: {
+          name: owner.name || "Restaurant Owner",
+          email: owner.email,
+          image: owner.image,
+          password: hashedPassword,
+          role: "OWNER",
+          restaurantId: newRestaurant.id,
+        },
+      });
+
+      return { restaurant: newRestaurant, owner: newOwner };
+    });
+
+    return NextResponse.json(
+      {
+        message: existingUser
+          ? "Existing user linked to restaurant successfully"
+          : "Restaurant and owner created successfully",
+        restaurant: result.restaurant,
+        owner: {
+          id: result.owner.id,
+          email: result.owner.email,
+          name: result.owner.name,
         },
       },
-      include: {
-        owners: true,
-      },
-    });
-
-    return NextResponse.json(restaurant, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.errors },
-        { status: 400 }
-      );
-    }
-
     console.error("Error creating restaurant:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }

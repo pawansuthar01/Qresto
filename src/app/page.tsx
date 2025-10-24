@@ -16,11 +16,10 @@ export default async function HomePage() {
       redirect("/company/dashboard");
     }
     // Restaurant Owner -> Their Restaurant
-    else if (
-      session.user.role === UserRole.OWNER &&
-      session.user.restaurantId
-    ) {
-      redirect(`/owner/restaurants/${session.user.restaurantId}/dashboard`);
+    else if (session.user.role === UserRole.OWNER) {
+      redirect(
+        `/owner/restaurants/${session.user.restaurantId || "padding"}/dashboard`
+      );
     }
   }
 

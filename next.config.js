@@ -11,19 +11,13 @@ const nextConfig = {
 
   images: {
     // Production: allow only listed domains
-    domains:
-      process.env.NODE_ENV === "production"
-        ? ["pawansuthar.in", "another-allowed-domain.com"]
-        : [],
+    domains: ["pawansuthar.in", "another-allowed-domain.com"],
 
     // Development: allow all remote images using remotePatterns
-    remotePatterns:
-      process.env.NODE_ENV === "development"
-        ? [
-            { protocol: "https", hostname: "**" },
-            { protocol: "http", hostname: "**" },
-          ]
-        : [],
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
+    ],
   },
 
   experimental: {

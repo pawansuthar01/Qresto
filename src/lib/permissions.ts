@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
 import { Permission } from "@/types";
 import { getServerSession } from "next-auth";
+import z from "zod";
 
 export async function authorize(
   restaurantId: string,
@@ -152,4 +153,33 @@ export const DEFAULT_PERMISSIONS = {
   "staff.manage": false,
   "settings.update": false,
   "media.upload": false,
+  "media.read": false,
+  "media.delete": false,
 };
+export const Z_PERMISSION = z.object({
+  "menu.create": z.boolean().optional(),
+  "menu.read": z.boolean().optional(),
+  "menu.schedule": z.boolean().optional(),
+  "menu.update": z.boolean().optional(),
+  "menu.delete": z.boolean().optional(),
+  "menu.customize": z.boolean().optional(),
+  "table.create": z.boolean().optional(),
+  "table.read": z.boolean().optional(),
+  "table.update": z.boolean().optional(),
+  "table.delete": z.boolean().optional(),
+  "qrcode.generate": z.boolean().optional(),
+  "qrcode.read": z.boolean().optional(),
+  "qrcode.update": z.boolean().optional(),
+  "qrcode.delete": z.boolean().optional(),
+  "order.create": z.boolean().optional(),
+  "order.read": z.boolean().optional(),
+  "order.update": z.boolean().optional(),
+  "invoice.generate": z.boolean().optional(),
+  "invoice.download": z.boolean().optional(),
+  "analytics.view": z.boolean().optional(),
+  "staff.manage": z.boolean().optional(),
+  "settings.update": z.boolean().optional(),
+  "media.upload": z.boolean().optional(),
+  "media.read": z.boolean().optional(),
+  "media.delete": z.boolean().optional(),
+});

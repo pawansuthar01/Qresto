@@ -100,6 +100,16 @@ const PERMISSION_GROUPS = {
   ],
   "Documents & Media": [
     {
+      key: "media.delete",
+      label: "Media Delete",
+      description: "video, images and files delete",
+    },
+    {
+      key: "media.read",
+      label: "Media seen",
+      description: "media files  View",
+    },
+    {
       key: "media.upload",
       label: "Upload Media",
       description: "Upload images and files",

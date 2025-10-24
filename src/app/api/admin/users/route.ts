@@ -100,19 +100,21 @@ export async function GET() {
     }
 
     const users = await prisma.user.findMany({
+      where: {
+        status: { in: ["active", "suspended"] },
+      },
       select: {
         id: true,
         name: true,
         email: true,
+        image: true,
         role: true,
         restaurantId: true,
         restaurant: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
+          select: { id: true, name: true, slug: true },
         },
+        status: true,
+        emailVerified: true,
         createdAt: true,
         updatedAt: true,
       },

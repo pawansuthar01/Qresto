@@ -29,51 +29,54 @@ export default async function AnalyticsPage({
   if (!permissions?.["analytics.view"]) {
     redirect(`/owner/restaurants/${params.id}/dashboard`);
   }
+  try {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: params.id },
+      select: { id: true, name: true },
+    });
 
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: params.id },
-    select: { id: true, name: true },
-  });
-
-  // Get analytics data
-  const orders = await prisma.order.findMany({
-    where: {
-      restaurantId: params.id,
-      createdAt: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-      },
-    },
-    include: {
-      items: {
-        include: {
-          menuItem: true,
+    // Get analytics data
+    const orders = await prisma.order.findMany({
+      where: {
+        restaurantId: params.id,
+        createdAt: {
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
         },
       },
-      table: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      include: {
+        items: {
+          include: {
+            menuItem: true,
+          },
+        },
+        table: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-  const menuItems = await prisma.menuItem.findMany({
-    where: { restaurantId: params.id },
-    select: {
-      id: true,
-      name: true,
-      price: true,
-      orderCount: true,
-    },
-  });
+    const menuItems = await prisma.menuItem.findMany({
+      where: { restaurantId: params.id },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        orderCount: true,
+      },
+    });
 
-  if (!restaurant) {
-    redirect("/login");
+    if (!restaurant) {
+      redirect("/login");
+    }
+
+    return (
+      <AnalyticsDashboard
+        restaurant={restaurant}
+        orders={orders}
+        menuItems={menuItems}
+        user={session.user}
+      />
+    );
+  } catch (_) {
+    throw Error("Something went wrong");
   }
-
-  return (
-    <AnalyticsDashboard
-      restaurant={restaurant}
-      orders={orders}
-      menuItems={menuItems}
-      user={session.user}
-    />
-  );
 }

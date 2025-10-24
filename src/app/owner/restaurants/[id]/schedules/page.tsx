@@ -11,6 +11,7 @@ import { Plus, Calendar, Clock, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { usePermissions } from "@/hooks/usePermissions";
+import Loading from "@/components/ui/loading";
 
 export default function SchedulesPage() {
   const params = useParams();
@@ -90,9 +91,7 @@ export default function SchedulesPage() {
         </Card>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading schedules...</p>
-          </div>
+          <Loading h="h-full" />
         ) : schedules?.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
             <Clock className="mb-4 h-12 w-12 text-muted-foreground" />

@@ -15,6 +15,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Search, Filter, ChevronDown, Download } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import Loading from "@/components/ui/loading";
 
 export default function QRCodesPage() {
   const params = useParams();
@@ -230,9 +231,7 @@ export default function QRCodesPage() {
 
         {/* QR Codes Grid */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <Loading h="h-full" />
         ) : qrCodes.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
             <p className="mb-4 text-muted-foreground">

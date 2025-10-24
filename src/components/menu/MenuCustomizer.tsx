@@ -26,7 +26,7 @@ export function MenuCustomizer({
   onOpenChange,
 }: MenuCustomizerProps) {
   const { toast } = useToast();
-  const updateRestaurant = useUpdateRestaurant(restaurant?.id);
+  const updateRestaurant = useUpdateRestaurant();
   const [customization, setCustomization] = useState({
     primaryColor: "#000000",
     backgroundColor: "#ffffff",
@@ -42,7 +42,10 @@ export function MenuCustomizer({
 
   const handleSave = async () => {
     try {
-      await updateRestaurant.mutateAsync({ customization });
+      await updateRestaurant.mutateAsync({
+        id: restaurant?.id,
+        data: customization,
+      });
       toast({
         title: "Success",
         description: "Menu customization saved successfully",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabaseClient } from "@/lib/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useActiveUser(tableData: any) {
   const [currentUsers, setCurrentUsers] = useState(
@@ -102,4 +103,26 @@ export async function removeActiveUser(
   } catch (error) {
     console.error("Error removing user:", error);
   }
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to update user");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
 }

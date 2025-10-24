@@ -39,19 +39,22 @@ model User {
   role          UserRole     @default(OWNER)
   image         String?
   emailVerified DateTime?
-  
+  suspendedAt DateTime?
+  blockedAt DateTime?
+ reason String?
   // Restaurant relationship
   restaurantId  String?
   restaurant    Restaurant?  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  
+  otp            String?
+   otpExpiresAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   accounts      Account[]
   sessions      Session[]
-  
+  status      Status   @default(active) // "active", "suspended", "blocked"
   @@index([email])
   @@index([restaurantId])
-  @@map("users")
+  @@map("User") 
 }
 
 
@@ -72,6 +75,8 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+ @@map("accounts")
+
 }
 
 model Session {
@@ -81,6 +86,7 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -101,12 +107,13 @@ model Restaurant {
   coverUrl    String?
   address     String?
   phone       String?
-  email       String?
+  email       String @unique
   
   // Status management
   status      Status   @default(active) // "active", "suspended", "blocked"
   suspendedAt DateTime?
-  suspendedReason String?
+  blockedAt DateTime?
+  reason String?
   
   // Permission system - stored as JSON
   permissions Json     @default("{}")

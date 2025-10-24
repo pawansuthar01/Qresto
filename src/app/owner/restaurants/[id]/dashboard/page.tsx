@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   Settings,
 } from "lucide-react";
+import Loading from "@/components/ui/loading";
 
 export default function OwnerDashboardPage() {
   const params = useParams();
@@ -37,13 +38,10 @@ export default function OwnerDashboardPage() {
     );
   }
   const { data: restaurant, isLoading } = useRestaurant(restaurantId);
-
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+        <Loading />
       </MainLayout>
     );
   }

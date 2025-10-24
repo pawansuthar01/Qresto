@@ -39,19 +39,21 @@ export function useUpdateMenuItem(restaurantId: string) {
 
   return useMutation({
     mutationFn: async ({ itemId, data }: { itemId: string; data: any }) => {
-      const res = await fetch(
-        `/api/restaurants/${restaurantId}/menu/${itemId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+      try {
+        const res = await fetch(
+          `/api/restaurants/${restaurantId}/menu/${itemId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || "Failed to update menu item");
         }
-      );
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to update menu item");
-      }
-      return res.json();
+        return res.json();
+      } catch (_) {}
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu", restaurantId] });
@@ -61,7 +63,6 @@ export function useUpdateMenuItem(restaurantId: string) {
 
 export function useDeleteMenuItem(restaurantId: string) {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({
       itemId,

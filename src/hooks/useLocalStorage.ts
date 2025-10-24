@@ -7,15 +7,19 @@ export function useLocalStorage<T>(
   initialValue: T
 ): [T, (value: SetValue<T>) => void, () => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === "undefined") {
-      return initialValue;
-    }
+    if (typeof window === "undefined") return initialValue;
 
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+
+      // 🧠 Guard: handle null, "undefined", "null", or empty string
+      if (!item || item === "undefined" || item === "null") {
+        return initialValue;
+      }
+
+      return JSON.parse(item);
     } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
+      console.warn(`⚠️ Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -25,10 +29,17 @@ export function useLocalStorage<T>(
       try {
         const valueToStore =
           value instanceof Function ? value(storedValue) : value;
+
         setStoredValue(valueToStore);
 
         if (typeof window !== "undefined") {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+          if (valueToStore === undefined || valueToStore === null) {
+            window.localStorage.removeItem(key);
+          } else {
+            window.localStorage.setItem(key, JSON.stringify(valueToStore));
+          }
+
+          // 🔄 Trigger local event for sync
           window.dispatchEvent(
             new CustomEvent("localStorage", {
               detail: { key, value: valueToStore },
@@ -36,7 +47,7 @@ export function useLocalStorage<T>(
           );
         }
       } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+        console.warn(`⚠️ Error setting localStorage key "${key}":`, error);
       }
     },
     [key, storedValue]
@@ -54,7 +65,7 @@ export function useLocalStorage<T>(
         );
       }
     } catch (error) {
-      console.warn(`Error removing localStorage key "${key}":`, error);
+      console.warn(`⚠️ Error removing localStorage key "${key}":`, error);
     }
   }, [key, initialValue]);
 
@@ -67,9 +78,13 @@ export function useLocalStorage<T>(
 
       try {
         const item = window.localStorage.getItem(key);
-        setStoredValue(item ? JSON.parse(item) : initialValue);
+        if (!item || item === "undefined" || item === "null") {
+          setStoredValue(initialValue);
+        } else {
+          setStoredValue(JSON.parse(item));
+        }
       } catch (error) {
-        console.warn(`Error syncing localStorage key "${key}":`, error);
+        console.warn(`⚠️ Error syncing localStorage key "${key}":`, error);
       }
     };
 

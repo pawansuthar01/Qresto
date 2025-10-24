@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Z_PERMISSION } from "./permissions";
 
 export const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -13,16 +14,16 @@ export const signUpSchema = z.object({
 
 export const restaurantSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
-  slug: z
-    .string()
-    .min(2, "Slug must be at least 2 characters")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens"
-    ),
+  ownerName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  slug: z.string().min(2, "Invalid slug address"),
+  description: z.string().min(10, "description must be at least 10 characters"),
+  password: z.string().min(8, "password must be at least 8 characters"),
   address: z.string().optional(),
   phone: z.string().optional(),
-  logo: z.string().url().optional(),
+  logoUrl: z.string().url("Logo url is not found"),
+  permission: Z_PERMISSION,
+  coverUrl: z.string().url().optional(),
 });
 
 export const menuCategorySchema = z.object({

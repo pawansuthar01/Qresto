@@ -11,17 +11,17 @@ export function useRestaurants() {
   });
 }
 
-export function useRestaurant(id: string) {
+export function useRestaurant(id?: string) {
   return useQuery({
     queryKey: ["restaurants", id],
     queryFn: async () => {
-      if (!id) return;
+      if (!id) throw new Error("Restaurant ID is required");
 
       const res = await fetch(`/api/restaurants/${id}`);
       if (!res.ok) throw new Error("Failed to fetch restaurant");
       return res.json();
     },
-    enabled: !!id,
+    enabled: !!id, // 🔹 Only run if id exists
   });
 }
 
@@ -44,22 +44,15 @@ export function useCreateRestaurant() {
   });
 }
 
-export function useUpdateRestaurant(id: string) {
-  const queryClient = useQueryClient();
-
+export function useUpdateRestaurant() {
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async ({ id, data }: any) => {
       const res = await fetch(`/api/restaurants/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update restaurant");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["restaurants", id] });
-      queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+      return res;
     },
   });
 }

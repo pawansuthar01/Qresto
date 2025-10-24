@@ -17,8 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
-import { signIn, useSession } from "next-auth/react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { toast } from "@/components/ui/use-toast";
+import Loading from "@/components/ui/loading";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -32,7 +33,6 @@ function SignInForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
-
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
       const role = session.user.role;
@@ -60,18 +60,17 @@ function SignInForm() {
     const result = await signIn("credentials", {
       email: data.email,
       password: data.password,
-      redirect: true,
-      callbackUrl: "/",
+      redirect: false,
     });
-
-    if (result?.error) {
+    if (!result?.ok) {
       toast({
         title: "Error",
         description: "Invalid email or password",
         variant: "destructive",
       });
     }
-
+    const res = await getSession();
+    console.log(res);
     setIsLoading(false);
   };
 
@@ -89,10 +88,17 @@ function SignInForm() {
       setIsGoogleLoading(false);
     });
   };
+  if (status === "loading") {
+    return <Loading />;
+  }
+
+  if (status === "authenticated") {
+    return <Loading message={"Redirecting"} />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-2">
             <Shield className="h-12 w-12 text-primary" />
@@ -163,6 +169,13 @@ function SignInForm() {
               )}
             </Button>
           </form>
+          <span
+            onClick={() => router.push("/account/email/password-forget")}
+            lang="password forget button"
+            className="text-xs flex justify-end m-1 text-red-500 hover:underline cursor-pointer"
+          >
+            forget password .?
+          </span>
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">

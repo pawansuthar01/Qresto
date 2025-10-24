@@ -1,15 +1,37 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Package, Award } from "lucide-react";
 import { MainLayout } from "../layout/MainLayout";
 
-interface AdminAnalyticsProps {
-  restaurants: any[];
-}
+import Loading from "../ui/loading";
 
-export function AdminAnalytics({ restaurants }: AdminAnalyticsProps) {
+export function AdminAnalytics() {
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const getRestaurants = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/restaurants", {
+          method: "GET",
+        });
+
+        setIsLoading(false);
+        if (res?.ok) {
+          const data = await res?.json();
+          setRestaurants(data);
+        }
+      } catch (error) {
+        setIsLoading(false);
+        console.error(error);
+      }
+    };
+    getRestaurants();
+  }, []);
+
   const analytics = useMemo(() => {
     if (!restaurants || restaurants.length === 0) {
       return {
@@ -49,14 +71,19 @@ export function AdminAnalytics({ restaurants }: AdminAnalyticsProps) {
     };
   }, [restaurants]);
 
+  if (isLoading) {
+    return <Loading />;
+  }
   if (!restaurants || restaurants.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
-        <BarChart3 className="mb-4 h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground">
-          No analytics data available. Add restaurants to see insights.
-        </p>
-      </div>
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
+          <BarChart3 className="mb-4 h-12 w-12 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            No analytics data available. Add restaurants to see insights.
+          </p>
+        </div>
+      </MainLayout>
     );
   }
 

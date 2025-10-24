@@ -64,7 +64,7 @@ export function PermissionDialog({
   onOpenChange,
 }: PermissionDialogProps) {
   const { toast } = useToast();
-  const updateRestaurant = useUpdateRestaurant(restaurant.id);
+  const updateRestaurant = useUpdateRestaurant();
   const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -79,7 +79,10 @@ export function PermissionDialog({
 
   const handleSave = async () => {
     try {
-      await updateRestaurant.mutateAsync({ permissions });
+      await updateRestaurant.mutateAsync({
+        id: restaurant.id,
+        data: permissions,
+      });
       toast({
         title: "Success",
         description: "Permissions updated successfully",

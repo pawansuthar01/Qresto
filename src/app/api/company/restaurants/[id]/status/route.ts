@@ -31,7 +31,7 @@ export async function PATCH(
       data: {
         status,
         suspendedAt: status !== "active" ? new Date() : null,
-        suspendedReason: status !== "active" ? reason : null,
+        reason: status !== "active" ? reason : null,
       },
     });
 
