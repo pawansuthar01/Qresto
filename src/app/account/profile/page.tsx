@@ -100,11 +100,7 @@ export default function ProfilePage() {
   }, [activeTab, session, restaurant]);
 
   useEffect(() => {
-    if (
-      activeTab !== "user" ||
-      !session?.user?.id ||
-      (user?.image == profileImage && user?.name == profileName)
-    ) {
+    if (activeTab !== "user" || !session?.user?.id || user) {
       return;
     }
     setLoading(true);
@@ -115,7 +111,7 @@ export default function ProfilePage() {
       })
       .catch(() => console.error("Failed to fetch user"))
       .finally(() => setLoading(false));
-  }, [activeTab, session, user]);
+  }, [activeTab, session]);
 
   // --- Generic helpers ---
   const showSuccess = (msg: string) => {
@@ -139,7 +135,14 @@ export default function ProfilePage() {
       return;
     }
     const res = await sendEmailOtp(session?.user.email);
-    console.log(res);
+    if (res?.message) {
+      toast({
+        title: "check your email",
+        description:
+          "forget password email code send your email check your email",
+        variant: "default",
+      });
+    }
     setPasswordForgetEmail({
       show: false,
       loading: false,
@@ -197,8 +200,8 @@ export default function ProfilePage() {
         });
         setUser(data);
         setUserEdit(false);
-        setProfileImage(data?.image);
-        setProfileName(data?.name);
+        setProfileImage(data?.image ?? profileImage);
+        setProfileName(data?.name ?? profileName);
       } else if (type == "restaurant") {
         if (
           !restaurant?.name ||
@@ -352,7 +355,7 @@ export default function ProfilePage() {
     });
     const data = await res?.json();
     setPassword({ ...password, updating: false });
-    console.log(data);
+
     if (!res?.ok) {
       toast({
         title: "Error during update password",
@@ -396,7 +399,7 @@ export default function ProfilePage() {
               label="User"
               icon={UserIcon}
               onClick={() => setActiveTab("user")}
-              activeColor="blue"
+              activeColor="bg-blue-600 text-white hover:bg-blue-700"
             />
             {user?.restaurantId && (
               <TabButton
@@ -404,7 +407,7 @@ export default function ProfilePage() {
                 label="Restaurant"
                 icon={Building2}
                 onClick={() => setActiveTab("restaurant")}
-                activeColor="purple"
+                activeColor="bg-purple-600 text-white hover:bg-purple-700"
               />
             )}
           </div>
@@ -477,7 +480,7 @@ function TabButton({ active, label, icon: Icon, onClick, activeColor }: any) {
       onClick={onClick}
       className={`flex-1 px-4 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition ${
         active
-          ? `bg-${activeColor}-600 text-white hover:bg-${activeColor}-700`
+          ? ` ${activeColor}  `
           : `bg-gray-50 text-gray-600 hover:bg-gray-100`
       }`}
     >

@@ -114,6 +114,15 @@ export async function POST(
         ...validatedData,
         restaurantId: params.id,
       },
+      select: {
+        qrCodes: true,
+        id: true,
+        number: true,
+        capacity: true,
+        restaurantId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(table, { status: 201 });

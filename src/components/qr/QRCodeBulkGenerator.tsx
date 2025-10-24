@@ -7,7 +7,7 @@ import { QrCode } from "lucide-react";
 
 interface QRCodeBulkGeneratorProps {
   restaurantId: string;
-  onData: (data: any) => void;
+  onData: (data: any[]) => void;
 }
 
 export function QRCodeBulkGenerator({
@@ -31,7 +31,7 @@ export function QRCodeBulkGenerator({
       return resData;
     },
     onSuccess: (data) => {
-      onData(data);
+      onData(data?.qrCodes);
 
       queryClient.invalidateQueries({ queryKey: ["qrcodes", restaurantId] });
       toast({

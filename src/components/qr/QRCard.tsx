@@ -22,9 +22,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 interface QRCardProps {
   qrCode: any;
   restaurantId: string;
+  onDelete: (id: string) => void;
 }
 
-export function QRCard({ qrCode, restaurantId }: QRCardProps) {
+export function QRCard({ qrCode, restaurantId, onDelete }: QRCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: restaurant } = useRestaurant(restaurantId);
@@ -46,6 +47,7 @@ export function QRCard({ qrCode, restaurantId }: QRCardProps) {
       return res.json();
     },
     onSuccess: () => {
+      onDelete(qrCode.id);
       queryClient.invalidateQueries({ queryKey: ["qrcodes", restaurantId] });
       toast({
         title: "Success",
@@ -60,7 +62,6 @@ export function QRCard({ qrCode, restaurantId }: QRCardProps) {
       });
     },
   });
-
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = qrCode.imageData;
@@ -79,7 +80,7 @@ export function QRCard({ qrCode, restaurantId }: QRCardProps) {
         <CardContent className="space-y-4">
           <img
             src={qrCode.dataUrl}
-            alt={`QR Code for Table ${qrCode.table.number}`}
+            alt={`QR Code for Table ${qrCode?.table?.number}`}
             className="mx-auto w-full max-w-xs"
           />
           <div className="space-y-2">
@@ -127,7 +128,7 @@ export function QRCard({ qrCode, restaurantId }: QRCardProps) {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the QR code for Table{" "}
-              {qrCode.table.number}. Customers won't be able to access the menu
+              {qrCode?.table.number}. Customers won't be able to access the menu
               using this QR code.
             </AlertDialogDescription>
           </AlertDialogHeader>

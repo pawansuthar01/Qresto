@@ -32,7 +32,6 @@ export async function DELETE(
 
     const permissions = restaurant.permissions as any;
     authorize(permissions, "qrcode.delete");
-    console.log(params.qrId);
     await prisma.qRCode.delete({
       where: { id: params.qrId },
     });

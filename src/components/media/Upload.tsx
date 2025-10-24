@@ -8,7 +8,7 @@ interface GlobeUploadModalProps {
   open: boolean;
   onClose: () => void;
   restaurantId: string;
-  onUploadSuccess?: (data: any) => void;
+  onUploadSuccess?: (data: any[]) => void;
   maxFiles?: number; // optional limit
 }
 

@@ -9,6 +9,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log("id:", params.id);
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -16,10 +17,7 @@ export async function PATCH(
     }
 
     let body = await req.json();
-
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    console.log(session);
     const imageUrl = await uploadMedia(body.image, {
       folder: "Qresto/users",
       width: 500,
@@ -107,12 +105,6 @@ export async function GET(
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Get user
     const user = await prisma.user.findUnique({
       where: { id: params.id },
       select: {

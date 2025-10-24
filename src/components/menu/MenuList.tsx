@@ -34,6 +34,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { PaginationState } from "@/types";
 import { toast } from "../ui/use-toast";
 import { useRouter } from "next/navigation";
+import Loading from "../ui/loading";
 
 interface MenuListProps {
   restaurantId: string;
@@ -317,7 +318,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
     0
   );
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -544,9 +545,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
       </div>
       {/* Menu Items */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <Loading h="h-full" />
       ) : getPaginatedItems().length === 0 ? (
         <Card className="p-12 text-center">
           <Palette className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -564,18 +563,20 @@ export function MenuList({ restaurantId }: MenuListProps) {
           )}
         </Card>
       ) : (
-        <>
-          <div className="space-y-3">
+        <Card>
+          <div className="space-y-3 ">
             {getPaginatedItems().map((cat: any) => (
               <div key={cat.id} className="space-y-3">
                 {/* Category Header */}
                 <Card className="bg-gray-50">
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-gray-900 text-lg">
+                    <h3 className="font-semibold text-gray-900 text-lg line-clamp-2">
                       Menu: {cat.name}
                     </h3>
                     {cat.description && (
-                      <CardDescription>{cat.description}</CardDescription>
+                      <CardDescription className=" break-all">
+                        {cat.description}
+                      </CardDescription>
                     )}
                   </CardContent>
                 </Card>
@@ -602,7 +603,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="font-semibold text-gray-900 text-lg">
+                                <h4 className="font-semibold  break-all text-gray-900 text-lg">
                                   {item.name}
                                 </h4>
                                 {!item.isAvailable && (
@@ -616,7 +617,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                              <p className="text-sm text-gray-600  break-all mt-1 line-clamp-4">
                                 {item.description}
                               </p>
                               <div className="flex items-center gap-3 mt-2">
@@ -700,7 +701,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
               </CardContent>
             </Card>
           )}
-        </>
+        </Card>
       )}
 
       {/* Create Dialog */}

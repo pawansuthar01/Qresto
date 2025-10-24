@@ -1,4 +1,3 @@
-// src/app/owner/restaurants/[id]/orders/page.tsx
 "use client";
 
 import { useParams } from "next/navigation";
@@ -24,6 +23,7 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import Loading from "@/components/ui/loading";
 
 interface FilterState {
   status: string;
@@ -426,9 +426,7 @@ export default function OrdersPage() {
 
         {/* Orders */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
+          <Loading h="h-full" />
         ) : (
           <EnhancedOrderBoard
             orders={orders}

@@ -241,7 +241,7 @@ export default function QRCodesPage() {
               <QRCodeBulkGenerator
                 restaurantId={restaurantId}
                 onData={(data) => {
-                  setQrCodes([...qrCodes, data]);
+                  setQrCodes([...qrCodes, ...data]);
                 }}
               />
             )}
@@ -251,6 +251,9 @@ export default function QRCodesPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {qrCodes.map((qrCode: any) => (
                 <QRCard
+                  onDelete={(id) =>
+                    setQrCodes((ql) => ql.filter((q) => q.id !== id))
+                  }
                   key={qrCode.id}
                   qrCode={qrCode}
                   restaurantId={restaurantId}

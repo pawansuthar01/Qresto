@@ -243,8 +243,8 @@ export default function MediaPage() {
           onClose={() => setOpen(false)}
           restaurantId={restaurantId}
           onUploadSuccess={(data) => {
-            setMedia((prev) => [data, ...prev]);
-            setFilterData((prev) => [data, ...prev]);
+            setMedia((prev) => [...data, ...prev]);
+            setFilterData((prev) => [...data, ...prev]);
           }}
           maxFiles={12}
         />
