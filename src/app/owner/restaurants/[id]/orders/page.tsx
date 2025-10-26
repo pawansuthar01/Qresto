@@ -16,14 +16,16 @@ import {
   Wifi,
   WifiOff,
   Filter,
-  Download,
   Search,
   ChevronDown,
   Calendar,
   Clock,
+  VolumeX,
+  Volume2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import Loading from "@/components/ui/loading";
+import { useSession } from "next-auth/react";
 
 interface FilterState {
   status: string;
@@ -37,6 +39,7 @@ interface FilterState {
 export default function OrdersPage() {
   const params = useParams();
   const restaurantId = params.id as string;
+  const { status } = useSession();
   const { data: restaurant } = useRestaurant(restaurantId);
   const [orders, setOrders] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
@@ -46,11 +49,14 @@ export default function OrdersPage() {
     totalPages: 1,
   });
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  const { isConnected, newOrderCount, resetNewOrderCount } =
-    useRealtimeOrders(restaurantId);
+  const {
+    isConnected,
+    orders: newOrders,
+    newOrderCount,
+    resetNewOrderCount,
+  } = useRealtimeOrders(restaurantId);
   const [isLoading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-
   const [filters, setFilters] = useState<FilterState>({
     status: "ALL",
     dateRange: "today",
@@ -59,7 +65,19 @@ export default function OrdersPage() {
     searchQuery: "",
     timeRange: "all",
   });
+  const [canPlaySound, setCanPlaySound] = useState(false);
 
+  useEffect(() => {
+    const onUserInteract = () => setCanPlaySound(true);
+    window.addEventListener("click", onUserInteract, { once: true });
+    return () => window.removeEventListener("click", onUserInteract);
+  }, []);
+
+  function playSound() {
+    const audio = new Audio("/notification.mp3");
+    audio.volume = 0.5;
+    audio.play().catch((e) => console.log("Sound play failed:", e));
+  }
   // Fetch orders with filters and pagination
   async function fetchOrders(page = 1, filterOverrides?: Partial<FilterState>) {
     setLoading(true);
@@ -115,7 +133,7 @@ export default function OrdersPage() {
     if (restaurantId) {
       fetchOrders(1);
     }
-  }, [restaurantId]);
+  }, []);
 
   // Refetch when filters change
   useEffect(() => {
@@ -131,13 +149,20 @@ export default function OrdersPage() {
     filters.timeRange,
   ]);
 
-  // Update orders when new order arrives
   useEffect(() => {
     if (newOrderCount > 0) {
-      fetchOrders(pagination.page);
+      setOrders((prev) => {
+        const uniqueNewOrders = newOrders.filter(
+          (newOrder) => !prev.some((o) => o.id === newOrder.id)
+        );
+
+        // Prepend new orders so they appear first
+        return [...uniqueNewOrders, ...prev];
+      });
+
       resetNewOrderCount();
     }
-  }, [newOrderCount]);
+  }, [newOrderCount, newOrders, resetNewOrderCount]);
 
   // Page title update
   useEffect(() => {
@@ -150,70 +175,70 @@ export default function OrdersPage() {
   const canRead = hasPermission("order.read");
 
   // Export to CSV
-  const exportToCSV = async () => {
-    try {
-      const res = await fetch(
-        `/api/restaurants/${restaurantId}/orders?limit=10000&${new URLSearchParams(
-          {
-            status: filters.status !== "ALL" ? filters.status : "",
-            dateRange: filters.dateRange,
-            startDate: filters.customStartDate,
-            endDate: filters.customEndDate,
-            search: filters.searchQuery,
-            timeRange: filters.timeRange,
-          }
-        )}`
-      );
+  // const exportToCSV = async () => {
+  //   try {
+  //     const res = await fetch(
+  //       `/api/restaurants/${restaurantId}/orders?limit=10000&${new URLSearchParams(
+  //         {
+  //           status: filters.status !== "ALL" ? filters.status : "",
+  //           dateRange: filters.dateRange,
+  //           startDate: filters.customStartDate,
+  //           endDate: filters.customEndDate,
+  //           search: filters.searchQuery,
+  //           timeRange: filters.timeRange,
+  //         }
+  //       )}`
+  //     );
 
-      if (!res.ok) throw new Error("Failed to fetch orders");
+  //     if (!res.ok) throw new Error("Failed to fetch orders");
 
-      const data = await res.json();
-      const allOrders = data.orders || [];
+  //     const data = await res.json();
+  //     const allOrders = data.orders || [];
 
-      const headers = [
-        "Order Number",
-        "Customer",
-        "Phone",
-        "Table",
-        "Status",
-        "Amount",
-        "Date",
-        "Time",
-      ];
-      const rows = allOrders.map((order: any) => [
-        order.orderNumber,
-        order.customerName || "N/A",
-        order.customerPhone || "N/A",
-        order.table?.number || "N/A",
-        order.status,
-        order.totalAmount,
-        new Date(order.createdAt).toLocaleDateString(),
-        new Date(order.createdAt).toLocaleTimeString(),
-      ]);
+  //     const headers = [
+  //       "Order Number",
+  //       "Customer",
+  //       "Phone",
+  //       "Table",
+  //       "Status",
+  //       "Amount",
+  //       "Date",
+  //       "Time",
+  //     ];
+  //     const rows = allOrders.map((order: any) => [
+  //       order.orderNumber,
+  //       order.customerName || "N/A",
+  //       order.customerPhone || "N/A",
+  //       order.table?.number || "N/A",
+  //       order.status,
+  //       order.totalAmount,
+  //       new Date(order.createdAt).toLocaleDateString(),
+  //       new Date(order.createdAt).toLocaleTimeString(),
+  //     ]);
 
-      const csvContent = [headers, ...rows]
-        .map((row) => row.join(","))
-        .join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `orders-${new Date().toISOString().split("T")[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+  //     const csvContent = [headers, ...rows]
+  //       .map((row) => row.join(","))
+  //       .join("\n");
+  //     const blob = new Blob([csvContent], { type: "text/csv" });
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = `orders-${new Date().toISOString().split("T")[0]}.csv`;
+  //     a.click();
+  //     window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "Success",
-        description: "Orders exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export orders",
-        variant: "destructive",
-      });
-    }
-  };
+  //     toast({
+  //       title: "Success",
+  //       description: "Orders exported successfully",
+  //     });
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to export orders",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   const handlePageChange = (newPage: number) => {
     fetchOrders(newPage);
@@ -230,7 +255,7 @@ export default function OrdersPage() {
     });
   };
 
-  if (!canRead) {
+  if (status !== "loading" && !canRead) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center py-12">
@@ -248,7 +273,7 @@ export default function OrdersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+            <h1 className="text-3xl sm:text-2xl max-sm:text-xl font-bold flex items-center gap-2">
               Orders
               {newOrderCount > 0 && (
                 <Badge variant="destructive" className="animate-pulse">
@@ -257,7 +282,7 @@ export default function OrdersPage() {
                 </Badge>
               )}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Total: {pagination.total} orders
             </p>
           </div>
@@ -279,7 +304,7 @@ export default function OrdersPage() {
 
         {/* Search and Actions */}
         <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
-          <div className="flex gap-3">
+          <div className="flex max-sm:flex-col gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -292,22 +317,47 @@ export default function OrdersPage() {
                 className="pl-10"
               />
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-              <ChevronDown
-                className={`w-4 h-4 ml-2 transition-transform ${
-                  showFilters ? "rotate-180" : ""
-                }`}
-              />
-            </Button>
-            <Button variant="default" onClick={exportToCSV}>
+            <div className="flex  gap-2  justify-evenly">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                <ChevronDown
+                  className={`w-4 h-4 ml-2 transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCanPlaySound(!canPlaySound)}
+                className="ml-auto"
+              >
+                {canPlaySound ? (
+                  <>
+                    <Volume2 className="mr-2 h-4 w-4" />
+                    Sound On
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="mr-2 h-4 w-4" />
+                    Sound Off
+                  </>
+                )}
+              </Button>
+              {canPlaySound && (
+                <Button type="button" size="sm" onClick={() => playSound()}>
+                  Play try
+                </Button>
+              )}
+            </div>
+            {/* <Button variant="default" onClick={exportToCSV}>
               <Download className="w-4 h-4 mr-2" />
               Export
-            </Button>
+            </Button> */}
           </div>
 
           {/* Filters Panel */}
@@ -425,7 +475,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders */}
-        {isLoading ? (
+        {status == "loading" || isLoading ? (
           <Loading h="h-full" />
         ) : (
           <EnhancedOrderBoard

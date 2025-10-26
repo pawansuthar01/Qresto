@@ -12,17 +12,13 @@ import {
   Settings,
 } from "lucide-react";
 import Loading from "@/components/ui/loading";
+import { useSession } from "next-auth/react";
 
 export default function OwnerDashboardPage() {
   const params = useParams();
-
+  const { data: session } = useSession();
   const restaurantId = params.id as string;
-
-  if (
-    restaurantId == "padding" ||
-    restaurantId == "undefined" ||
-    !restaurantId
-  ) {
+  if (!session?.user.restaurantId) {
     return (
       <MainLayout>
         <Card className="p-12 text-center">
@@ -31,7 +27,7 @@ export default function OwnerDashboardPage() {
             No restaurant assigned
           </h3>
           <p className="text-gray-600">
-            Contact your administrator to get access to features
+            Administrator contact you 1 hours please wait
           </p>
         </Card>
       </MainLayout>

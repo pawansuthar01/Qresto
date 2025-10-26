@@ -193,3 +193,39 @@ export interface PaginatedResponse<T> {
   data: T[];
   pagination: PaginationState;
 }
+
+//contact
+export interface ContactSubmission {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  company?: string | null;
+  subject: string;
+  message: string;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  subject: string;
+  message: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  stats?: {
+    total: number;
+    pending: number;
+    inProgress: number;
+    completed: number;
+  };
+  error?: string;
+  message?: string;
+}

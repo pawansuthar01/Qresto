@@ -169,14 +169,22 @@ function SignInForm() {
               )}
             </Button>
           </form>
-          <span
-            onClick={() => router.push("/account/email/password-forget")}
-            lang="password forget button"
-            className="text-xs flex justify-end m-1 text-red-500 hover:underline cursor-pointer"
-          >
-            forget password .?
-          </span>
-
+          <div className="flex justify-between m-1 w-full">
+            <span
+              onClick={() => router.push("/signup")}
+              lang="create account button"
+              className="text-xs   text-black hover:underline cursor-pointer"
+            >
+              You do not have account ..?
+            </span>
+            <span
+              onClick={() => router.push("/account/email/password-forget")}
+              lang="password forget button"
+              className="text-xs   text-red-500 hover:underline cursor-pointer"
+            >
+              forget password .?
+            </span>
+          </div>
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
@@ -235,7 +243,9 @@ export default function SignInPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground">
+            <Loading />
+          </div>
         </div>
       }
     >

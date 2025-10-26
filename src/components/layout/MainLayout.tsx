@@ -45,7 +45,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 overflow-hidden">{children}</main>
       </div>
 
       <Toaster />

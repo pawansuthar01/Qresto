@@ -166,6 +166,19 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  events: {
+    async signOut({ token }) {
+      try {
+        if (token?.sessionToken) {
+          await prisma.session.deleteMany({
+            where: { sessionToken: token.sessionToken },
+          });
+        }
+      } catch (err) {
+        console.error("Error deleting session on logout:", err);
+      }
+    },
+  },
 
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",

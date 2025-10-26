@@ -31,7 +31,7 @@ export async function PATCH(
     const validatedData = updateMenuItemSchema.parse(body);
 
     const menuItem = await prisma.menuItem.update({
-      where: { id: params.itemId, restaurantId: params.id },
+      where: { id: params.itemId, restaurantId: params.id ,status: "active", },
       data: validatedData,
       include: { category: true },
     });

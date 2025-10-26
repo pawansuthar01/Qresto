@@ -21,9 +21,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRestaurant } from "@/hooks/useRestaurant";
+import { useEffect, useState } from "react";
 
 interface EnhancedOrderBoardProps {
   orders: any[];
@@ -53,43 +53,65 @@ export function EnhancedOrderBoard({
   onPageChange,
 }: EnhancedOrderBoardProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { data: restaurant } = useRestaurant(restaurantId);
+  const [orderData, setOrderData] = useState(orders || []);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-
+  const [isOrderStatusUpdating, setIsOrderStatusUpdating] = useState<any[]>([]);
   const canUpdate = hasPermission("order.update");
 
-  const updateOrderStatus = useMutation({
-    mutationFn: async ({
-      orderId,
-      status,
-    }: {
-      orderId: string;
-      status: string;
-    }) => {
-      const res = await fetch(
-        `/api/restaurants/${restaurantId}/orders/${orderId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        }
+  useEffect(() => {
+    setOrderData(orders);
+  }, [orders]);
+
+  const handelStatusUpdate = async (id: string, status: string) => {
+    if (!canUpdate) {
+      toast({
+        title: "Permission Error",
+        description: "Permission denied",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsOrderStatusUpdating((prev) => [...prev, id]);
+
+      const res = await fetch(`/api/restaurants/${restaurantId}/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        toast({
+          title: "Error",
+          description: "Failed to update order status",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // ✅ Get updated order from API response
+      const updatedOrder = await res.json();
+
+      // ✅ Replace that order in the current list
+      setOrderData((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === updatedOrder.id ? updatedOrder : order
+        )
       );
-      if (!res.ok) throw new Error("Failed to update order");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+
       toast({ title: "Success", description: "Order status updated" });
-    },
-    onError: () => {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to update order status",
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setIsOrderStatusUpdating((prev) => prev.filter((i) => i !== id));
+    }
+  };
 
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -131,14 +153,14 @@ export function EnhancedOrderBoard({
   return (
     <div className="space-y-4">
       {/* Orders Grid */}
-      {orders.length === 0 ? (
+      {orderData.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
           <p className="text-muted-foreground">No orders found</p>
         </div>
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-            {orders.map((order) => (
+            {orderData.map((order) => (
               <Card
                 key={order.id}
                 className="hover:shadow-lg transition-shadow"
@@ -214,11 +236,9 @@ export function EnhancedOrderBoard({
                     !["SERVED", "CANCELLED"].includes(order.status) && (
                       <Select
                         value={order.status}
+                        disabled={isOrderStatusUpdating.includes(order.id)}
                         onValueChange={(status) =>
-                          updateOrderStatus.mutate({
-                            orderId: order.id,
-                            status,
-                          })
+                          handelStatusUpdate(order.id, status)
                         }
                       >
                         <SelectTrigger>

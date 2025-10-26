@@ -64,7 +64,7 @@ export function QRCard({ qrCode, restaurantId, onDelete }: QRCardProps) {
   });
   const handleDownload = () => {
     const link = document.createElement("a");
-    link.href = qrCode.imageData;
+    link.href = qrCode.dataUrl;
     link.download = `table-${qrCode.table.number}-qr.png`;
     link.click();
   };
@@ -75,19 +75,21 @@ export function QRCard({ qrCode, restaurantId, onDelete }: QRCardProps) {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Table {qrCode?.table?.number}</CardTitle>
+          <CardTitle className="sm:text-sm max-sm:text-xs">
+            Table {qrCode?.table?.number}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <img
             src={qrCode.dataUrl}
             alt={`QR Code for Table ${qrCode?.table?.number}`}
-            className="mx-auto w-full max-w-xs"
+            className="mx-auto max-sm:w-28 sm:w-32 w-full max-w-xs"
           />
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm max-sm:text-xs text-muted-foreground">
               Scans: {qrCode.scans}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"

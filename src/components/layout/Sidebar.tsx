@@ -16,7 +16,10 @@ import {
   Settings,
   ImagePlus,
   User,
+  MessageCircle,
 } from "lucide-react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useEffect } from "react";
 
 interface SidebarProps {
   className?: string;
@@ -26,7 +29,26 @@ export function Sidebar({ className }: SidebarProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const { sidebarOpen } = useUserStore();
+  const [profileImage, setProfileImage] = useLocalStorage<string | null>(
+    "profileImage",
+    null
+  );
 
+  const [profileName, setProfileName] = useLocalStorage<string | null>(
+    "profileName",
+    null
+  );
+
+  useEffect(() => {
+    try {
+      const name = localStorage.getItem("profileName") || null;
+      const logo = localStorage.getItem("profileImage") || null;
+      const cleanLogo = logo !== null ? JSON.parse(logo) : null;
+      const cleanName = name !== null ? JSON.parse(name) : null;
+      setProfileName(cleanName ?? session?.user.name ?? null);
+      setProfileImage(cleanLogo ?? session?.user.image ?? null);
+    } catch {}
+  }, [session?.user]);
   const adminLinks = [
     {
       id: "5500",
@@ -39,6 +61,12 @@ export function Sidebar({ className }: SidebarProps) {
       href: `/company/analytics`,
       label: "Analytics",
       icon: TrendingUp,
+    },
+    {
+      id: "50ddsa0",
+      href: `/contact-submission-check`,
+      label: "Message",
+      icon: MessageCircle,
     },
     {
       id: "550asssscsca2",
@@ -112,20 +140,27 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
-  if (status === "loading" || !sidebarOpen) {
+  if (status == "loading" || !sidebarOpen) {
     return (
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-white transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
       >
-        <nav className="flex flex-col gap-2 p-4 mt-10">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors bg-white text-black hover:bg-accent hover:text-accent-foreground"
-              )}
-            ></div>
-          ))}
+        <nav className="flex flex-col gap-4 p-4 animate-pulse">
+          {/* Profile Skeleton */}
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 bg-gray-300 rounded-full"></span>
+            <div className="flex flex-col gap-2">
+              <div className="w-24 h-3 bg-gray-300 rounded"></div>
+              <div className="w-10 h-2 bg-gray-300 rounded"></div>
+            </div>
+          </div>
+
+          {/* Sidebar Item Skeletons */}
+          <div className="flex flex-col gap-3 mt-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-full h-8 bg-gray-200 rounded-md"></div>
+            ))}
+          </div>
         </nav>
       </aside>
     );
@@ -153,41 +188,59 @@ export function Sidebar({ className }: SidebarProps) {
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
     >
-      <nav className="flex flex-col gap-2 p-4 mt-10">
-        {links.map((link) => {
-          const Icon = link.icon;
-          const isActive = pathname === link.href;
+      <nav className="flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-2">
+          {profileImage ? (
+            <img
+              src={profileImage || ""}
+              className="border-1 border-gray-400  rounded-full h-10 w-10"
+            />
+          ) : (
+            <User className="h-5 w-5" />
+          )}
+          <div className="flex flex-col">
+            <div className="text-sm  font-medium">{session?.user?.email}</div>
+            <div className="text-[13px] ">{profileName}</div>
+          </div>
+        </div>
 
-          return (
-            <Link
-              key={link.id}
-              href={link.href}
+        {/* Sidebar Item Skeletons */}
+        <div className="flex flex-col gap-3 mt-2">
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+
+            return (
+              <Link
+                key={link.id}
+                href={link.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm sm:text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                {link.label}
+              </Link>
+            );
+          })}
+
+          {links.length > 0 && session?.user.role === "OWNER" && (
+            <button
+              key="analytics-button"
+              type="button"
+              onClick={openAnalyticsInNewTab}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
             >
-              <Icon className="h-5 w-5" />
-              {link.label}
-            </Link>
-          );
-        })}
-
-        {links.length > 0 && session?.user.role === "OWNER" && (
-          <button
-            key="analytics-button"
-            type="button"
-            onClick={openAnalyticsInNewTab}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <TrendingUp className="h-5 w-5" />
-            Analytics
-          </button>
-        )}
+              <TrendingUp className="h-5 w-5" />
+              Analytics
+            </button>
+          )}
+        </div>
       </nav>
     </aside>
   );

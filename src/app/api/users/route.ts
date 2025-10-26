@@ -5,7 +5,7 @@ export async function GET(_: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       include: {
-        restaurant: true, // fetch assigned restaurant if any
+        restaurant: true, 
       },
       orderBy: {
         createdAt: "desc",

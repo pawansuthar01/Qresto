@@ -72,6 +72,7 @@ export async function POST(
         },
         include: {
           table: true,
+          
         },
       });
 

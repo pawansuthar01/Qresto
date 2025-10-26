@@ -72,7 +72,11 @@ export function AdminAnalytics() {
   }, [restaurants]);
 
   if (isLoading) {
-    return <Loading />;
+    return (
+      <MainLayout>
+        <Loading />
+      </MainLayout>
+    );
   }
   if (!restaurants || restaurants.length === 0) {
     return (

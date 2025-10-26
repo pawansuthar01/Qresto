@@ -185,34 +185,4 @@ export async function POST(
   }
 }
 
-// DELETE - Delete media file
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const { authorized, error } = await authorize(params.id, "media.upload");
-    if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
-    const { searchParams } = new URL(request.url);
-    const mediaId = searchParams.get("mediaId");
-
-    if (!mediaId)
-      return NextResponse.json({ error: "Media ID required" }, { status: 400 });
-
-    await prisma.media.delete({
-      where: {
-        id: mediaId,
-        restaurantId: params.id,
-      },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting media:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}

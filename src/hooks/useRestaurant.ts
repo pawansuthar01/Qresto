@@ -15,7 +15,7 @@ export function useRestaurant(id?: string) {
   return useQuery({
     queryKey: ["restaurants", id],
     queryFn: async () => {
-      if (!id) throw new Error("Restaurant ID is required");
+      if (!id || id == "padding") throw new Error("Restaurant ID is required");
 
       const res = await fetch(`/api/restaurants/${id}`);
       if (!res.ok) throw new Error("Failed to fetch restaurant");

@@ -13,11 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { checkSession } from "@/lib/check-session";
 
 export function Header() {
   const { data: session, status } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const [profileImage, setProfileImage, removeImage] = useLocalStorage<
@@ -45,6 +46,11 @@ export function Header() {
     };
     validate();
   }, [router]);
+  const handelLogout = async () => {
+    setIsLoading(true);
+    await signOut({ callbackUrl: "/signin" }), removeImage(), removeName();
+    setIsLoading(false);
+  };
 
   const openPermissionInNewTab = () => {
     if (session?.user?.restaurantId) {
@@ -81,7 +87,7 @@ export function Header() {
                 {profileImage ? (
                   <img
                     src={profileImage || ""}
-                    className="border-1 border-gray-400  rounded-lg h-10 w-12"
+                    className="border-1 border-gray-400  rounded-full h-10 w-12"
                   />
                 ) : (
                   <User className="h-5 w-5" />
@@ -105,15 +111,20 @@ export function Header() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
+                disabled={isLoading}
                 className=" cursor-pointer"
                 onClick={() => {
-                  signOut({ callbackUrl: "/signin" }),
-                    removeImage(),
-                    removeName();
+                  handelLogout();
                 }}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
+                {isLoading ? (
+                  <div className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </>
+                )}
               </DropdownMenuItem>
               {!session?.user.restaurantId ||
                 (["ADMIN", "OWNER"].includes(session?.user?.role || "") && (

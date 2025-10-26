@@ -12,14 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRestaurant } from "@/hooks/useRestaurant";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Search, Filter, ChevronDown, Download } from "lucide-react";
+import { Search, Filter, ChevronDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import Loading from "@/components/ui/loading";
+import { useSession } from "next-auth/react";
 
 export default function QRCodesPage() {
   const params = useParams();
   const restaurantId = params.id as string;
+  const { status } = useSession();
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
 
@@ -83,49 +85,49 @@ export default function QRCodesPage() {
     fetchQRCodes(newPage);
   };
 
-  const downloadAllQRCodes = async () => {
-    try {
-      // Fetch all QR codes without pagination
-      const res = await fetch(
-        `/api/restaurants/${restaurantId}/qrcodes?limit=1000`
-      );
-      if (!res.ok) throw new Error("Failed to fetch QR codes");
+  // const downloadAllQRCodes = async () => {
+  //   try {
+  //     // Fetch all QR codes without pagination
+  //     const res = await fetch(
+  //       `/api/restaurants/${restaurantId}/qrcodes?limit=1000`
+  //     );
+  //     if (!res.ok) throw new Error("Failed to fetch QR codes");
 
-      const data = await res.json();
-      const allQRCodes = data.qrCodes || [];
+  //     const data = await res.json();
+  //     const allQRCodes = data.qrCodes || [];
 
-      // Create a downloadable file with all QR codes
-      const qrData = allQRCodes.map((qr: any) => ({
-        table: qr.table?.number,
-        shortCode: qr.shortCode,
-        url: `${window.location.origin}/q/${qr.shortCode}`,
-        dataUrl: qr.dataUrl,
-      }));
+  //     // Create a downloadable file with all QR codes
+  //     const qrData = allQRCodes.map((qr: any) => ({
+  //       table: qr.table?.number,
+  //       shortCode: qr.shortCode,
+  //       url: `${window.location.origin}/q/${qr.shortCode}`,
+  //       dataUrl: qr.dataUrl,
+  //     }));
 
-      const blob = new Blob([JSON.stringify(qrData, null, 2)], {
-        type: "application/json",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `qr-codes-${new Date().toISOString().split("T")[0]}.json`;
-      a.click();
-      window.URL.revokeObjectURL(url);
+  //     const blob = new Blob([JSON.stringify(qrData, null, 2)], {
+  //       type: "application/json",
+  //     });
+  //     const url = window.URL.createObjectURL(blob);
+  //     const a = document.createElement("a");
+  //     a.href = url;
+  //     a.download = `qr-codes-${new Date().toISOString().split("T")[0]}.json`;
+  //     a.click();
+  //     window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "Success",
-        description: "QR codes exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export QR codes",
-        variant: "destructive",
-      });
-    }
-  };
+  //     toast({
+  //       title: "Success",
+  //       description: "QR codes exported successfully",
+  //     });
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to export QR codes",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
-  if (!canRead) {
+  if (status !== "loading" && !canRead) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center py-12">
@@ -141,18 +143,18 @@ export default function QRCodesPage() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap max-sm:gap-2 items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">QR Codes</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl sm:text-xl font-bold">QR Codes</h1>
+            <p className="text-muted-foreground text-sm">
               Total: {pagination.total} QR codes
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={downloadAllQRCodes}>
+            {/* <Button variant="outline" onClick={downloadAllQRCodes}>
               <Download className="w-4 h-4 mr-2" />
               Export All
-            </Button>
+            </Button> */}
             {canGenerate && (
               <QRCodeBulkGenerator
                 restaurantId={restaurantId}
@@ -230,7 +232,7 @@ export default function QRCodesPage() {
         </div>
 
         {/* QR Codes Grid */}
-        {isLoading ? (
+        {status == "loading" || isLoading ? (
           <Loading h="h-full" />
         ) : qrCodes.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
@@ -248,7 +250,7 @@ export default function QRCodesPage() {
           </div>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="flex justify-evenly flex-wrap gap-6">
               {qrCodes.map((qrCode: any) => (
                 <QRCard
                   onDelete={(id) =>

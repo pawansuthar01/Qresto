@@ -204,7 +204,6 @@ export async function GET(
       skip,
       take: limit,
     });
-    console.log("orders", orders);
 
     return pagedSuccess(orders, {
       total,

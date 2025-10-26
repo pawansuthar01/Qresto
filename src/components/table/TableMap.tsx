@@ -40,7 +40,7 @@ function TableCard({
             <Table className="h-5 w-5" />
             Table {table.number}
           </span>
-          {table.qrCodes.length !== 0 && (
+          {table?.qrCodes?.length !== 0 && (
             <Badge variant="secondary">
               <QrCode className="mr-1 h-3 w-3" />
               QR

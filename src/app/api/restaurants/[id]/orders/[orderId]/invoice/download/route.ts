@@ -68,7 +68,15 @@ export async function GET(
 }
 
 function generateInvoiceHTML(order: any): string {
-  const subtotal = order.total;
+  const subtotal =
+    typeof order.totalAmount === "number"
+      ? order.totalAmount
+      : order.items?.reduce(
+          (sum: number, item: any) =>
+            sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+          0
+        ) || 0;
+
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
@@ -122,10 +130,10 @@ function generateInvoiceHTML(order: any): string {
     <div class="info-section">
       <div class="info-box">
         <h3>From</h3>
-        <p><strong>${order.restaurant.name}</strong></p>
-        ${order.restaurant.address ? `<p>${order.restaurant.address}</p>` : ""}
+        <p><strong>${order.restaurant?.name || "Restaurant"}</strong></p>
+        ${order.restaurant?.address ? `<p>${order.restaurant.address}</p>` : ""}
         ${
-          order.restaurant.phone
+          order.restaurant?.phone
             ? `<p>Phone: ${order.restaurant.phone}</p>`
             : ""
         }
@@ -151,20 +159,23 @@ function generateInvoiceHTML(order: any): string {
         </tr>
       </thead>
       <tbody>
-        ${order.items
-          .map(
-            (item: any) => `
-          <tr>
-            <td>${item.menuItem.name}</td>
-            <td class="text-right">${item.quantity}</td>
-            <td class="text-right">₹${item.price.toFixed(2)}</td>
-            <td class="text-right">₹${(item.quantity * item.price).toFixed(
-              2
-            )}</td>
-          </tr>
-        `
-          )
-          .join("")}
+        ${
+          order.items
+            ?.map((item: any) => {
+              const price = Number(item.price) || 0;
+              const qty = Number(item.quantity) || 0;
+              const itemTotal = price * qty;
+              return `
+              <tr>
+                <td>${item.menuItem?.name || "Unnamed Item"}</td>
+                <td class="text-right">${qty}</td>
+                <td class="text-right">₹${price.toFixed(2)}</td>
+                <td class="text-right">₹${itemTotal.toFixed(2)}</td>
+              </tr>
+            `;
+            })
+            .join("") || ""
+        }
       </tbody>
     </table>
 
@@ -196,7 +207,6 @@ function generateInvoiceHTML(order: any): string {
     <div class="footer">
       <p>Thank you for dining with us!</p>
       <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-      <p style="margin-top: 10px;">This is a computer-generated invoice.</p>
     </div>
 
     <div class="no-print" style="text-align: center; margin-top: 30px;">

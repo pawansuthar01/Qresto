@@ -53,6 +53,7 @@ export function QRCodeBulkGenerator({
       variant="outline"
       onClick={() => generateBulk.mutate()}
       disabled={generateBulk.isPending}
+      className="sm:text-sm max-sm:text-xs"
     >
       <QrCode className="mr-2 h-4 w-4" />
       {generateBulk.isPending

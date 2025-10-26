@@ -19,6 +19,9 @@ export async function authorize(
     const user = session.user;
 
     // Company Owner (ADMIN) has all permissions
+    if(user?.status=="blocked" || user.status=="suspended"){
+      return { authorized: false, user: null, error: user.status};
+    }
     if (user.role === UserRole.ADMIN) {
       return { authorized: true, user };
     }
