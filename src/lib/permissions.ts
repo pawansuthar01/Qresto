@@ -19,8 +19,8 @@ export async function authorize(
     const user = session.user;
 
     // Company Owner (ADMIN) has all permissions
-    if(user?.status=="blocked" || user.status=="suspended"){
-      return { authorized: false, user: null, error: user.status};
+    if (user?.status == "blocked" || user.status == "suspended") {
+      return { authorized: false, user: null, error: user.status };
     }
     if (user.role === UserRole.ADMIN) {
       return { authorized: true, user };
@@ -116,6 +116,8 @@ export async function getRestaurantPermissions(
         "staff.manage": true,
         "settings.update": true,
         "media.upload": true,
+        "media.read": true,
+        "media.delete": true,
       };
     }
 

@@ -9,7 +9,6 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log("id:", params.id);
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -17,7 +16,6 @@ export async function PATCH(
     }
 
     let body = await req.json();
-    console.log(session);
     const imageUrl = await uploadMedia(body.image, {
       folder: "Qresto/users",
       width: 500,

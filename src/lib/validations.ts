@@ -36,10 +36,7 @@ export const menuItemSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   description: z.string().optional().default(""),
   price: z.number().positive("Price must be positive"),
-  originalPrice: z
-    .number()
-    .positive("Original price must be positive")
-    .optional(),
+
   discount: z.number().int().min(0).max(100).optional().default(0),
   imageUrl: z.string().url("Must be a valid URL").optional().default(""),
   isAvailable: z.boolean().default(true),

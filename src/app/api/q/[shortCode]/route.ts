@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 // GET - Public access to menu via QR code
 export async function GET(
@@ -8,7 +10,7 @@ export async function GET(
   { params }: { params: { shortCode: string } }
 ) {
   try {
-    // Find QR code and include restaurant
+    // 1️⃣ Find QR code and restaurant
     const qrCode = await prisma.qRCode.findUnique({
       where: { shortCode: params.shortCode },
       include: {
@@ -35,56 +37,26 @@ export async function GET(
       );
     }
 
-    // Increment scan count
-    await prisma.qRCode.update({
-      where: { id: qrCode.id },
-      data: { scans: { increment: 1 } },
-    });
+    // 2️⃣ Increment scan count asynchronously (don’t block response)
+    prisma.qRCode
+      .update({
+        where: { id: qrCode.id },
+        data: { scans: { increment: 1 } },
+      })
+      .catch(() => {});
 
-    // Get current date/time info
+    // 3️⃣ Prepare time/date info
     const now = dayjs();
     const currentTime = now.format("HH:mm");
-    const currentDay = now.format("dddd").toLowerCase(); // monday, tuesday, ...
-    const currentMonth = now.month() + 1; // 1-12
+    const currentDay = now.format("dddd").toLowerCase();
+    const currentMonth = now.month() + 1; // 1–12
 
-    const categories = await prisma.menuCategory.findMany({
+    // 4️⃣ Fetch all active categories for restaurant
+    const allCategories = await prisma.menuCategory.findMany({
       where: {
         restaurantId: qrCode.restaurant.id,
         isActive: true,
         status: "active",
-
-        OR: [
-          { scheduleType: "always" },
-          {
-            scheduleType: "DAILY",
-            startTime: { lte: currentTime },
-            endTime: { gte: currentTime },
-          },
-          {
-            scheduleType: "WEEKLY",
-            daysOfWeek: { has: currentDay },
-            startTime: { lte: currentTime },
-            endTime: { gte: currentTime },
-          },
-          {
-            scheduleType: "DATE_RANGE",
-            startDate: { lte: now.toDate() },
-            endDate: { gte: now.toDate() },
-            startTime: { lte: currentTime },
-            endTime: { gte: currentTime },
-          },
-          {
-            scheduleType: "EVENT",
-            eventActive: true,
-          },
-          {
-            scheduleType: "SEASONAL",
-            startMonth: { lte: currentMonth },
-            endMonth: { gte: currentMonth },
-            startTime: { lte: currentTime },
-            endTime: { gte: currentTime },
-          },
-        ],
       },
       include: {
         items: {
@@ -95,15 +67,74 @@ export async function GET(
       orderBy: { displayOrder: "asc" },
     });
 
-    // Check if ordering is allowed
-    const permissions = qrCode.restaurant.permissions as any;
-    const canOrder = permissions["order.create"] === true;
+    // 5️⃣ Filter categories by schedule logic
+    const activeCategories = allCategories.filter((cat) => {
+      const type = (cat.scheduleType || "ALWAYS").toUpperCase();
+      const startTime = cat.startTime || "00:00";
+      const endTime = cat.endTime || "23:59";
+      const inTime =
+        startTime < endTime
+          ? currentTime >= startTime && currentTime <= endTime
+          : currentTime >= startTime || currentTime <= endTime; // handles overnight time
 
+      switch (type) {
+        case "ALWAYS":
+          return true;
+
+        case "DAILY":
+          return inTime;
+
+        case "WEEKLY":
+          return cat.daysOfWeek?.includes(currentDay) && inTime;
+
+        case "DATE_RANGE":
+          if (!cat.startDate || !cat.endDate) return false;
+          const inRange = now.isBetween(
+            dayjs(cat.startDate),
+            dayjs(cat.endDate),
+            "day",
+            "[]"
+          );
+          return inRange && inTime;
+
+        case "EVENT":
+          return cat.eventActive === true;
+
+        case "SEASONAL":
+          if (!cat.startMonth || !cat.endMonth) return false;
+          // Handles wrapping seasons (e.g., Nov → Feb)
+          if (cat.startMonth <= cat.endMonth) {
+            return (
+              currentMonth >= cat.startMonth &&
+              currentMonth <= cat.endMonth &&
+              inTime
+            );
+          } else {
+            return (
+              (currentMonth >= cat.startMonth ||
+                currentMonth <= cat.endMonth) &&
+              inTime
+            );
+          }
+
+        default:
+          return false;
+      }
+    });
+
+    // 6️⃣ Check restaurant permission for ordering
+    const permissions = qrCode.restaurant.permissions as any;
+    const canOrder = permissions?.["order.create"] === true;
+
+    // 7️⃣ Send filtered categories
     return NextResponse.json({
       restaurant: qrCode.restaurant,
       table: qrCode.table,
-      categories,
+      categories: activeCategories,
       canOrder,
+      time: currentTime,
+      day: currentDay,
+      month: currentMonth,
     });
   } catch (error) {
     console.error("Error fetching guest menu:", error);

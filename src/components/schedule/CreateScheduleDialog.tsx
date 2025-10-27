@@ -1,6 +1,5 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Dialog,
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
@@ -24,7 +22,7 @@ interface CreateScheduleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   restaurantId: string;
-  categoryId?: string;
+  editingSchedule?: any | null;
 }
 
 const DAYS_OF_WEEK = [
@@ -41,13 +39,12 @@ export function CreateScheduleDialog({
   open,
   onOpenChange,
   restaurantId,
-  categoryId,
+  editingSchedule,
 }: CreateScheduleDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [scheduleType, setScheduleType] = useState("DAILY");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
-
   const {
     register,
     handleSubmit,
@@ -55,16 +52,45 @@ export function CreateScheduleDialog({
     formState: { errors },
   } = useForm({});
 
-  const createSchedule = useMutation({
+  // 🧩 Pre-fill form when editing
+  useEffect(() => {
+    if (editingSchedule) {
+      setScheduleType(editingSchedule.scheduleType);
+      setSelectedDays(editingSchedule.daysOfWeek || []);
+      reset({
+        name: editingSchedule.name,
+        description: editingSchedule.description,
+        startTime: editingSchedule.startTime,
+        endTime: editingSchedule.endTime,
+        startDate: editingSchedule.startDate?.split("T")[0],
+        endDate: editingSchedule.endDate?.split("T")[0],
+        eventName: editingSchedule.eventName,
+        priority: editingSchedule.displayOrder ?? 0,
+      });
+    } else {
+      reset({});
+      setScheduleType("DAILY");
+      setSelectedDays([]);
+    }
+  }, [editingSchedule, reset]);
+
+  // 🧩 Mutation (auto-switch between POST and PATCH)
+  const saveSchedule = useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`/api/restaurants/${restaurantId}/schedules`, {
-        method: "PATCH",
+      const method = editingSchedule ? "PATCH" : "POST";
+      const url = editingSchedule
+        ? `/api/restaurants/${restaurantId}/schedules/${editingSchedule.id}`
+        : `/api/restaurants/${restaurantId}/schedules`;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create schedule");
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save schedule");
       }
       return res.json();
     },
@@ -72,7 +98,9 @@ export function CreateScheduleDialog({
       queryClient.invalidateQueries({ queryKey: ["schedules", restaurantId] });
       toast({
         title: "Success",
-        description: "Schedule created successfully",
+        description: editingSchedule
+          ? "Schedule updated successfully"
+          : "Schedule created successfully",
       });
       reset();
       setSelectedDays([]);
@@ -88,31 +116,20 @@ export function CreateScheduleDialog({
   });
 
   const onSubmit = (data: any) => {
-    const scheduleData = {
+    const payload = {
       name: data.name,
       description: data.description,
-      categoryId,
       scheduleType,
-      daysOfWeek: data.daysOfWeek,
-      startDate: data.startDate,
-      eventName: data.eventName,
-      endDate: data.endDate,
+      daysOfWeek: scheduleType === "WEEKLY" ? selectedDays : [],
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      eventName: data.eventName || null,
       startTime: data.startTime,
       endTime: data.endTime,
-      priority: parseInt(data.priority) || 0,
+      displayOrder: parseInt(data.priority) || 0,
       isActive: true,
     };
-
-    if (scheduleType === "WEEKLY") {
-      scheduleData.daysOfWeek = selectedDays;
-    } else if (scheduleType === "DATE_RANGE") {
-      scheduleData.startDate = data.startDate;
-      scheduleData.endDate = data.endDate;
-    } else if (scheduleType === "EVENT") {
-      scheduleData.eventName = data.eventName;
-    }
-
-    createSchedule.mutate(scheduleData);
+    saveSchedule.mutate(payload);
   };
 
   const toggleDay = (day: string) => {
@@ -125,9 +142,13 @@ export function CreateScheduleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Menu Schedule</DialogTitle>
+          <DialogTitle>
+            {editingSchedule ? "Edit Schedule" : "Create Menu Schedule"}
+          </DialogTitle>
           <DialogDescription>
-            Set up time-based or event-driven menu availability
+            {editingSchedule
+              ? "Modify existing menu schedule settings"
+              : "Set up a new time-based schedule"}
           </DialogDescription>
         </DialogHeader>
 
@@ -141,10 +162,9 @@ export function CreateScheduleDialog({
               <TabsTrigger value="SEASONAL">Seasonal</TabsTrigger>
             </TabsList>
 
-            {/* Basic Info */}
             <div className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Schedule Name *</Label>
+                <Label>Name *</Label>
                 <Input
                   id="name"
                   placeholder="e.g., Breakfast Menu"
@@ -156,28 +176,25 @@ export function CreateScheduleDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label>Description</Label>
                 <Textarea
                   id="description"
-                  placeholder="Brief description..."
+                  placeholder="Description..."
                   {...register("description")}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startTime">Start Time *</Label>
+                  <Label>Start Time</Label>
                   <Input
-                    id="startTime"
                     type="time"
                     {...register("startTime", { required: true })}
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="endTime">End Time *</Label>
+                  <Label>End Time</Label>
                   <Input
-                    id="endTime"
                     type="time"
                     {...register("endTime", { required: true })}
                   />
@@ -185,81 +202,55 @@ export function CreateScheduleDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="priority">
-                  Priority (higher = more important)
-                </Label>
+                <Label>Priority</Label>
                 <Input
-                  id="priority"
                   type="number"
-                  placeholder="0"
                   defaultValue={0}
                   {...register("priority")}
                 />
               </div>
             </div>
 
-            {/* WEEKLY Specific */}
+            {/* WEEKLY */}
             <TabsContent value="WEEKLY" className="space-y-4">
-              <div className="space-y-2">
-                <Label>Active Days</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {DAYS_OF_WEEK.map((day) => (
-                    <div key={day} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={day}
-                        checked={selectedDays.includes(day)}
-                        onCheckedChange={() => toggleDay(day)}
-                      />
-                      <Label
-                        htmlFor={day}
-                        className="capitalize cursor-pointer"
-                      >
-                        {day.slice(0, 3)}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+              <Label>Active Days</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {DAYS_OF_WEEK.map((day) => (
+                  <div key={day} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedDays.includes(day)}
+                      onCheckedChange={() => toggleDay(day)}
+                    />
+                    <Label className="capitalize cursor-pointer">
+                      {day.slice(0, 3)}
+                    </Label>
+                  </div>
+                ))}
               </div>
             </TabsContent>
 
-            {/* DATE_RANGE Specific */}
+            {/* DATE RANGE */}
             <TabsContent value="DATE_RANGE" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    {...register("startDate")}
-                  />
+                <div>
+                  <Label>Start Date</Label>
+                  <Input type="date" {...register("startDate")} />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input id="endDate" type="date" {...register("endDate")} />
+                <div>
+                  <Label>End Date</Label>
+                  <Input type="date" {...register("endDate")} />
                 </div>
               </div>
             </TabsContent>
 
-            {/* EVENT Specific */}
-            <TabsContent value="EVENT" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="eventName">Event Name</Label>
+            {/* EVENT */}
+            <TabsContent value="EVENT">
+              <div>
+                <Label>Event Name</Label>
                 <Input
-                  id="eventName"
-                  placeholder="e.g., Live Music Night, Happy Hour"
+                  placeholder="e.g., Happy Hour"
                   {...register("eventName")}
                 />
-              </div>
-            </TabsContent>
-
-            {/* SEASONAL Specific */}
-            <TabsContent value="SEASONAL" className="space-y-4">
-              <div className="rounded-lg border bg-muted/50 p-4">
-                <p className="text-sm text-muted-foreground">
-                  Seasonal schedules automatically activate based on months. Set
-                  the start and end times for your seasonal menu.
-                </p>
               </div>
             </TabsContent>
           </Tabs>
@@ -272,8 +263,14 @@ export function CreateScheduleDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={createSchedule.isPending}>
-              {createSchedule.isPending ? "Creating..." : "Create Schedule"}
+            <Button type="submit" disabled={saveSchedule.isPending}>
+              {saveSchedule.isPending
+                ? editingSchedule
+                  ? "Updating..."
+                  : "Creating..."
+                : editingSchedule
+                ? "Save Changes"
+                : "Create Schedule"}
             </Button>
           </DialogFooter>
         </form>

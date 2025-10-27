@@ -273,7 +273,7 @@ export default function ContactPage() {
                 <p className="text-xs text-gray-500 text-center">
                   By submitting this form, you agree to our{" "}
                   <a
-                    href="/privacy"
+                    href="/privacy-policy"
                     target="_blank"
                     className="underline text-blue-600 hover:text-blue-800"
                   >
@@ -281,7 +281,7 @@ export default function ContactPage() {
                   </a>{" "}
                   and{" "}
                   <a
-                    href="/terms"
+                    href="/terms-conditions"
                     target="_blank"
                     className="underline text-blue-600 hover:text-blue-800"
                   >

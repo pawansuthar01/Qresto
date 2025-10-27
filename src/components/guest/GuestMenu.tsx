@@ -865,7 +865,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
       )}
 
       {/* Mobile Floating Cart Button */}
-      {canOrder && tableStatus.joined && cartItemCount > 0 && (
+      {!cartOpen && canOrder && tableStatus.joined && cartItemCount > 0 && (
         <div
           className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 backdrop-blur-md z-50 safe-area-bottom"
           style={{

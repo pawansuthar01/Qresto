@@ -27,7 +27,11 @@ export default async function AnalyticsPage({
   const permissions = await getRestaurantPermissions(params.id);
 
   if (!permissions?.["analytics.view"]) {
-    redirect(`/owner/restaurants/${params.id}/dashboard`);
+    return (
+      <div className="flex justify-center items-center w-full h-screen">
+        <p>you can not permission this action</p>
+      </div>
+    );
   }
   try {
     const restaurant = await prisma.restaurant.findUnique({

@@ -1,3 +1,4 @@
+import { Permission } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useRestaurants() {
@@ -20,6 +21,22 @@ export function useRestaurant(id?: string) {
       const res = await fetch(`/api/restaurants/${id}`);
       if (!res.ok) throw new Error("Failed to fetch restaurant");
       return res.json();
+    },
+    enabled: !!id, // 🔹 Only run if id exists
+  });
+}
+
+export function getPermission(id?: string) {
+  return useQuery<Permission>({
+    queryKey: ["permission", id],
+    queryFn: async () => {
+      if (!id || id == "padding") throw new Error("Restaurant ID is required");
+
+      const res = await fetch(`/api/restaurants/${id}/permission`);
+
+      if (!res.ok) throw new Error("Failed to fetch restaurant permission");
+      const data = await res.json();
+      return data.permissions;
     },
     enabled: !!id, // 🔹 Only run if id exists
   });

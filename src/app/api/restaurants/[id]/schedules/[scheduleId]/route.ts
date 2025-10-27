@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/permissions";
 
 export async function PATCH(
@@ -10,27 +10,24 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
     });
-    if (!restaurant) {
+    if (!restaurant)
       return NextResponse.json(
         { error: "Restaurant not found" },
         { status: 404 }
       );
-    }
 
-    const permissions = restaurant.permissions as any;
-    authorize(permissions, "menu.schedule");
+    authorize(restaurant.permissions as any, "menu.schedule");
 
     const body = await req.json();
+    const updateData: any = {};
 
-    // Extract only schedule-related fields from body
-    const allowedFields = [
+    for (const field of [
       "scheduleType",
       "startTime",
       "endTime",
@@ -42,10 +39,7 @@ export async function PATCH(
       "startMonth",
       "endMonth",
       "isActive",
-    ];
-
-    const updateData: any = {};
-    for (const field of allowedFields) {
+    ]) {
       if (body[field] !== undefined) updateData[field] = body[field];
     }
 
@@ -57,9 +51,6 @@ export async function PATCH(
     return NextResponse.json(schedule);
   } catch (error: any) {
     console.error("Error updating schedule:", error);
-    if (error.message?.includes("Permission denied")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -73,36 +64,28 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: params.id },
     });
-    if (!restaurant) {
+    if (!restaurant)
       return NextResponse.json(
         { error: "Restaurant not found" },
         { status: 404 }
       );
-    }
 
-    const permissions = restaurant.permissions as any;
-    authorize(permissions, "menu.schedule");
+    authorize(restaurant.permissions as any, "menu.schedule");
 
     await prisma.menuCategory.update({
       where: { id: params.scheduleId },
-      data: {
-        status: "deleted",
-      },
+      data: { status: "deleted" },
     });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error deleting schedule:", error);
-    if (error.message?.includes("Permission denied")) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -64,17 +64,17 @@ export function Header() {
   if (status == "loading") return;
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="flex h-16 items-center gap-4 px-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold">QResto</h1>
+    <header className="sticky top-0 z-40 border-b bg-white shadow-sm">
+      <div className="flex h-14 sm:h-16 items-center gap-2 sm:gap-4 px-3 sm:px-4">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold truncate">QResto</h1>
           {session?.user?.role === "ADMIN" && (
-            <span className="rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
+            <span className="rounded-full bg-primary px-2 py-0.5 sm:py-1 text-xs text-primary-foreground whitespace-nowrap">
               Admin
             </span>
           )}
           {session?.user?.role === "OWNER" && (
-            <span className="rounded-full bg-secondary px-2 py-1 text-xs text-secondary-foreground">
+            <span className="rounded-full bg-secondary px-2 py-0.5 sm:py-1 text-xs text-secondary-foreground whitespace-nowrap">
               Owner
             </span>
           )}
@@ -83,22 +83,27 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative min-w-[44px] min-h-[44px]"
+              >
                 {profileImage ? (
                   <img
                     src={profileImage || ""}
-                    className="border-1 border-gray-400  rounded-full h-10 w-12"
+                    alt="Profile"
+                    className="border border-gray-400 rounded-full h-8 w-8 sm:h-10 sm:w-10 object-cover"
                   />
                 ) : (
                   <User className="h-5 w-5" />
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{profileName}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium truncate">{profileName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
                     {session?.user?.email}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -112,7 +117,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 disabled={isLoading}
-                className=" cursor-pointer"
+                className="cursor-pointer min-h-[44px]"
                 onClick={() => {
                   handelLogout();
                 }}
@@ -130,7 +135,7 @@ export function Header() {
                 (["ADMIN", "OWNER"].includes(session?.user?.role || "") && (
                   <DropdownMenuItem
                     onClick={() => router.push("/account/profile")}
-                    className=" cursor-pointer"
+                    className="cursor-pointer min-h-[44px]"
                   >
                     <User2 className="mr-2 h-4 w-4" />
                     Profile
@@ -139,10 +144,10 @@ export function Header() {
               {session?.user.restaurantId && session.user.role == "OWNER" && (
                 <DropdownMenuItem
                   onClick={() => openPermissionInNewTab()}
-                  className=" cursor-pointer"
+                  className="cursor-pointer min-h-[44px]"
                 >
                   <Lock className="mr-2 h-4 w-4" />
-                  permissions
+                  Permissions
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

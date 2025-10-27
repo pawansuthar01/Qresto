@@ -46,7 +46,12 @@ function SignInForm() {
       router.push(redirectMap[role] || "/");
     }
   }, [session, status, router]);
-
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+  }, []);
   const {
     register,
     handleSubmit,

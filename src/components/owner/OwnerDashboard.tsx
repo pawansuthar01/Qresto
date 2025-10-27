@@ -183,16 +183,16 @@ export default function OwnerDashboard({
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader user={user} title={restaurant.name} />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
                 {restaurant.name}
               </h1>
-              <p className="text-gray-600 mt-1 flex items-center gap-2">
-                Welcome back! Here's your overview.
-                <span className="inline-flex items-center gap-1 text-green-600 text-sm">
+              <p className="text-sm sm:text-base text-gray-600 mt-1 flex flex-wrap items-center gap-2">
+                <span>Welcome back! Here's your overview.</span>
+                <span className="inline-flex items-center gap-1 text-green-600 text-xs sm:text-sm">
                   <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
                   Live
                 </span>
@@ -202,59 +202,64 @@ export default function OwnerDashboard({
               variant="outline"
               size="sm"
               onClick={toggleSound}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 min-h-[44px] w-full sm:w-auto"
             >
               {soundEnabled ? (
                 <>
                   <Volume2 className="w-4 h-4" />
-                  Sound On
+                  <span className="text-sm">Sound On</span>
                 </>
               ) : (
                 <>
                   <VolumeX className="w-4 h-4" />
-                  Sound Off
+                  <span className="text-sm">Sound Off</span>
                 </>
               )}
             </Button>
           </div>
 
-          {/* New Order Alert */}
           {newOrderAlert && (
-            <div className="mt-4 bg-green-500 text-white p-4 rounded-lg flex items-center gap-3 animate-bounce">
-              <Bell className="w-6 h-6" />
-              <span className="font-semibold">New Order Received!</span>
+            <div className="mt-4 bg-green-500 text-white p-3 sm:p-4 rounded-lg flex items-center gap-3 animate-bounce shadow-lg">
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+              <span className="font-semibold text-sm sm:text-base">
+                New Order Received!
+              </span>
             </div>
           )}
         </div>
 
         {allowedFeatures.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <Card className="p-8 sm:p-12 text-center shadow-md">
+            <Settings className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
               No permissions assigned
             </h3>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               Contact your administrator to get access to features
             </p>
           </Card>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {allowedFeatures.map((feature, idx) => (
                 <Link key={idx} href={feature.href}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardHeader>
+                  <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer h-full border shadow-sm">
+                    <CardHeader className="p-4 sm:p-6">
                       <CardTitle className="flex items-center justify-between">
-                        <span className="text-base">{feature.title}</span>
-                        <div className="text-blue-600">{feature.icon}</div>
+                        <span className="text-sm sm:text-base">
+                          {feature.title}
+                        </span>
+                        <div className="text-blue-600 flex-shrink-0">
+                          {feature.icon}
+                        </div>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-600 mb-2">
+                    <CardContent className="p-4 sm:p-6 pt-0">
+                      <p className="text-xs sm:text-sm text-gray-600 mb-2">
                         {feature.description}
                       </p>
                       {feature.count !== undefined && (
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-xl sm:text-2xl font-bold text-blue-600">
                           {feature.count}
                         </p>
                       )}
@@ -265,26 +270,26 @@ export default function OwnerDashboard({
             </div>
 
             {permissions?.["order.read"] && orders.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Recent Orders
-                    <span className="text-sm font-normal text-gray-500">
+              <Card className="shadow-md">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Recent Orders</span>
+                    <span className="text-xs sm:text-sm font-normal text-gray-500">
                       (Live Updates)
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  <div className="space-y-3 sm:space-y-4">
                     {orders.slice(0, 10).map((order) => (
                       <div
                         key={order.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                       >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-semibold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                            <span className="font-semibold text-sm sm:text-base text-gray-900">
                               {order.orderNumber}
                             </span>
                             <span
@@ -295,13 +300,13 @@ export default function OwnerDashboard({
                               {order.status}
                             </span>
                           </div>
-                          <div className="text-sm text-gray-600">
+                          <div className="text-xs sm:text-sm text-gray-600">
                             Table {order.table.number} • {order.items.length}{" "}
                             items • {formatRelativeTime(order.createdAt)}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-bold text-gray-900">
+                        <div className="text-left sm:text-right">
+                          <div className="font-bold text-base sm:text-lg text-gray-900">
                             {formatCurrency(order.totalAmount)}
                           </div>
                         </div>
@@ -310,7 +315,7 @@ export default function OwnerDashboard({
                   </div>
                   <div className="mt-4">
                     <Link href={`/owner/restaurants/${restaurant.id}/orders`}>
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full min-h-[44px]">
                         View All Orders
                       </Button>
                     </Link>

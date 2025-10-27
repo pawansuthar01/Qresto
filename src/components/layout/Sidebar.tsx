@@ -23,12 +23,13 @@ import { useEffect } from "react";
 
 interface SidebarProps {
   className?: string;
+  sidebarOpen: boolean;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, sidebarOpen }: SidebarProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { sidebarOpen } = useUserStore();
+  const { setSidebarOpen } = useUserStore();
   const [profileImage, setProfileImage] = useLocalStorage<string | null>(
     "profileImage",
     null
@@ -140,39 +141,21 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
-  if (status == "loading" || !sidebarOpen) {
-    return (
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-white transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
-      >
-        <nav className="flex flex-col gap-4 p-4 animate-pulse">
-          {/* Profile Skeleton */}
-          <div className="flex items-center gap-3">
-            <span className="w-12 h-12 bg-gray-300 rounded-full"></span>
-            <div className="flex flex-col gap-2">
-              <div className="w-24 h-3 bg-gray-300 rounded"></div>
-              <div className="w-10 h-2 bg-gray-300 rounded"></div>
-            </div>
-          </div>
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
 
-          {/* Sidebar Item Skeletons */}
-          <div className="flex flex-col gap-3 mt-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="w-full h-8 bg-gray-200 rounded-md"></div>
-            ))}
-          </div>
-        </nav>
-      </aside>
-    );
+  if (status === "loading" || !sidebarOpen) {
+    return null;
   }
 
   if (session?.user.role === "OWNER" && !session?.user.restaurantId) {
     return (
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
-      >
+      <aside className={className}>
         <nav className="flex flex-col gap-2 p-4 text-center mt-20">
-          <Settings className="w-4 h-4 text-gray-400 mx-auto mb-4" />
+          <Settings className="w-8 h-8 text-gray-400 mx-auto mb-4" />
           <h3 className="text-sm font-semibold text-gray-900 mb-2">
             No restaurant assigned
           </h3>
@@ -185,27 +168,31 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-background transition-transform md:sticky md:top-16 md:h-[calc(100vh-4rem)] ${className}`}
-    >
-      <nav className="flex flex-col gap-4 p-4">
-        <div className="flex items-center gap-2">
+    <aside className={className}>
+      <nav className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
+        <div className="flex items-center gap-3 pb-4 border-b">
           {profileImage ? (
             <img
               src={profileImage || ""}
-              className="border-1 border-gray-400  rounded-full h-10 w-10"
+              alt="Profile"
+              className="border border-gray-300 rounded-full h-12 w-12 object-cover shadow-sm"
             />
           ) : (
-            <User className="h-5 w-5" />
+            <span className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm">
+              {(profileName || "U").charAt(0).toUpperCase()}
+            </span>
           )}
-          <div className="flex flex-col">
-            <div className="text-sm  font-medium">{session?.user?.email}</div>
-            <div className="text-[13px] ">{profileName}</div>
+          <div className="flex flex-col overflow-hidden">
+            <span className="text-sm font-semibold text-gray-900 truncate">
+              {profileName || "User"}
+            </span>
+            <span className="text-xs text-gray-500 truncate">
+              {session?.user.role === "ADMIN" ? "Admin" : "Owner"}
+            </span>
           </div>
         </div>
 
-        {/* Sidebar Item Skeletons */}
-        <div className="flex flex-col gap-3 mt-2">
+        <div className="flex flex-col gap-1">
           {links.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -214,33 +201,38 @@ export function Sidebar({ className }: SidebarProps) {
               <Link
                 key={link.id}
                 href={link.href}
+                onClick={handleLinkClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm sm:text-xs font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-all min-h-[44px]",
+                  "hover:bg-gray-100 active:bg-gray-200",
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-blue-50 text-blue-700 font-medium shadow-sm border border-blue-200"
+                    : "text-gray-700"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                {link.label}
+                <Icon
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0",
+                    isActive ? "text-blue-700" : "text-gray-500"
+                  )}
+                />
+                <span className="text-sm">{link.label}</span>
               </Link>
             );
           })}
-
-          {links.length > 0 && session?.user.role === "OWNER" && (
-            <button
-              key="analytics-button"
-              type="button"
-              onClick={openAnalyticsInNewTab}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              <TrendingUp className="h-5 w-5" />
-              Analytics
-            </button>
-          )}
         </div>
+
+        {session?.user.role === "OWNER" && session?.user.restaurantId && (
+          <div className="mt-auto pt-4 border-t">
+            <button
+              onClick={openAnalyticsInNewTab}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all min-h-[44px] text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+            >
+              <TrendingUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
+              <span className="text-sm">Analytics</span>
+            </button>
+          </div>
+        )}
       </nav>
     </aside>
   );

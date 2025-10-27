@@ -1,51 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { useUserStore } from "@/store/userStore";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarOpen, setSidebarOpen } = useUserStore();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [setSidebarOpen]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
 
-      {/* Mobile Sidebar Toggle */}
-      <div className="md:hidden flex items-center p-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+      <div className="md:hidden sticky top-16 z-30 bg-white border-b shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="gap-2 min-h-[44px]"
+          >
+            {sidebarOpen ? (
+              <>
+                <X className="h-4 w-4" />
+                <span className="text-sm">Close Menu</span>
+              </>
+            ) : (
+              <>
+                <Menu className="h-4 w-4" />
+                <span className="text-sm">Open Menu</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-1">
-        {/* Sidebar */}
+      <div className="flex flex-1 relative">
         <Sidebar
+          sidebarOpen={sidebarOpen}
           className={`
-            fixed z-50 top-0 left-0 h-full w-64 bg-background shadow-md
-            transform transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            md:translate-x-0 md:static md:shadow-none
+            fixed md:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 
+            bg-white border-r shadow-lg md:shadow-none
+            transform transition-transform duration-300 ease-in-out z-40
+            ${
+              sidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full md:translate-x-0"
+            }
           `}
         />
 
-        {/* Overlay for mobile when sidebar open */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden"
+            className="fixed inset-0 bg-black/50 z-30 md:hidden top-16"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Main content */}
-        <main className="flex-1 p-6 overflow-hidden">{children}</main>
+        <main className="flex-1 p-4 md:p-6 overflow-x-hidden w-full">
+          {children}
+        </main>
       </div>
 
       <Toaster />

@@ -31,8 +31,8 @@ export function Header() {
     { id: "/", label: "Home" },
     { id: "/about", label: "About" },
     { id: "/contact", label: "Contact" },
-    { id: "/privacy", label: "Privacy" },
-    { id: "/terms", label: "Terms" },
+    { id: "/privacy-police", label: "Privacy" },
+    { id: "/terms-conditions", label: "Terms" },
   ];
 
   // Close drawer when clicking outside

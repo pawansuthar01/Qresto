@@ -12,25 +12,27 @@ import {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-16 max-w-8xl">
+      <div className="container mx-auto px-4 py-16 max-w-8xl lg:max-w-5xl">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-            <Shield className="w-6 h-6 text-purple-600" />
+          <div className="w-12 h-12 max-sm:w-8 max-sm:h-8  bg-blue-100 rounded-full flex items-center justify-center">
+            <Shield className="w-6 h-6 max-sm:w-4 max-sm:h-4 text-blue-600" />
           </div>
-          <h1 className="text-5xl font-bold text-gray-900">Privacy Policy</h1>
+          <h1 className="text-5xl font-bold text-gray-900 sm:text-3xl max-sm:text-xl">
+            Privacy Policy
+          </h1>
         </div>
 
         <p className="text-sm text-gray-500 mb-8">Last updated: October 2025</p>
 
         <div className="prose prose-lg max-w-none space-y-6 text-gray-700">
           <p className="text-xl leading-relaxed">
-            At <strong className="text-purple-600">QResto</strong>, we take your
+            At <strong className="text-blue-600">QResto</strong>, we take your
             privacy seriously. This Privacy Policy explains how we collect, use,
             disclose, and safeguard your information when you use our restaurant
             management platform.
           </p>
 
-          <div className="bg-purple-50 border-l-4 border-purple-600 p-6 my-8">
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-6 my-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Information We Collect
             </h2>
@@ -42,35 +44,35 @@ export default function PrivacyPage() {
 
           <ul className="space-y-3 ml-4">
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Personal Information:</strong> Name, email address,
                 phone number, and business details
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Usage Data:</strong> Information about how you use our
                 platform
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Device Information:</strong> IP address, browser type,
                 and device identifiers
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Cookies:</strong> We use cookies to enhance your
                 experience
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Payment Information:</strong> Credit card details and
                 billing information (processed securely through encrypted
@@ -78,7 +80,7 @@ export default function PrivacyPage() {
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Location Data:</strong> No
               </span>
@@ -93,38 +95,38 @@ export default function PrivacyPage() {
           </p>
           <ul className="space-y-2 ml-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Provide, maintain, and improve our services</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Process transactions and send related information</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Send technical notices and support messages</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Respond to your comments and questions</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Analyze usage patterns to enhance user experience</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Prevent fraud and ensure platform security</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Comply with legal obligations and enforce our terms</span>
             </li>
           </ul>
 
           <div className="bg-gray-50 p-8 rounded-xl mt-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-              <Lock className="w-8 h-8 text-purple-600" />
+              <Lock className="w-8 h-8 text-blue-600" />
               Data Security
             </h2>
             <p className="text-lg leading-relaxed mb-4">
@@ -143,7 +145,7 @@ export default function PrivacyPage() {
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4 flex items-center gap-3">
-            <Database className="w-8 h-8 text-purple-600" />
+            <Database className="w-8 h-8 text-blue-600" />
             Data Storage and Retention
           </h2>
           <p className="leading-relaxed">
@@ -155,21 +157,21 @@ export default function PrivacyPage() {
           </p>
           <ul className="space-y-2 ml-4 mt-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Legal compliance and regulatory requirements</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Fraud prevention and security purposes</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Resolving disputes and enforcing agreements</span>
             </li>
           </ul>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4 flex items-center gap-3">
-            <Globe className="w-8 h-8 text-purple-600" />
+            <Globe className="w-8 h-8 text-blue-600" />
             Information Sharing and Disclosure
           </h2>
           <p className="leading-relaxed mb-4">
@@ -178,7 +180,7 @@ export default function PrivacyPage() {
           </p>
           <ul className="space-y-3 ml-4">
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Service Providers:</strong> With trusted third-party
                 service providers who assist in operating our platform (e.g.,
@@ -186,21 +188,21 @@ export default function PrivacyPage() {
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Legal Requirements:</strong> When required by law or to
                 protect our rights and safety
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Business Transfers:</strong> In connection with a
                 merger, acquisition, or sale of assets
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-purple-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>With Your Consent:</strong> When you explicitly
                 authorize us to share your information
@@ -209,33 +211,33 @@ export default function PrivacyPage() {
           </ul>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4 flex items-center gap-3">
-            <UserCheck className="w-8 h-8 text-purple-600" />
+            <UserCheck className="w-8 h-8 text-blue-600" />
             Your Rights
           </h2>
           <p className="leading-relaxed mb-4">You have the right to:</p>
           <ul className="space-y-2 ml-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Access, update, or delete your personal information</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Opt-out of marketing communications</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Request data portability</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Lodge a complaint with a supervisory authority</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Restrict or object to certain data processing</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>
                 Withdraw consent at any time (where processing is based on
                 consent)
@@ -243,9 +245,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
 
-          <div className="bg-purple-50 border-l-4 border-purple-600 p-6 my-12">
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-6 my-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-3">
-              <Eye className="w-6 h-6 text-purple-600" />
+              <Eye className="w-6 h-6 text-blue-600" />
               Cookies and Tracking Technologies
             </h2>
             <p className="text-lg leading-relaxed mb-4">
@@ -294,14 +296,14 @@ export default function PrivacyPage() {
             when posted on this page.
           </p>
 
-          <div className="bg-purple-600 text-white p-8 rounded-xl mt-12">
+          <div className="bg-blue-600 text-white p-8 sm:p-6 max-sm:p-4 rounded-xl mt-12">
             <h2 className="text-2xl font-bold mb-3">Contact Us</h2>
-            <p className="text-purple-100 mb-4">
+            <p className="text-blue-100 mb-4">
               If you have questions about this Privacy Policy, please contact us
               at:
             </p>
             <p className="font-semibold mb-2">Email: paw.kum.2111@gmail.com</p>
-            <p className="text-purple-100 text-sm mt-4">
+            <p className="text-blue-100 text-sm mt-4">
               We typically respond to privacy inquiries within 48 hours. For
               urgent matters related to data security, please mark your email as
               "Urgent - Privacy Concern."

@@ -126,18 +126,21 @@ export default function CategoriesManager({
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader user={user} title="Categories" />
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
               Menu Categories
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               Organize your menu into categories
             </p>
           </div>
           {permissions?.["menu.create"] && (
-            <Button onClick={openCreateDialog}>
+            <Button
+              onClick={openCreateDialog}
+              className="min-h-[44px] w-full sm:w-auto"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Category
             </Button>
@@ -145,42 +148,44 @@ export default function CategoriesManager({
         </div>
 
         {categories.length === 0 ? (
-          <Card className="p-12 text-center">
-            <div className="text-6xl mb-4">📂</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <Card className="p-8 sm:p-12 text-center shadow-md">
+            <div className="text-5xl sm:text-6xl mb-4">📂</div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
               No categories yet
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm sm:text-base text-gray-600 mb-6">
               Create your first category to organize your menu
             </p>
             {permissions?.["menu.create"] && (
-              <Button onClick={openCreateDialog}>
+              <Button onClick={openCreateDialog} className="min-h-[44px]">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Category
               </Button>
             )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {categories.map((category) => (
               <Card
                 key={category.id}
-                className="hover:shadow-lg transition-shadow"
+                className="hover:shadow-lg transition-all duration-200 border shadow-sm"
               >
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-gray-400" />
-                      <span>{category.name}</span>
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-base sm:text-lg truncate">
+                        {category.name}
+                      </span>
                     </div>
-                    <span className="text-sm font-normal text-gray-600">
+                    <span className="text-xs sm:text-sm font-normal text-gray-600 whitespace-nowrap">
                       {category._count.items} items
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6 pt-0">
                   {category.description && (
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-4 line-clamp-2">
                       {category.description}
                     </p>
                   )}
@@ -191,7 +196,7 @@ export default function CategoriesManager({
                         variant="outline"
                         size="sm"
                         onClick={() => openEditDialog(category)}
-                        className="flex-1"
+                        className="flex-1 min-h-[44px]"
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
@@ -202,7 +207,7 @@ export default function CategoriesManager({
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[44px] min-w-[44px]"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -215,18 +220,19 @@ export default function CategoriesManager({
         )}
       </main>
 
-      {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
               {editingCategory ? "Edit Category" : "Create Category"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-5">
             <div>
-              <Label htmlFor="name">Category Name *</Label>
+              <Label htmlFor="name" className="text-sm font-medium">
+                Category Name *
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -234,12 +240,14 @@ export default function CategoriesManager({
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="e.g., Appetizers, Main Course, Desserts"
-                className="mt-2"
+                className="mt-2 min-h-[44px]"
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="text-sm font-medium">
+                Description
+              </Label>
               <textarea
                 id="description"
                 value={formData.description}
@@ -247,13 +255,15 @@ export default function CategoriesManager({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Brief description (optional)"
-                className="w-full mt-2 p-3 border rounded-lg"
+                className="w-full mt-2 p-3 border rounded-lg min-h-[100px] text-sm"
                 rows={3}
               />
             </div>
 
             <div>
-              <Label htmlFor="displayOrder">Display Order</Label>
+              <Label htmlFor="displayOrder" className="text-sm font-medium">
+                Display Order
+              </Label>
               <Input
                 id="displayOrder"
                 type="number"
@@ -264,18 +274,26 @@ export default function CategoriesManager({
                     displayOrder: parseInt(e.target.value),
                   })
                 }
-                className="mt-2"
+                className="mt-2 min-h-[44px]"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Lower numbers appear first
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                className="min-h-[44px]"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={loading}>
+              <Button
+                onClick={handleSave}
+                disabled={loading}
+                className="min-h-[44px]"
+              >
                 {loading ? "Saving..." : editingCategory ? "Update" : "Create"}
               </Button>
             </div>

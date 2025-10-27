@@ -26,6 +26,8 @@ export interface Permission {
   "staff.manage"?: boolean;
   "settings.update"?: boolean;
   "media.upload"?: boolean;
+  "media.read"?: boolean;
+  "media.delete"?: boolean;
 }
 
 export interface Customization {
@@ -228,4 +230,19 @@ export interface ApiResponse<T> {
   };
   error?: string;
   message?: string;
+}
+
+/// ai-suggestions data type
+interface AISuggestion {
+  title: string;
+  description: string;
+  impact: "high" | "medium" | "low";
+  confidence: number;
+  actionable: boolean;
+  data?: any;
+}
+
+export interface AISuggestionResponse {
+  suggestions: AISuggestion[];
+  range: string;
 }

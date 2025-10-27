@@ -139,13 +139,10 @@ export async function PATCH(
       });
     }
 
-    const response = NextResponse.json({
-      success: true,
-      logout,
-      message: "password updated successfully.",
-      user: updatedUser,
-    });
+    let response;
+
     if (logout) {
+      response = NextResponse.redirect(new URL("/signin", req.url));
       response.cookies.set("next-auth.session-token", "", {
         maxAge: 0,
         path: "/",
@@ -155,6 +152,13 @@ export async function PATCH(
         path: "/",
         secure: true,
         sameSite: "lax",
+      });
+    } else {
+      response = NextResponse.json({
+        success: true,
+        logout,
+        message: "password updated successfully.",
+        user: updatedUser,
       });
     }
 

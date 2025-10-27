@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorize } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { getSupabaseAdmin } from "@/lib/supabase";
 
-const updateScheduleSchema = z.object({
-  categoryId: z.string(),
+const scheduleSchema = z.object({
+  categoryId: z.string().optional(),
+  name: z.string().min(1),
+  description: z.string().optional(),
   scheduleType: z.enum([
     "always",
     "DAILY",
@@ -24,22 +25,21 @@ const updateScheduleSchema = z.object({
   startMonth: z.number().optional(),
   endMonth: z.number().optional(),
   isActive: z.boolean().optional(),
+  displayOrder: z.number().optional(),
 });
-// GET - Fetch all menu schedules
+
 export async function GET(
   _: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const categories = await prisma.menuCategory.findMany({
-      where: {
-        restaurantId: params.id,
-
-        status: "active",
-      },
+      where: { restaurantId: params.id, status: "active" },
+      orderBy: { displayOrder: "asc" },
       select: {
         id: true,
         name: true,
+        description: true,
         scheduleType: true,
         isActive: true,
         startTime: true,
@@ -50,11 +50,9 @@ export async function GET(
         eventName: true,
         eventActive: true,
         startMonth: true,
-        displayOrder: true,
         endMonth: true,
-        _count: {
-          select: { items: true },
-        },
+        displayOrder: true,
+        _count: { select: { items: true } },
       },
     });
 
@@ -68,81 +66,85 @@ export async function GET(
   }
 }
 
+// 🆕 CREATE new schedule
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { authorized, error } = await authorize(params.id, "menu.schedule");
+    if (!authorized) return NextResponse.json({ error }, { status: 403 });
+
+    const body = await request.json();
+    const data = scheduleSchema.parse(body);
+
+    const created = await prisma.menuCategory.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        restaurantId: params.id,
+        scheduleType: data.scheduleType,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        daysOfWeek: data.daysOfWeek || [],
+        startDate: data.startDate ? new Date(data.startDate) : null,
+        endDate: data.endDate ? new Date(data.endDate) : null,
+        eventName: data.eventName,
+        eventActive: data.eventActive,
+        startMonth: data.startMonth,
+        endMonth: data.endMonth,
+        isActive: data.isActive ?? true,
+        displayOrder: data.displayOrder ?? 0,
+      },
+    });
+
+    return NextResponse.json(created);
+  } catch (error) {
+    if (error instanceof z.ZodError)
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      );
+
+    console.error("Error creating schedule:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// 🛠️ UPDATE schedule
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabaseAdmin = getSupabaseAdmin();
+    const { authorized, error } = await authorize(params.id, "menu.schedule");
+    if (!authorized) return NextResponse.json({ error }, { status: 403 });
 
-    // Check permission
-    const { authorized, error } = await authorize(params.id, "menu.update");
-    if (!authorized) {
-      return NextResponse.json({ error }, { status: 403 });
-    }
-
-    // Parse and validate request body
     const body = await request.json();
-    if (!body.categoryId) {
+    const data = scheduleSchema.partial().parse(body);
+
+    if (!data.categoryId)
       return NextResponse.json(
-        { error: "Category ID does not found" },
+        { error: "Category ID is required for update" },
         { status: 400 }
       );
-    }
-    const {
-      categoryId,
-      scheduleType,
-      startTime,
-      endTime,
-      daysOfWeek,
-      startDate,
-      endDate,
-      eventName,
-      eventActive,
-      startMonth,
-      endMonth,
-      isActive,
-    } = updateScheduleSchema.parse(body);
 
-    // Build update data object dynamically
-    const updateData: any = { scheduleType };
-    if (startTime !== undefined) updateData.startTime = startTime;
-    if (endTime !== undefined) updateData.endTime = endTime;
-    if (daysOfWeek !== undefined) updateData.daysOfWeek = daysOfWeek;
-    if (startDate !== undefined) updateData.startDate = startDate;
-    if (endDate !== undefined) updateData.endDate = endDate;
-    if (eventName !== undefined) updateData.eventName = eventName;
-    if (eventActive !== undefined) updateData.eventActive = eventActive;
-    if (startMonth !== undefined) updateData.startMonth = startMonth;
-    if (endMonth !== undefined) updateData.endMonth = endMonth;
-    if (isActive !== undefined) updateData.isActive = isActive;
-
-    // Update the category in Prisma
     const updated = await prisma.menuCategory.update({
-      where: { id: categoryId },
-      data: updateData,
+      where: { id: data.categoryId },
+      data,
     });
-
-    // Push real-time update via Supabase Realtime
-    try {
-      await supabaseAdmin
-        .from(`menu_categories:id=eq.${categoryId}`)
-        .upsert(
-          { ...updateData, _realtime_event: "schedule-updated" },
-          { onConflict: "id" }
-        );
-    } catch (supabaseError) {
-      console.warn("Supabase Realtime failed:", supabaseError);
-    }
 
     return NextResponse.json(updated);
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof z.ZodError)
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
         { status: 400 }
       );
-    }
+
     console.error("Error updating schedule:", error);
     return NextResponse.json(
       { error: "Internal server error" },

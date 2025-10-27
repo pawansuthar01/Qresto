@@ -18,21 +18,7 @@ export default function OwnerDashboardPage() {
   const params = useParams();
   const { data: session } = useSession();
   const restaurantId = params.id as string;
-  if (!session?.user.restaurantId) {
-    return (
-      <MainLayout>
-        <Card className="p-12 text-center">
-          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No restaurant assigned
-          </h3>
-          <p className="text-gray-600">
-            Administrator contact you 1 hours please wait
-          </p>
-        </Card>
-      </MainLayout>
-    );
-  }
+
   const { data: restaurant, isLoading } = useRestaurant(restaurantId);
   if (isLoading) {
     return (
@@ -69,12 +55,31 @@ export default function OwnerDashboardPage() {
     },
   ];
 
+  if (!session?.user.restaurantId) {
+    return (
+      <MainLayout>
+        <Card className="p-12 text-center">
+          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            No restaurant assigned
+          </h3>
+          <p className="text-gray-600">
+            Administrator contact you 1 hours please wait
+          </p>
+        </Card>
+      </MainLayout>
+    );
+  }
   return (
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{restaurant?.name}</h1>
-          <p className="text-muted-foreground">Restaurant Owner Dashboard</p>
+          <h1 className="text-3xl font-bold max-sm:text-xl sm:text-2xl">
+            {restaurant?.name}
+          </h1>
+          <p className="text-muted-foreground max-sm:text-sm sm:text-xl">
+            Restaurant Owner Dashboard
+          </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

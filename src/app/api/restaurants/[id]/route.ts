@@ -120,7 +120,7 @@ export async function PATCH(
       >;
       if (!permissions["settings.update"]) {
         return NextResponse.json(
-          { error: "Permission denied." },
+          { message: "Permission denied." },
           { status: 403 }
         );
       }

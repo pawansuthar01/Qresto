@@ -380,9 +380,9 @@ export default function ContactSubmissionsPage() {
             </div>
           </div>
 
-          {/* Submissions Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 ">
-            <div className=" overflow-x-auto ">
+          {/* Submissions Table - Desktop */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 hidden md:block">
+            <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -395,7 +395,7 @@ export default function ContactSubmissionsPage() {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Message
                     </th>
-                    <th className="px-6 py-4  text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Date
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -434,7 +434,7 @@ export default function ContactSubmissionsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex text-xs items-center px-3 py-1 rounded-full  font-medium bg-indigo-100 text-indigo-800">
+                          <span className="inline-flex text-xs items-center px-3 py-1 rounded-full font-medium bg-indigo-100 text-indigo-800">
                             {submission.subject}
                           </span>
                         </td>
@@ -481,28 +481,28 @@ export default function ContactSubmissionsPage() {
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="View Details"
                             >
-                              <Eye className="w-5 h-5 sm:w-4 sm:h-4" />
+                              <Eye className="w-4 h-4" />
                             </button>
                             <a
                               href={`mailto:${submission.email}`}
                               className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                               title="Send Email"
                             >
-                              <Mail className="w-5 h-5 sm:w-4 sm:h-4" />
+                              <Mail className="w-4 h-4" />
                             </a>
                             <a
                               href={`tel:${submission.phone}`}
                               className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                               title="Call"
                             >
-                              <Phone className="w-5 h-5 sm:w-4 sm:h-4" />
+                              <Phone className="w-4 h-4" />
                             </a>
                             <button
                               onClick={() => deleteSubmission(submission.id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Delete"
                             >
-                              <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </td>
@@ -521,6 +521,121 @@ export default function ContactSubmissionsPage() {
                   Try adjusting your filters
                 </p>
               </div>
+            )}
+          </div>
+
+          {/* Submissions Cards - Mobile */}
+          <div className="md:hidden space-y-4">
+            {isFilterLoading ? (
+              <Loading h="h-full" />
+            ) : filteredSubmissions.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 text-center py-12">
+                <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">No submissions found</p>
+                <p className="text-gray-500 text-sm">
+                  Try adjusting your filters
+                </p>
+              </div>
+            ) : (
+              filteredSubmissions.map((submission) => (
+                <div
+                  key={submission.id}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+                >
+                  {/* Customer Info */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">
+                        {submission.name}
+                      </p>
+                      <p className="text-xs text-gray-600 truncate">
+                        {submission.email}
+                      </p>
+                      {submission.company && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {submission.company}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Subject */}
+                  <div className="mb-3">
+                    <span className="inline-flex text-xs items-center px-3 py-1 rounded-full font-medium bg-indigo-100 text-indigo-800">
+                      {submission.subject}
+                    </span>
+                  </div>
+
+                  {/* Message */}
+                  <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                    {submission.message}
+                  </p>
+
+                  {/* Date & Status */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      {formatDate(submission.createdAt)}
+                    </p>
+                    {isStatusUpdate.includes(submission.id as any) ? (
+                      <span className="text-xs font-normal text-gray-500">
+                        updating..
+                      </span>
+                    ) : (
+                      <select
+                        disabled={submission.status == "completed"}
+                        value={submission.status}
+                        onChange={(e) =>
+                          updateStatus(submission.id, e.target.value)
+                        }
+                        className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                          statusColors[submission.status]
+                        } cursor-pointer min-h-[44px]`}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => viewDetails(submission)}
+                      className="flex-1 flex items-center justify-center gap-2 p-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="text-sm font-medium">View</span>
+                    </button>
+                    <a
+                      href={`mailto:${submission.email}`}
+                      className="flex items-center justify-center p-3 text-green-600 hover:bg-green-50 rounded-lg transition-colors border border-green-200 min-w-[44px]"
+                      title="Send Email"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </a>
+                    <a
+                      href={`tel:${submission.phone}`}
+                      className="flex items-center justify-center p-3 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-purple-200 min-w-[44px]"
+                      title="Call"
+                    >
+                      <Phone className="w-4 h-4" />
+                    </a>
+                    <button
+                      onClick={() => deleteSubmission(submission.id)}
+                      className="flex items-center justify-center p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200 min-w-[44px]"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

@@ -261,26 +261,15 @@ export function CreateMenuItemDialog({
                     {...itemForm.register("price", { valueAsNumber: true })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Original Price (Optional)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    {...itemForm.register("originalPrice", {
-                      valueAsNumber: true,
-                    })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Discount (%)</Label>
-                  <Input
-                    type="number"
-                    step="1"
-                    {...itemForm.register("discount", { valueAsNumber: true })}
-                  />
-                </div>
               </div>
-
+              <div className="space-y-2">
+                <Label>Discount (%)</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  {...itemForm.register("discount", { valueAsNumber: true })}
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea

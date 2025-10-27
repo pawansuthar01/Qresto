@@ -364,7 +364,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
       {/* Search and Filters */}
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="flex gap-3">
+          <div className="flex gap-3 max-sm:flex-col">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -377,22 +377,24 @@ export function MenuList({ restaurantId }: MenuListProps) {
                 className="pl-10"
               />
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-              <ChevronDown
-                className={`w-4 h-4 ml-2 transition-transform ${
-                  showFilters ? "rotate-180" : ""
-                }`}
-              />
-            </Button>
-            <Button variant="default" onClick={exportMenu}>
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                <ChevronDown
+                  className={`w-4 h-4 ml-2 transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              <Button variant="default" onClick={exportMenu}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
 
           {/* Filters Panel */}
@@ -590,7 +592,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
                   cat.items.map((item: any) => (
                     <Card key={item.id}>
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-2">
                           <div className="flex items-center gap-4 flex-1">
                             {item.imageUrl && (
                               <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
@@ -617,7 +619,10 @@ export function MenuList({ restaurantId }: MenuListProps) {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600  break-all mt-1 line-clamp-4">
+                              <p
+                                title={item.description}
+                                className="text-sm text-gray-600  break-all mt-1  line-clamp-4"
+                              >
                                 {item.description}
                               </p>
                               <div className="flex items-center gap-3 mt-2">
@@ -637,7 +642,7 @@ export function MenuList({ restaurantId }: MenuListProps) {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center max-sm:justify-evenly gap-2 flex-shrink-0 justify-center max-sm:w-full">
                             {canUpdate && (
                               <>
                                 <Button

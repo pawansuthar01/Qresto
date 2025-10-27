@@ -39,31 +39,53 @@ export function SchedulePreview({
     const testTime = previewTime;
     const testDay = testDate.toLocaleDateString("en-US", { weekday: "long" });
 
+    const toMinutes = (time: string | undefined | null) => {
+      if (!time || typeof time !== "string" || !time.includes(":")) return 0;
+      const [h, m] = time.split(":").map((v) => Number(v) || 0);
+      return h * 60 + m;
+    };
+
+    const testMinutes = toMinutes(testTime);
+
     return schedules.filter((schedule) => {
       if (!schedule.isActive) return false;
 
-      switch (schedule.type) {
+      const type = schedule.scheduleType?.toUpperCase();
+
+      switch (type) {
+        case "ALWAYS":
+          // Always active, no time restriction
+          return true;
+
         case "DAILY":
-          return testTime >= schedule.startTime && testTime <= schedule.endTime;
+          return (
+            toMinutes(schedule.startTime) <= testMinutes &&
+            testMinutes <= toMinutes(schedule.endTime)
+          );
 
         case "WEEKLY":
           if (!schedule.daysOfWeek?.includes(testDay)) return false;
-          return testTime >= schedule.startTime && testTime <= schedule.endTime;
+          return (
+            toMinutes(schedule.startTime) <= testMinutes &&
+            testMinutes <= toMinutes(schedule.endTime)
+          );
 
         case "DATE_RANGE":
           const start = new Date(schedule.startDate);
           const end = new Date(schedule.endDate);
           if (testDate < start || testDate > end) return false;
-          return testTime >= schedule.startTime && testTime <= schedule.endTime;
+          return (
+            toMinutes(schedule.startTime) <= testMinutes &&
+            testMinutes <= toMinutes(schedule.endTime)
+          );
 
         default:
-          return true;
+          return false;
       }
     });
   };
 
   const activeSchedules = getActiveSchedules();
-
   const setCurrentTime = () => {
     const now = new Date();
     setPreviewDate(now.toISOString().split("T")[0]);
@@ -72,17 +94,19 @@ export function SchedulePreview({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl h-[85vh] flex  flex-col">
+        {/* Sticky Header */}
+        <DialogHeader className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm pb-3 border-b">
           <DialogTitle>Schedule Preview & Simulator</DialogTitle>
           <DialogDescription>
-            Test how your menu will look at different times
+            Test how your menu behaves at different times of the day
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {/* Scrollable Section */}
+        <div className="overflow-y-auto flex-1 pr-1 space-y-6 py-4 max-sm:py-1">
           {/* Time Selector */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="previewDate">Date</Label>
               <Input
@@ -116,7 +140,7 @@ export function SchedulePreview({
             </div>
           </div>
 
-          {/* Active Schedules Display */}
+          {/* Active Schedules */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">
@@ -150,16 +174,16 @@ export function SchedulePreview({
                           <p className="text-sm text-muted-foreground">
                             {schedule.startTime} - {schedule.endTime}
                           </p>
-                          <div className="mt-2 flex items-center gap-2">
+                          <div className="mt-2 flex items-center gap-2 flex-wrap">
                             <Badge variant="outline" className="text-xs">
-                              {schedule.type}
+                              {schedule.scheduleType}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              {schedule.categories?.length || 0} categories
+                              {schedule._count.items || 0} items
                             </span>
                           </div>
                         </div>
-                        <Badge>Priority {schedule.priority}</Badge>
+                        <Badge>Priority {schedule.displayOrder}</Badge>
                       </div>
                     </CardContent>
                   </Card>

@@ -373,16 +373,18 @@ export default function ProfilePage() {
   };
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600">
+      <div className="max-w-4xl mx-auto px-4 py-6 max-sm:py-2 max-sm:px-0">
+        <div className="bg-white rounded-xl shadow  max-sm:p-3 p-6 mb-6">
+          <h1 className="text-2xl font-bold max-sm:text-xl text-gray-900">
+            Profile Settings
+          </h1>
+          <p className="text-gray-600  max-sm:text-sm">
             Manage your account and restaurant details
           </p>
         </div>
 
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2 mb-4">
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3  max-sm:px-2 max-sm:py-2 rounded-lg flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5" />
             <span className="flex-1">{success}</span>
             <button onClick={() => setSuccess("")}>
@@ -412,7 +414,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="p-6">
+          <div className="p-6  max-sm:p-3">
             {activeTab === "user" && (
               <UserTab
                 user={user}
@@ -649,7 +651,7 @@ function UserTab({
         </button>
 
         {showPassword && (
-          <div className="mt-4 space-y-3 bg-gray-50 p-4 rounded-lg ">
+          <div className="mt-4 space-y-3 bg-gray-50 p-4  max-sm:p-2 rounded-lg ">
             {["current", "new", "confirm"].map((key, index) => (
               <div key={key} className=" relative">
                 <InputField

@@ -11,12 +11,12 @@ import {
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-16 max-w-8xl">
+      <div className="container mx-auto px-4 sm:px-2 sm:py-8 max-sm:px-2 max-sm:py-8 py-16 max-w-5xl">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-            <FileText className="w-6 h-6 text-orange-600" />
+          <div className="w-12 h-12 max-sm:w-8 max-sm:h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <FileText className="w-6 h-6 max-sm:w-4 max-sm:h-4 text-blue-600" />
           </div>
-          <h1 className="text-5xl font-bold text-gray-900">
+          <h1 className="text-5xl font-bold sm:text-3xl max-sm:text-xl text-gray-900">
             Terms & Conditions
           </h1>
         </div>
@@ -25,12 +25,12 @@ export default function TermsPage() {
 
         <div className="prose prose-lg max-w-none space-y-6 text-gray-700">
           <p className="text-xl leading-relaxed">
-            Welcome to <strong className="text-orange-600">QResto</strong>. By
+            Welcome to <strong className="text-blue-600">QResto</strong>. By
             accessing or using our platform, you agree to be bound by these
             Terms and Conditions.
           </p>
 
-          <div className="bg-orange-50 border-l-4 border-orange-600 p-6 my-8">
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-6 my-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Acceptance of Terms
             </h2>
@@ -51,27 +51,27 @@ export default function TermsPage() {
           </p>
           <ul className="space-y-2 ml-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Digital menu creation and management</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>QR code generation for contactless ordering</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Order management and tracking</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Analytics and reporting tools</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Customer engagement and notification features</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Multi-location restaurant management</span>
             </li>
           </ul>
@@ -82,35 +82,35 @@ export default function TermsPage() {
           <p className="leading-relaxed">As a user of QResto, you agree to:</p>
           <ul className="space-y-3 ml-4">
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Provide Accurate Information:</strong> Keep your account
                 information current and accurate
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Maintain Security:</strong> Protect your login
                 credentials and notify us of unauthorized access
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Comply with Laws:</strong> Use our services in
                 accordance with all applicable laws
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Respect Others:</strong> Not misuse our platform or harm
                 other users
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Content Responsibility:</strong> Ensure all menu items,
                 descriptions, and images you upload comply with food safety
@@ -118,7 +118,7 @@ export default function TermsPage() {
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 <strong>Fair Usage:</strong> Not overload our systems or attempt
                 to gain unauthorized access to any part of our services
@@ -145,7 +145,7 @@ export default function TermsPage() {
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4 flex items-center gap-3">
-            <Scale className="w-8 h-8 text-orange-600" />
+            <Scale className="w-8 h-8 text-blue-600" />
             Intellectual Property
           </h2>
           <p className="leading-relaxed mb-4">
@@ -171,23 +171,23 @@ export default function TermsPage() {
           </p>
           <ul className="space-y-2 ml-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>
                 You violate these terms or engage in fraudulent activity
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>Your payment fails or you have outstanding balances</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>
                 You engage in activities that harm other users or our platform
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>We are required to do so by law</span>
             </li>
           </ul>
@@ -197,9 +197,9 @@ export default function TermsPage() {
             the end of your current billing period.
           </p>
 
-          <div className="bg-orange-50 border-l-4 border-orange-600 p-6 my-12">
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-6 my-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-3 flex items-center gap-3">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
+              <AlertCircle className="w-6 h-6 text-blue-600" />
               Limitation of Liability
             </h2>
             <p className="text-lg leading-relaxed mb-4">
@@ -229,7 +229,7 @@ export default function TermsPage() {
           </p>
 
           <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-4 flex items-center gap-3">
-            <Ban className="w-8 h-8 text-orange-600" />
+            <Ban className="w-8 h-8 text-blue-600" />
             Prohibited Activities
           </h2>
           <p className="leading-relaxed mb-4">
@@ -238,36 +238,36 @@ export default function TermsPage() {
           </p>
           <ul className="space-y-3 ml-4">
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 Attempting to gain unauthorized access to our systems or other
                 users' accounts
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 Using our services for any illegal or unauthorized purpose
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 Transmitting viruses, malware, or other malicious code
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 Scraping or harvesting data from our platform without permission
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>Impersonating another person or entity</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="text-orange-600 font-bold">•</span>
+              <span className="text-blue-600 font-bold">•</span>
               <span>
                 Interfering with or disrupting our services or servers
               </span>
@@ -294,18 +294,18 @@ export default function TermsPage() {
           </p>
           <ul className="space-y-2 ml-4">
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>First, informal negotiation between you and QResto</span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>
                 If unresolved, binding arbitration in accordance with applicable
                 laws
               </span>
             </li>
             <li className="flex items-start gap-3">
-              <ChevronRight className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
+              <ChevronRight className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
               <span>
                 You waive any right to participate in class action lawsuits
               </span>
@@ -314,7 +314,7 @@ export default function TermsPage() {
 
           <div className="bg-gray-50 p-8 rounded-xl mt-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-              <RefreshCw className="w-8 h-8 text-orange-600" />
+              <RefreshCw className="w-8 h-8 text-blue-600" />
               Changes to Terms
             </h2>
             <p className="text-lg leading-relaxed">
@@ -356,14 +356,14 @@ export default function TermsPage() {
             understandings.
           </p>
 
-          <div className="bg-orange-600 text-white p-8 rounded-xl mt-12">
+          <div className="bg-blue-600 text-white p-8 max-sm:p-4 sm:p-6  rounded-xl mt-12">
             <h2 className="text-2xl font-bold mb-3">Questions?</h2>
-            <p className="text-orange-100 mb-4">
+            <p className="text-blue-100 mb-4">
               If you have any questions about these Terms & Conditions, please
               contact us:
             </p>
             <p className="font-semibold mb-2">Email: paw.kum.2111@gmail.com</p>
-            <p className="text-orange-100 text-sm mt-4">
+            <p className="text-blue-100 text-sm mt-4">
               We typically respond to legal inquiries within 48 hours. For
               urgent matters, please mark your email as "Urgent - Legal Matter."
             </p>

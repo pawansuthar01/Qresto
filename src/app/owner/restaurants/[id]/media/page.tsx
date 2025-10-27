@@ -7,6 +7,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 import GlobeUpload from "@/components/media/Upload";
+import { getPermission } from "@/hooks/useRestaurant";
 
 type MediaItem = {
   id: string;
@@ -43,7 +44,9 @@ export default function MediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey] = useState<number>(0);
   const [mediaCache, setMediaCache] = useState<MediaCache>({});
+  const { data: permissions } = getPermission(restaurantId);
 
+  const [canView, setCanView] = useState(false);
   // If restaurantId invalid
   if (
     !restaurantId ||
@@ -137,6 +140,23 @@ export default function MediaPage() {
     setFilterData((prev) => prev.filter((m) => m.id !== id));
   };
 
+  useEffect(() => {
+    setCanView(Boolean(permissions?.["media.read"]));
+  }, []);
+  if (typeof window !== "undefined" && !canView) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col justify-center items-center w-full text-center text-gray-600">
+          <p className="text-lg font-medium mb-2">
+            You don’t have permission to view this page.
+          </p>
+          <p className="text-sm text-gray-500">
+            Please contact your administrator
+          </p>
+        </div>
+      </MainLayout>
+    );
+  }
   return (
     <MainLayout>
       <div className="p-6 max-sm:p-2 max-w-7xl mx-auto">
