@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { QrCode, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "../ui/button";
@@ -31,7 +31,7 @@ export function Header() {
     { id: "/", label: "Home" },
     { id: "/about", label: "About" },
     { id: "/contact", label: "Contact" },
-    { id: "/privacy-police", label: "Privacy" },
+    { id: "/privacy-policy", label: "Privacy" },
     { id: "/terms-conditions", label: "Terms" },
   ];
 
@@ -58,7 +58,7 @@ export function Header() {
           onClick={() => router.push("/")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <QrCode className="w-8 h-8 text-blue-600" />
+          <img src="/logo_Qresto.png" alt="QResto Logo" className="h-10 w-10" />
           <span className="text-2xl font-bold text-gray-900">QResto</span>
         </button>
 
@@ -68,7 +68,7 @@ export function Header() {
             <button
               key={link.id}
               onClick={() => router.push(link.id)}
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+              className={`text-sm font-medium transition-colors hover:text-blue-600  ${
                 pathname === link.id ? "text-blue-600" : "text-gray-600"
               }`}
             >
@@ -124,8 +124,10 @@ export function Header() {
                   router.push(link.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`text-base font-medium transition-colors hover:text-blue-600 ${
-                  pathname === link.id ? "text-blue-600" : "text-gray-700"
+                className={`text-base font-medium border-2 border-blue-400 px-3 py-2  rounded-lg transition-colors hover:text-blue-600 ${
+                  pathname === link.id
+                    ? "text-blue-600 bg-blue-200"
+                    : "text-gray-700"
                 }`}
               >
                 {link.label}
@@ -138,7 +140,7 @@ export function Header() {
                   router.push(dashboardRoute);
                   setMobileMenuOpen(false);
                 }}
-                className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
               >
                 Dashboard
               </button>

@@ -48,7 +48,7 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li>
                 <button
-                  onClick={() => router.push("/privacy")}
+                  onClick={() => router.push("/privacy-policy")}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Privacy Policy
@@ -56,7 +56,7 @@ export const Footer = () => {
               </li>
               <li>
                 <button
-                  onClick={() => router.push("/terms")}
+                  onClick={() => router.push("/terms-conditions")}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Terms & Conditions
@@ -71,7 +71,7 @@ export const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2 text-gray-400">
                 <Mail className="w-4 h-4" />
-                <span>paw.kum.2111@gmail.com</span>
+                <span>qresto.pawansuthar.in</span>
               </li>
             </ul>
           </div>

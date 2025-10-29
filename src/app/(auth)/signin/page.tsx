@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
-import { getSession, signIn, useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { toast } from "@/components/ui/use-toast";
 import Loading from "@/components/ui/loading";
 
@@ -74,8 +74,7 @@ function SignInForm() {
         variant: "destructive",
       });
     }
-    const res = await getSession();
-    console.log(res);
+
     setIsLoading(false);
   };
 
@@ -97,7 +96,7 @@ function SignInForm() {
     return <Loading />;
   }
 
-  if (status === "authenticated") {
+  if (status && status === "authenticated") {
     return <Loading message={"Redirecting"} />;
   }
 

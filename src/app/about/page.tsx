@@ -1,16 +1,17 @@
 "use client";
 import { Layout } from "@/components/pageLayout/Layout";
 import { ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function AboutPage() {
+  const router = useRouter();
   return (
     <Layout>
-      <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-16 max-w-8xl">
-          <h1 className="text-5xl font-bold text-gray-900 mb-8">
+      <div className="min-h-screen  relative">
+        <div className="container  mx-auto px-4 py-10 max-sm:px-2 max-sm:py-8 max-w-8xl">
+          <h1 className="text-5xl flex max-sm:text-4xl font-bold text-gray-900 mb-8">
             About QResto
           </h1>
-
           <div className="prose prose-lg max-w-none space-y-6 text-gray-700">
             <p className="text-xl leading-relaxed">
               Welcome to <strong className="text-blue-600">QResto</strong>, a
@@ -359,7 +360,10 @@ export default function AboutPage() {
                 that have already transformed their operations with our
                 platform.
               </p>
-              <button className="px-8 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+              <button
+                onClick={() => router.push("/signin")}
+                className="px-8 py-3 bg-white text-blue-600 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+              >
                 Get Started Today
               </button>
             </div>

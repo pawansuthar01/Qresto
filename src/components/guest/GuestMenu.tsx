@@ -56,6 +56,9 @@ const defaultCustomization = {
   headingWeight: 700,
   layout: "grid",
   columns: 3,
+  columnsMobile: 1,
+  columnsTablet: 2,
+  columnsDesktop: 3,
   gap: 16,
   padding: 16,
   maxWidth: 1200,
@@ -200,6 +203,16 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
         image: theme.backgroundImageDesktop || theme.backgroundImage,
         video: theme.backgroundVideoDesktop || theme.backgroundVideo,
       };
+    }
+  };
+
+  const getResponsiveColumns = () => {
+    if (deviceType === "mobile") {
+      return theme.columnsMobile || 1;
+    } else if (deviceType === "tablet") {
+      return theme.columnsTablet || 2;
+    } else {
+      return theme.columnsDesktop || theme.columns || 3;
     }
   };
 
@@ -377,13 +390,15 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
   }
 
   const background = getResponsiveBackground();
+  const columns = getResponsiveColumns();
+
   const hoverClass = theme.enableAnimations
     ? theme.hoverEffect === "lift"
-      ? "hover:scale-[1.02] active:scale-[0.98] transition-transform"
+      ? "hover:scale-[1.02] active:scale-[0.98]"
       : theme.hoverEffect === "glow"
-      ? "hover:shadow-2xl transition-shadow"
+      ? "hover:shadow-2xl"
       : theme.hoverEffect === "scale"
-      ? "hover:scale-105 transition-transform"
+      ? "hover:scale-105"
       : ""
     : "";
 
@@ -456,8 +471,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
               ? `${theme.primaryColor}f0`
               : "rgba(255,255,255,0.9)",
           color: theme.buttonTextColor,
-          minHeight: `${Math.max(theme.headerHeight * 0.8, 56)}px`,
-          boxShadow: "0 2px 20px rgba(0,0,0,0.1)",
+          minHeight: `${theme.headerHeight}px`,
+          boxShadow: theme.enableShadows
+            ? "0 2px 20px rgba(0,0,0,0.1)"
+            : "none",
         }}
       >
         <div
@@ -471,8 +488,8 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
               <div
                 className="bg-white rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 shadow-lg ring-2 ring-white/50"
                 style={{
-                  width: `${Math.max(theme.logoSize * 0.6, 36)}px`,
-                  height: `${Math.max(theme.logoSize * 0.6, 36)}px`,
+                  width: `${theme.logoSize}px`,
+                  height: `${theme.logoSize}px`,
                 }}
               >
                 <Image
@@ -560,10 +577,12 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
       <div
         className="sticky z-40 backdrop-blur-md overflow-x-auto scrollbar-hide"
         style={{
-          top: `${Math.max(theme.headerHeight * 0.8, 56)}px`,
+          top: `${theme.headerHeight}px`,
           backgroundColor: `${theme.cardBackground}f0`,
           borderBottom: `1px solid ${theme.borderColor}`,
-          boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
+          boxShadow: theme.enableShadows
+            ? "0 2px 10px rgba(0,0,0,0.05)"
+            : "none",
         }}
       >
         <div
@@ -591,7 +610,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                     ? "none"
                     : `2px solid ${theme.borderColor}`,
                 boxShadow:
-                  selectedCategory === category.id
+                  selectedCategory === category.id && theme.enableShadows
                     ? "0 4px 12px rgba(0,0,0,0.15)"
                     : "none",
               }}
@@ -604,9 +623,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
 
       {/* Menu Items - Section Based Layout */}
       <div
-        className="container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6 space-y-8 sm:space-y-12"
+        className="container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6"
         style={{
           maxWidth: `${theme.maxWidth}px`,
+          gap: `${theme.sectionSpacing}px`,
         }}
       >
         {(searchQuery ? filteredCategories : categories).map(
@@ -617,6 +637,9 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                 categoryRefs.current[category.id] = el;
               }}
               className="scroll-mt-32"
+              style={{
+                marginBottom: `${theme.sectionSpacing}px`,
+              }}
             >
               {/* Category Header */}
               <div className="mb-4 sm:mb-6">
@@ -631,7 +654,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                   {category.name}
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </h2>
-                {category.description && (
+                {category.description && theme.showDescription && (
                   <p
                     className="text-xs sm:text-sm"
                     style={{ color: theme.accentColor }}
@@ -643,16 +666,11 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
 
               {/* Items Grid */}
               <div
-                className="grid gap-3 sm:gap-4 lg:gap-5"
+                className="grid"
                 style={{
                   gridTemplateColumns:
-                    deviceType === "mobile"
-                      ? "repeat(auto-fill, minmax(min(100%, 160px), 1fr))"
-                      : deviceType === "tablet"
-                      ? "repeat(auto-fill, minmax(min(100%, 220px), 1fr))"
-                      : `repeat(auto-fill, minmax(min(100%, max(260px, ${
-                          100 / theme.columns
-                        }%)), 1fr))`,
+                    theme.layout === "grid" ? `repeat(${columns}, 1fr)` : "1fr",
+                  gap: `${theme.gap}px`,
                 }}
               >
                 {category.items.map((item: any) => {
@@ -660,14 +678,14 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                   return (
                     <Card
                       key={item.id}
-                      className={`overflow-hidden ${hoverClass}`}
+                      className={`overflow-hidden ${hoverClass} ${transitionClass}`}
                       style={{
                         backgroundColor: theme.cardBackground,
                         boxShadow: theme.enableShadows
                           ? theme.cardShadow
                           : "none",
                         borderRadius: `${theme.borderRadius}px`,
-                        padding: `${Math.max(theme.cardPadding * 0.7, 10)}px`,
+                        padding: `${theme.cardPadding}px`,
                         border: theme.cardBorder
                           ? `${theme.cardBorderWidth}px solid ${theme.borderColor}`
                           : "none",
@@ -676,18 +694,13 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                       <CardContent className="p-0">
                         <div
                           className="flex flex-col h-full"
-                          style={{ gap: `${theme.itemSpacing * 0.5}px` }}
+                          style={{ gap: `${theme.itemSpacing}px` }}
                         >
                           {theme.showImages && item.imageUrl && (
                             <div
                               className="relative w-full overflow-hidden"
                               style={{
-                                height:
-                                  deviceType === "mobile"
-                                    ? "120px"
-                                    : deviceType === "tablet"
-                                    ? "160px"
-                                    : `${Math.min(theme.imageHeight, 200)}px`,
+                                height: `${theme.imageHeight}px`,
                                 borderRadius: `${theme.imageRadius}px`,
                               }}
                             >
@@ -731,7 +744,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                               <h3
                                 className="font-semibold text-xs sm:text-sm lg:text-base line-clamp-2"
                                 style={{
-                                  color: theme.primaryColor,
+                                  color: theme.textColor,
                                   fontFamily: theme.headingFont,
                                   fontWeight: theme.headingWeight,
                                 }}
@@ -782,10 +795,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                                           ? `2px solid ${theme.primaryColor}`
                                           : "none",
                                       borderRadius: `${theme.buttonRadius}px`,
-                                      padding:
-                                        deviceType === "mobile"
-                                          ? "6px 10px"
-                                          : "8px 12px",
+                                      padding: "8px 12px",
                                     }}
                                   >
                                     <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4 mr-1" />
@@ -802,10 +812,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                                         borderColor: theme.primaryColor,
                                         color: theme.primaryColor,
                                         borderRadius: `${theme.buttonRadius}px`,
-                                        padding:
-                                          deviceType === "mobile"
-                                            ? "6px"
-                                            : "8px",
+                                        padding: "8px",
                                       }}
                                     >
                                       <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
@@ -826,10 +833,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                                         backgroundColor: theme.primaryColor,
                                         color: theme.buttonTextColor,
                                         borderRadius: `${theme.buttonRadius}px`,
-                                        padding:
-                                          deviceType === "mobile"
-                                            ? "6px"
-                                            : "8px",
+                                        padding: "8px",
                                       }}
                                     >
                                       <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
@@ -871,7 +875,9 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
           style={{
             background: `${theme.cardBackground}f5`,
             borderTop: `1px solid ${theme.borderColor}`,
-            boxShadow: "0 -4px 20px rgba(0,0,0,0.1)",
+            boxShadow: theme.enableShadows
+              ? "0 -4px 20px rgba(0,0,0,0.1)"
+              : "none",
           }}
         >
           <Button

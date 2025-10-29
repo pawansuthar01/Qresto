@@ -16,24 +16,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRestaurant } from "@/hooks/useRestaurant";
-import { usePermissions } from "@/hooks/usePermissions";
 
 interface QRCardProps {
   qrCode: any;
   restaurantId: string;
   onDelete: (id: string) => void;
+  canDelete: boolean;
 }
 
-export function QRCard({ qrCode, restaurantId, onDelete }: QRCardProps) {
+export function QRCard({
+  qrCode,
+  restaurantId,
+  onDelete,
+  canDelete,
+}: QRCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: restaurant } = useRestaurant(restaurantId);
-  const { hasPermission } = usePermissions(restaurant?.permissions);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const canDelete = hasPermission("qrcode.delete");
-
   const deleteQRCode = useMutation({
     mutationFn: async () => {
       const res = await fetch(
@@ -130,8 +129,8 @@ export function QRCard({ qrCode, restaurantId, onDelete }: QRCardProps) {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the QR code for Table{" "}
-              {qrCode?.table.number}. Customers won't be able to access the menu
-              using this QR code.
+              {qrCode?.table?.number}. Customers won't be able to access the
+              menu using this QR code.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

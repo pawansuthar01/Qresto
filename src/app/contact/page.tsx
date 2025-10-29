@@ -304,8 +304,8 @@ export default function ContactPage() {
                     icon={<Mail className="w-6 h-6 text-blue-600" />}
                     title="Email Us"
                     desc="Our team responds within 24 hours"
-                    link="mailto:paw.kum.2111@gmail.com"
-                    linkText="paw.kum.2111@gmail.com"
+                    link="mailto:qresto.pawansuthar.in"
+                    linkText="qresto.pawansuthar.in"
                     color="bg-blue-100"
                   />
                   <ContactItem
@@ -337,7 +337,7 @@ export default function ContactPage() {
                 </p>
 
                 <a
-                  href="mailto:paw.sut.211138@gmail.com"
+                  href="mailto:qresto.pawansuthar.in"
                   className="px-6 py-3 bg-white flex items-center text-center justify-center text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors w-full"
                 >
                   Visit Help Center

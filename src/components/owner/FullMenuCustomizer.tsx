@@ -21,12 +21,16 @@ import {
   VideoIcon,
   MoveLeftIcon,
   RefreshCcwIcon,
+  StretchHorizontal,
+  ImportIcon,
 } from "lucide-react";
 import { Card } from "../ui/CardUi";
 import { SelectInput } from "../ui/SelectInput";
 import { SliderInput } from "../ui/silderInput";
 import { ToggleSwitch } from "../ui/ToggleSwitch";
 import { Button } from "../ui/button";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { toast } from "../ui/use-toast";
 
 const ColorPicker = ({ label, value, onChange }: any) => (
   <div className="space-y-2">
@@ -144,11 +148,26 @@ export default function FullMenuCustomizer({
     ...defaultCustomization,
     ...restaurant.customization,
   });
+  const [customizeData, setCustomizeData] = useLocalStorage<string | null>(
+    "customizeData",
+    null
+  );
+  const [isLocalData, setIsLocalData] = useState<any>({});
+  useEffect(() => {
+    try {
+      const dataInLocal = localStorage.getItem("customizeData") || null;
+      const dataInLocalData =
+        customizeData && dataInLocal !== null ? JSON.parse(dataInLocal) : null;
+      setIsLocalData(dataInLocalData);
+    } catch {}
+  }, [customizeData, setCustomizeData]);
+
   const [activeTab, setActiveTab] = useState("colors");
   const [previewMode, setPreviewMode] = useState(false);
   const [isSaving, setSaving] = useState(loading);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState("desktop");
+  const [deviceType, setDeviceType] = useState("desktop");
 
   useEffect(() => {
     setSaving(loading);
@@ -164,9 +183,40 @@ export default function FullMenuCustomizer({
     }
   };
 
+  const importLocalData = () => {
+    if (confirm("import all customizations to local?")) {
+      setCustomization(isLocalData);
+    }
+  };
+
+  const saveInLocal = () => {
+    setCustomizeData(customization);
+    toast({
+      title: "save in Local successfully",
+      variant: "default",
+    });
+  };
+
   const handleSave = async () => {
     onSave(customization);
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setDeviceType("mobile");
+      } else if (width < 1024) {
+        setDeviceType("tablet");
+      } else {
+        setDeviceType("desktop");
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const tabs = [
     { id: "colors", label: "Colors", icon: Palette },
@@ -229,17 +279,68 @@ export default function FullMenuCustomizer({
   const bgVideo = getDeviceVideo();
 
   const bgImage = getDeviceBackground();
+
+  useEffect(() => {
+    if (!previewMode) {
+      setPreviewDevice("mobile");
+    }
+    if (deviceType.includes("mobile")) {
+      setPreviewDevice("mobile");
+    }
+  }, [previewMode]);
+
   const renderPreview = () => {
     const deviceClass = {
-      mobile: "max-w-sm",
-      tablet: "max-w-2xl",
-      desktop: "max-w-7xl",
+      mobile: "w-[440px]",
+      tablet: "w-[840px]",
+      desktop: "w-[1400px]",
     }[previewDevice];
 
     return (
-      <div className={`${deviceClass} mx-auto`}>
+      <div
+        className={`${previewMode ? deviceClass : "w-[400px]"} mx-auto`}
+        style={{
+          maxWidth: `${window.innerWidth - 100}px`,
+          overflow: "hidden",
+        }}
+      >
+        {previewMode && !deviceType.includes("mobile") && (
+          <div className="flex gap-2 mb-4 justify-center">
+            <button
+              onClick={() => setPreviewDevice("mobile")}
+              className={`p-2 rounded ${
+                previewDevice === "mobile"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPreviewDevice("tablet")}
+              className={`p-2 rounded ${
+                previewDevice === "tablet"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Tablet className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPreviewDevice("desktop")}
+              className={`p-2 rounded ${
+                previewDevice === "desktop"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Monitor className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <div
-          className="p-4 md:p-8 rounded-lg min-h-[70vh] relative overflow-hidden isolate"
+          className="rounded-lg max-h-[100vh]  relative overflow-y-auto overflow-x-hidden  isolate"
           style={{
             fontFamily: customization.fontFamily,
             color: customization.textColor,
@@ -281,7 +382,7 @@ export default function FullMenuCustomizer({
           )}
 
           <div
-            className="sticky top-0 mb-4 md:mb-6 p-3 md:p-4 rounded-lg"
+            className="sticky top-0 mb-4 z-40 md:mb-6 p-3 md:p-4 rounded-lg"
             style={{
               background:
                 customization.headerStyle === "gradient"
@@ -438,7 +539,11 @@ export default function FullMenuCustomizer({
         return (
           <div className="space-y-6">
             <Card title="Brand Colors" icon={Palette}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`grid 
+                   grid-cols-1 gap-4
+                } `}
+              >
                 <ColorPicker
                   label="Primary Color"
                   value={customization.primaryColor}
@@ -463,7 +568,11 @@ export default function FullMenuCustomizer({
             </Card>
 
             <Card title="Text Colors">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`grid 
+                   grid-cols-1 gap-4
+                } `}
+              >
                 <ColorPicker
                   label="Text Color"
                   value={customization.textColor}
@@ -478,7 +587,11 @@ export default function FullMenuCustomizer({
             </Card>
 
             <Card title="UI Colors">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`grid 
+                   grid-cols-1 gap-4
+                } `}
+              >
                 <ColorPicker
                   label="Card Background"
                   value={customization.cardBackground}
@@ -1221,7 +1334,7 @@ export default function FullMenuCustomizer({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded"
+                className="p-2 hover:bg-gray-100 rounded"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -1238,6 +1351,22 @@ export default function FullMenuCustomizer({
               </Button>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => saveInLocal()}
+                className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+              >
+                <StretchHorizontal className="w-4 h-4" />
+                <span className="hidden md:inline">Save in local</span>
+              </button>
+              {isLocalData && (
+                <button
+                  onClick={() => importLocalData()}
+                  className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
+                >
+                  <ImportIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">import form local</span>
+                </button>
+              )}
               <button
                 onClick={() => resetToDefault()}
                 className="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
@@ -1274,65 +1403,33 @@ export default function FullMenuCustomizer({
       </div>
 
       {/* Main Content */}
-      <div className="lg:max-w-7xl mx-auto p-2 md:p-4">
+      <div className="  overflow-hidden mx-auto p-2 md:p-4">
         {previewMode ? (
-          <div className="bg-white rounded-xl shadow-lg p-2 md:p-6">
-            <div className="flex gap-2 mb-4 justify-center">
-              <button
-                onClick={() => setPreviewDevice("mobile")}
-                className={`p-2 rounded ${
-                  previewDevice === "mobile"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                <Smartphone className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPreviewDevice("tablet")}
-                className={`p-2 rounded ${
-                  previewDevice === "tablet"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                <Tablet className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPreviewDevice("desktop")}
-                className={`p-2 rounded ${
-                  previewDevice === "desktop"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                <Monitor className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="bg-white rounded-xl shadow-lg p-2 md:p-6 grid ">
             {renderPreview()}
           </div>
         ) : (
-          <div className="lg:grid lg:grid-cols-12 gap-4 md:gap-6">
+          <div className="  ">
             {/* Mobile Sidebar Overlay */}
             {sidebarOpen && (
               <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+                className="fixed inset-0 bg-black bg-opacity-50 z-40 "
                 onClick={() => setSidebarOpen(false)}
               />
             )}
 
             {/* Sidebar */}
             <div
-              className={`fixed lg:static inset-y-0 left-0 z-50 lg:z-30 lg:col-span-3 transform ${
+              className={`fixed  inset-y-0 left-0 z-50 transform ${
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
-              } lg:translate-x-0 transition-transform duration-300`}
+              }  transition-transform duration-300`}
             >
-              <div className="bg-white rounded-xl shadow-sm border h-full overflow-auto lg:sticky lg:top-24">
+              <div className="bg-white rounded-xl shadow-sm border h-full overflow-auto">
                 <div className="p-3 border-b bg-gray-50 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Settings</h3>
                   <button
                     onClick={() => setSidebarOpen(false)}
-                    className="lg:hidden p-1 hover:bg-gray-200 rounded"
+                    className="p-1 hover:bg-gray-200 rounded"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1363,9 +1460,17 @@ export default function FullMenuCustomizer({
             </div>
 
             {/* Settings Panel */}
-            <div className="lg:col-span-9">
-              <div className="bg-white rounded-xl shadow-sm border p-4 md:p-6">
+            <div
+              className={`grid grid-cols-12 gap-2
+              `}
+            >
+              <div
+                className={` grid  md:col-span-6 col-span-12 bg-white rounded-xl shadow-sm border p-4 md:p-6`}
+              >
                 {renderSettings()}
+              </div>
+              <div className="hidden   sticky  top-0 md:block md:col-span-6 max-h-[105vh] bg-white rounded-xl shadow-sm border p-4 md:p-6">
+                {renderPreview()}
               </div>
             </div>
           </div>

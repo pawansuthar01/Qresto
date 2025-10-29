@@ -362,7 +362,7 @@ export default function TermsPage() {
               If you have any questions about these Terms & Conditions, please
               contact us:
             </p>
-            <p className="font-semibold mb-2">Email: paw.kum.2111@gmail.com</p>
+            <p className="font-semibold mb-2">Email: qresto.pawansuthar.in</p>
             <p className="text-blue-100 text-sm mt-4">
               We typically respond to legal inquiries within 48 hours. For
               urgent matters, please mark your email as "Urgent - Legal Matter."

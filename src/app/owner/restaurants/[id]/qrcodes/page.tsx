@@ -24,7 +24,7 @@ export default function QRCodesPage() {
   const { status } = useSession();
   const { data: restaurant } = useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-
+  console.log(restaurant);
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -42,6 +42,7 @@ export default function QRCodesPage() {
 
   const canRead = hasPermission("qrcode.read");
   const canGenerate = hasPermission("qrcode.generate");
+  const canDelete = hasPermission("qrcode.delete");
 
   const fetchQRCodes = async (page = 1) => {
     setLoading(true);
@@ -60,6 +61,7 @@ export default function QRCodesPage() {
       if (!res.ok) throw new Error("Failed to fetch QR codes");
 
       const data = await res.json();
+
       setQrCodes(data.qrCodes || []);
       setPagination(data.pagination || pagination);
     } catch (error) {
@@ -159,7 +161,7 @@ export default function QRCodesPage() {
               <QRCodeBulkGenerator
                 restaurantId={restaurantId}
                 onData={(data) => {
-                  setQrCodes([...qrCodes, data]);
+                  setQrCodes((prev) => [...prev, ...data]);
                 }}
               />
             )}
@@ -210,8 +212,8 @@ export default function QRCodesPage() {
                   >
                     <option value="">All Tables</option>
                     {restaurant?.tables?.map((table: any) => (
-                      <option key={table.id} value={table.id}>
-                        Table {table.number}
+                      <option key={table?.id} value={table?.id}>
+                        Table {table?.number}
                       </option>
                     ))}
                   </select>
@@ -243,7 +245,7 @@ export default function QRCodesPage() {
               <QRCodeBulkGenerator
                 restaurantId={restaurantId}
                 onData={(data) => {
-                  setQrCodes([...qrCodes, ...data]);
+                  setQrCodes((prev) => [...prev, ...data]);
                 }}
               />
             )}
@@ -258,6 +260,7 @@ export default function QRCodesPage() {
                   }
                   key={qrCode.id}
                   qrCode={qrCode}
+                  canDelete={canDelete}
                   restaurantId={restaurantId}
                 />
               ))}

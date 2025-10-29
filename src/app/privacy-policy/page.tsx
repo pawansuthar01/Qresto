@@ -302,7 +302,7 @@ export default function PrivacyPage() {
               If you have questions about this Privacy Policy, please contact us
               at:
             </p>
-            <p className="font-semibold mb-2">Email: paw.kum.2111@gmail.com</p>
+            <p className="font-semibold mb-2">Email: qresto.pawansuthar.in</p>
             <p className="text-blue-100 text-sm mt-4">
               We typically respond to privacy inquiries within 48 hours. For
               urgent matters related to data security, please mark your email as
