@@ -175,6 +175,36 @@ export default function EnhancedCart({
       : t.cartWidth === "wide"
       ? "max-w-2xl"
       : "max-w-lg";
+  const cartSpacing =
+    t.cartLayout === "compact"
+      ? {
+          headerPadding: "10px 14px",
+          bodyClass: "p-3 space-y-3",
+          itemPadding: "8px",
+          panelPaddingClass: "p-3",
+          summaryPaddingClass: "p-3",
+          submitClass: "py-3",
+          imageSize: "56px",
+        }
+      : t.cartLayout === "spacious"
+      ? {
+          headerPadding: "20px 24px",
+          bodyClass: "p-5 sm:p-7 space-y-6 sm:space-y-7",
+          itemPadding: "16px",
+          panelPaddingClass: "p-5",
+          summaryPaddingClass: "p-5",
+          submitClass: "py-4 sm:py-5",
+          imageSize: "82px",
+        }
+      : {
+          headerPadding: "16px 20px",
+          bodyClass: "p-4 sm:p-6 space-y-5 sm:space-y-6",
+          itemPadding: "12px",
+          panelPaddingClass: "p-4",
+          summaryPaddingClass: "p-4",
+          submitClass: "py-3.5 sm:py-4",
+          imageSize: "70px",
+        };
 
   return (
     <div
@@ -195,7 +225,7 @@ export default function EnhancedCart({
         <div
           className="flex items-center justify-between border-b sticky top-0 z-10"
           style={{
-            padding: "16px 20px",
+            padding: cartSpacing.headerPadding,
             borderColor: t.borderColor,
             background: t.enableGradients
               ? `linear-gradient(135deg, ${t.primaryColor}, ${t.secondaryColor})`
@@ -280,10 +310,10 @@ export default function EnhancedCart({
               )}
             </div>
           ) : (
-            <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
+            <div className={cartSpacing.bodyClass}>
               {error && (
                 <div
-                  className="p-4 rounded-xl flex items-center gap-3"
+                  className={`${cartSpacing.panelPaddingClass} rounded-xl flex items-center gap-3`}
                   style={{
                     backgroundColor: `${t.errorColor}20`,
                     color: t.errorColor,
@@ -345,7 +375,7 @@ export default function EnhancedCart({
                         key={item.menuItem.id}
                         className="rounded-xl border transition-all hover:shadow-md"
                         style={{
-                          padding: "12px",
+                          padding: cartSpacing.itemPadding,
                           borderColor: t.borderColor,
                           backgroundColor: t.cardBackground,
                         }}
@@ -355,8 +385,8 @@ export default function EnhancedCart({
                             <div
                               className="flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden"
                               style={{
-                                width: "70px",
-                                height: "70px",
+                                width: cartSpacing.imageSize,
+                                height: cartSpacing.imageSize,
                               }}
                             >
                               <img
@@ -475,7 +505,7 @@ export default function EnhancedCart({
                   {/* Coupon Section */}
                   {theme.enableCoupon && !appliedCoupon && (
                     <div
-                      className="p-4 rounded-xl border"
+                      className={`${cartSpacing.panelPaddingClass} rounded-xl border`}
                       style={{
                         borderColor: t.borderColor,
                         backgroundColor: `${t.primaryColor}05`,
@@ -520,7 +550,7 @@ export default function EnhancedCart({
 
                   {appliedCoupon && (
                     <div
-                      className="p-3 rounded-xl flex items-center justify-between"
+                      className={`${cartSpacing.panelPaddingClass} rounded-xl flex items-center justify-between`}
                       style={{
                         backgroundColor: `${t.successColor}20`,
                       }}
@@ -544,7 +574,7 @@ export default function EnhancedCart({
                   {/* Tips Section */}
                   {theme.enableTips && (
                     <div
-                      className="p-4 rounded-xl border"
+                      className={`${cartSpacing.panelPaddingClass} rounded-xl border`}
                       style={{
                         borderColor: t.borderColor,
                       }}
@@ -643,7 +673,7 @@ export default function EnhancedCart({
 
                   {/* Price Breakdown */}
                   <div
-                    className="p-4 rounded-xl space-y-2.5"
+                    className={`${cartSpacing.summaryPaddingClass} rounded-xl space-y-2.5`}
                     style={{
                       backgroundColor: `${t.accentColor}10`,
                     }}
@@ -705,7 +735,7 @@ export default function EnhancedCart({
                   <button
                     onClick={handlePlaceOrder}
                     disabled={loading}
-                    className="w-full py-3.5 sm:py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition text-base sm:text-lg shadow-lg"
+                    className={`w-full ${cartSpacing.submitClass} rounded-xl font-bold flex items-center justify-center gap-2 transition text-base sm:text-lg shadow-lg`}
                     style={{
                       backgroundColor: loading ? t.accentColor : t.primaryColor,
                       color: t.buttonTextColor,
