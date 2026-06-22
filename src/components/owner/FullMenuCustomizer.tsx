@@ -138,6 +138,30 @@ const defaultCustomization = {
   cartLayout: "comfortable",
 };
 
+const spacingPresets: Record<string, any> = {
+  compact: {
+    gap: 10,
+    containerPadding: 10,
+    cardPadding: 10,
+    itemSpacing: 8,
+    sectionSpacing: 20,
+  },
+  normal: {
+    gap: 16,
+    containerPadding: 16,
+    cardPadding: 16,
+    itemSpacing: 16,
+    sectionSpacing: 32,
+  },
+  relaxed: {
+    gap: 24,
+    containerPadding: 24,
+    cardPadding: 20,
+    itemSpacing: 22,
+    sectionSpacing: 48,
+  },
+};
+
 export default function FullMenuCustomizer({
   restaurant = {},
   onSave = () => {},
@@ -174,7 +198,17 @@ export default function FullMenuCustomizer({
   }, [loading]);
 
   const update = (key: any, value: any) => {
-    setCustomization((prev: any) => ({ ...prev, [key]: value }));
+    setCustomization((prev: any) => {
+      if (key === "spacing") {
+        return {
+          ...prev,
+          spacing: value,
+          ...(spacingPresets[value] || {}),
+        };
+      }
+
+      return { ...prev, [key]: value };
+    });
   };
 
   const resetToDefault = () => {
@@ -279,6 +313,10 @@ export default function FullMenuCustomizer({
   const bgVideo = getDeviceVideo();
 
   const bgImage = getDeviceBackground();
+  const previewContainerPadding =
+    customization.containerPadding ?? customization.padding ?? 16;
+  const previewSectionSpacing = customization.sectionSpacing ?? 32;
+  const previewItemSpacing = customization.itemSpacing ?? 16;
 
   useEffect(() => {
     if (!previewMode) {
@@ -347,6 +385,7 @@ export default function FullMenuCustomizer({
             backgroundColor: customization.backgroundColor,
             fontSize: `${customization.fontSize}px`,
             lineHeight: customization.lineHeight,
+            padding: `${previewContainerPadding}px`,
           }}
         >
           {bgVideo && (
@@ -390,6 +429,7 @@ export default function FullMenuCustomizer({
                   : customization.primaryColor,
               color: customization.buttonTextColor,
               height: `${customization.headerHeight}px`,
+              marginBottom: `${Math.max(12, previewSectionSpacing / 2)}px`,
             }}
           >
             <div className="flex items-center gap-2 md:gap-4">
@@ -424,7 +464,7 @@ export default function FullMenuCustomizer({
             style={{
               gridTemplateColumns:
                 customization.layout === "grid"
-                  ? `repeat(${getDeviceColumns()}, 1fr)`
+                  ? `repeat(${getDeviceColumns()}, minmax(0, 1fr))`
                   : "1fr",
               gap: `${customization.gap}px`,
             }}
@@ -452,9 +492,13 @@ export default function FullMenuCustomizer({
                     : "none",
                 }}
               >
+                <div
+                  className="flex flex-col"
+                  style={{ gap: `${previewItemSpacing}px` }}
+                >
                 {customization.showImages && (
                   <div
-                    className="bg-gradient-to-br from-blue-400 to-purple-500 mb-3"
+                    className="bg-gradient-to-br from-blue-400 to-purple-500"
                     style={{
                       height: `${customization.imageHeight}px`,
                       borderRadius: `${customization.imageRadius}px`,
@@ -463,7 +507,7 @@ export default function FullMenuCustomizer({
                 )}
 
                 <h3
-                  className="font-bold mb-2 text-sm md:text-base"
+                  className="font-bold text-sm md:text-base"
                   style={{
                     fontFamily: customization.headingFont,
                     fontWeight: customization.headingWeight,
@@ -475,7 +519,7 @@ export default function FullMenuCustomizer({
 
                 {customization.showDescription && (
                   <p
-                    className="mb-2 text-xs md:text-sm"
+                    className="text-xs md:text-sm"
                     style={{ color: customization.accentColor }}
                   >
                     Delicious food item
@@ -483,7 +527,7 @@ export default function FullMenuCustomizer({
                 )}
 
                 {customization.showBadges && (
-                  <div className="flex gap-2 mb-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap">
                     <span
                       className="text-xs px-2 py-1 rounded-full"
                       style={{
@@ -498,7 +542,7 @@ export default function FullMenuCustomizer({
 
                 {customization.showPrices && (
                   <p
-                    className="font-bold mb-3 text-sm md:text-base"
+                    className="font-bold text-sm md:text-base"
                     style={{ color: customization.primaryColor }}
                   >
                     ₹{299 + i * 50}
@@ -525,6 +569,7 @@ export default function FullMenuCustomizer({
                 >
                   Add to Cart
                 </button>
+                </div>
               </div>
             ))}
           </div>

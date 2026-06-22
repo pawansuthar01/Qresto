@@ -40,7 +40,8 @@ export default function OrdersPage() {
   const params = useParams();
   const restaurantId = params.id as string;
   const { status } = useSession();
-  const { data: restaurant } = useRestaurant(restaurantId);
+  const { data: restaurant, isLoading: isRestaurantLoading } =
+    useRestaurant(restaurantId);
   const [orders, setOrders] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -49,6 +50,7 @@ export default function OrdersPage() {
     totalPages: 1,
   });
   const { hasPermission } = usePermissions(restaurant?.permissions);
+  const canRead = hasPermission("order.read");
   const {
     isConnected,
     orders: newOrders,
@@ -130,17 +132,19 @@ export default function OrdersPage() {
 
   // Initial fetch
   useEffect(() => {
-    if (restaurantId) {
+    if (restaurantId && canRead) {
       fetchOrders(1);
     }
-  }, []);
+  }, [restaurantId, canRead]);
 
   // Refetch when filters change
   useEffect(() => {
-    if (restaurantId) {
+    if (restaurantId && canRead) {
       fetchOrders(1);
     }
   }, [
+    restaurantId,
+    canRead,
     filters.status,
     filters.dateRange,
     filters.customStartDate,
@@ -171,8 +175,6 @@ export default function OrdersPage() {
         ? `(${newOrderCount}) New Orders - QResto`
         : "Orders - QResto";
   }, [newOrderCount]);
-
-  const canRead = hasPermission("order.read");
 
   // Export to CSV
   // const exportToCSV = async () => {
@@ -255,7 +257,15 @@ export default function OrdersPage() {
     });
   };
 
-  if (status !== "loading" && !canRead) {
+  if (status === "loading" || isRestaurantLoading) {
+    return (
+      <MainLayout>
+        <Loading h="h-full" />
+      </MainLayout>
+    );
+  }
+
+  if (!canRead) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center py-12">
@@ -475,7 +485,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Orders */}
-        {status == "loading" || isLoading ? (
+        {isLoading ? (
           <Loading h="h-full" />
         ) : (
           <EnhancedOrderBoard

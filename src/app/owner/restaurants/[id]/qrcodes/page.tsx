@@ -22,9 +22,9 @@ export default function QRCodesPage() {
   const params = useParams();
   const restaurantId = params.id as string;
   const { status } = useSession();
-  const { data: restaurant } = useRestaurant(restaurantId);
+  const { data: restaurant, isLoading: isRestaurantLoading } =
+    useRestaurant(restaurantId);
   const { hasPermission } = usePermissions(restaurant?.permissions);
-  console.log(restaurant);
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
@@ -77,10 +77,10 @@ export default function QRCodesPage() {
   };
 
   useEffect(() => {
-    if (restaurantId) {
+    if (restaurantId && canRead) {
       fetchQRCodes(1);
     }
-  }, [restaurantId, filters]);
+  }, [restaurantId, filters, canRead]);
 
   const handlePageChange = (newPage: number) => {
     setPagination({ ...pagination, page: newPage });
@@ -129,7 +129,15 @@ export default function QRCodesPage() {
   //   }
   // };
 
-  if (status !== "loading" && !canRead) {
+  if (status === "loading" || isRestaurantLoading) {
+    return (
+      <MainLayout>
+        <Loading h="h-full" />
+      </MainLayout>
+    );
+  }
+
+  if (!canRead) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center py-12">
@@ -234,7 +242,7 @@ export default function QRCodesPage() {
         </div>
 
         {/* QR Codes Grid */}
-        {status == "loading" || isLoading ? (
+        {isLoading ? (
           <Loading h="h-full" />
         ) : qrCodes.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">

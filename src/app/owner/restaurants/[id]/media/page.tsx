@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 import GlobeUpload from "@/components/media/Upload";
 import { getPermission } from "@/hooks/useRestaurant";
+import Loading from "@/components/ui/loading";
 
 type MediaItem = {
   id: string;
@@ -44,9 +45,10 @@ export default function MediaPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey] = useState<number>(0);
   const [mediaCache, setMediaCache] = useState<MediaCache>({});
-  const { data: permissions } = getPermission(restaurantId);
+  const { data: permissions, isLoading: isPermissionLoading } =
+    getPermission(restaurantId);
 
-  const [canView, setCanView] = useState(false);
+  const canView = Boolean(permissions?.["media.read"]);
   // If restaurantId invalid
   if (
     !restaurantId ||
@@ -71,6 +73,10 @@ export default function MediaPage() {
   // Fetch media
   useEffect(() => {
     const controller = new AbortController();
+
+    if (isPermissionLoading || !canView) {
+      return () => controller.abort();
+    }
 
     if (mediaCache[filter]?.[page]) {
       setMedia(mediaCache[filter][page]);
@@ -115,7 +121,15 @@ export default function MediaPage() {
 
     fetchMedia();
     return () => controller.abort();
-  }, [restaurantId, filter, page, refreshKey]);
+  }, [
+    restaurantId,
+    filter,
+    page,
+    refreshKey,
+    isPermissionLoading,
+    canView,
+    mediaCache,
+  ]);
   useEffect(() => {
     if (filter === "all") {
       setFilterData(media);
@@ -140,10 +154,15 @@ export default function MediaPage() {
     setFilterData((prev) => prev.filter((m) => m.id !== id));
   };
 
-  useEffect(() => {
-    setCanView(Boolean(permissions?.["media.read"]));
-  }, []);
-  if (typeof window !== "undefined" && !canView) {
+  if (isPermissionLoading) {
+    return (
+      <MainLayout>
+        <Loading h="h-full" />
+      </MainLayout>
+    );
+  }
+
+  if (!canView) {
     return (
       <MainLayout>
         <div className="flex flex-col justify-center items-center w-full text-center text-gray-600">

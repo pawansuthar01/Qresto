@@ -27,6 +27,9 @@ export const updateThemeSchema = z.object({
   // Layout
   layout: z.string().optional(),
   columns: z.number().optional(),
+  columnsMobile: z.number().optional(),
+  columnsTablet: z.number().optional(),
+  columnsDesktop: z.number().optional(),
   gap: z.number().optional(),
   padding: z.number().optional(),
   maxWidth: z.number().optional(),
@@ -70,6 +73,12 @@ export const updateThemeSchema = z.object({
   // Background
   backgroundImage: z.string().optional(),
   backgroundVideo: z.string().optional(),
+  backgroundImageMobile: z.string().optional(),
+  backgroundImageTablet: z.string().optional(),
+  backgroundImageDesktop: z.string().optional(),
+  backgroundVideoMobile: z.string().optional(),
+  backgroundVideoTablet: z.string().optional(),
+  backgroundVideoDesktop: z.string().optional(),
   backgroundOpacity: z.number().optional(),
   backgroundBlur: z.number().optional(),
   backgroundOverlay: z.boolean().optional(),

@@ -160,6 +160,18 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
     ...defaultCustomization,
     ...restaurant.customization,
   };
+  const spacingScale =
+    theme.spacing === "compact" ? 0.75 : theme.spacing === "relaxed" ? 1.25 : 1;
+  const containerPadding = Math.round(
+    (theme.containerPadding ?? theme.padding ?? 16) * spacingScale
+  );
+  const headerPaddingY = Math.max(8, Math.round(containerPadding * 0.6));
+  const navPaddingY = Math.max(8, Math.round(containerPadding * 0.55));
+  const pagePaddingY = Math.max(12, Math.round(containerPadding * 1.1));
+  const sectionSpacing = Math.round((theme.sectionSpacing ?? 32) * spacingScale);
+  const itemSpacing = Math.round((theme.itemSpacing ?? 16) * spacingScale);
+  const gridGap = Math.round((theme.gap ?? 16) * spacingScale);
+  const cardPadding = Math.round((theme.cardPadding ?? 16) * spacingScale);
 
   const [isJoined, setIsJoined] = useState(false);
   const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
@@ -481,6 +493,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
           className="container mx-auto h-full flex justify-between items-center px-3 sm:px-4 lg:px-6 py-2 sm:py-3"
           style={{
             maxWidth: `${theme.maxWidth}px`,
+            paddingLeft: `${containerPadding}px`,
+            paddingRight: `${containerPadding}px`,
+            paddingTop: `${headerPaddingY}px`,
+            paddingBottom: `${headerPaddingY}px`,
           }}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -589,6 +605,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
           className="container mx-auto flex gap-2 py-2.5 sm:py-3 px-3 sm:px-4 lg:px-6"
           style={{
             maxWidth: `${theme.maxWidth}px`,
+            paddingLeft: `${containerPadding}px`,
+            paddingRight: `${containerPadding}px`,
+            paddingTop: `${navPaddingY}px`,
+            paddingBottom: `${navPaddingY}px`,
           }}
         >
           {categories.map((category: any) => (
@@ -626,7 +646,11 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
         className="container mx-auto py-4 sm:py-6 px-3 sm:px-4 lg:px-6"
         style={{
           maxWidth: `${theme.maxWidth}px`,
-          gap: `${theme.sectionSpacing}px`,
+          paddingLeft: `${containerPadding}px`,
+          paddingRight: `${containerPadding}px`,
+          paddingTop: `${pagePaddingY}px`,
+          paddingBottom: `${pagePaddingY}px`,
+          gap: `${sectionSpacing}px`,
         }}
       >
         {(searchQuery ? filteredCategories : categories).map(
@@ -638,7 +662,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
               }}
               className="scroll-mt-32"
               style={{
-                marginBottom: `${theme.sectionSpacing}px`,
+                marginBottom: `${sectionSpacing}px`,
               }}
             >
               {/* Category Header */}
@@ -669,8 +693,10 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                 className="grid"
                 style={{
                   gridTemplateColumns:
-                    theme.layout === "grid" ? `repeat(${columns}, 1fr)` : "1fr",
-                  gap: `${theme.gap}px`,
+                    theme.layout === "grid"
+                      ? `repeat(${columns}, minmax(0, 1fr))`
+                      : "1fr",
+                  gap: `${gridGap}px`,
                 }}
               >
                 {category.items.map((item: any) => {
@@ -685,7 +711,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                           ? theme.cardShadow
                           : "none",
                         borderRadius: `${theme.borderRadius}px`,
-                        padding: `${theme.cardPadding}px`,
+                        padding: `${cardPadding}px`,
                         border: theme.cardBorder
                           ? `${theme.cardBorderWidth}px solid ${theme.borderColor}`
                           : "none",
@@ -694,7 +720,7 @@ export default function GuestMenu({ data, shortCode }: GuestMenuProps) {
                       <CardContent className="p-0">
                         <div
                           className="flex flex-col h-full"
-                          style={{ gap: `${theme.itemSpacing}px` }}
+                          style={{ gap: `${itemSpacing}px` }}
                         >
                           {theme.showImages && item.imageUrl && (
                             <div

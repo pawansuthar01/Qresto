@@ -18,11 +18,11 @@ export async function authorize(
 
     const user = session.user;
 
-    // Company Owner (ADMIN) has all permissions
+    // Company admins have all permissions
     if (user?.status == "blocked" || user.status == "suspended") {
       return { authorized: false, user: null, error: user.status };
     }
-    if (user.role === UserRole.ADMIN) {
+    if (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) {
       return { authorized: true, user };
     }
 
@@ -90,8 +90,11 @@ export async function getRestaurantPermissions(
 
     if (!session?.user) return null;
 
-    // Company Owner has all permissions
-    if (session.user.role === UserRole.ADMIN) {
+    // Company admins have all permissions
+    if (
+      session.user.role === UserRole.ADMIN ||
+      session.user.role === UserRole.SUPER_ADMIN
+    ) {
       return {
         "menu.create": true,
         "menu.read": true,

@@ -23,9 +23,13 @@ import { AISuggestionResponse } from "@/types";
 export default function SchedulesPage() {
   const params = useParams();
   const restaurantId = params.id as string;
-  const { data: restaurant } = useRestaurant(restaurantId);
-  const { hasPermission } = usePermissions(restaurant?.permissions);
+  const { data: restaurant, isLoading: isRestaurantLoading } =
+    useRestaurant(restaurantId);
+  const { hasPermission, isSessionLoading } = usePermissions(
+    restaurant?.permissions
+  );
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const canSchedule = hasPermission("menu.schedule");
   const { data: schedules, isLoading } = useQuery({
     queryKey: ["schedules", restaurantId],
     queryFn: async () => {
@@ -33,7 +37,7 @@ export default function SchedulesPage() {
       if (!res.ok) throw new Error("Failed to fetch schedules");
       return res.json();
     },
-    enabled: !!restaurantId, // only run if restaurantId exists
+    enabled: !!restaurantId && canSchedule, // only run after permission is known
     staleTime: 1000 * 60 * 2, // cache for 2 minutes
     retry: 2, // retry twice if failed
   });
@@ -57,12 +61,19 @@ export default function SchedulesPage() {
 
       return data;
     },
-    enabled: !!restaurantId, // only run if restaurantId exists
+    enabled: !!restaurantId && canSchedule, // only run after permission is known
     staleTime: 1000 * 60 * 2, // cache for 2 minutes
     retry: 2, // retry twice if failed
   });
 
-  const canSchedule = hasPermission("menu.schedule");
+  if (isSessionLoading || isRestaurantLoading) {
+    return (
+      <MainLayout>
+        <Loading h="h-full" />
+      </MainLayout>
+    );
+  }
+
   if (!canSchedule) {
     return (
       <MainLayout>
