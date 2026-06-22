@@ -1,0 +1,23 @@
+name: Keep Database Awake
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-health-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Ping health endpoint
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL || vars.HEALTHCHECK_URL }}
+        run: |
+          if [ -z "$HEALTHCHECK_URL" ]; then
+            echo "Set HEALTHCHECK_URL as a repository secret or variable, for example: https://your-domain.com/api/health"
+            exit 1
+          fi
+
+          curl --fail --show-error --silent --max-time 20 "$HEALTHCHECK_URL"
